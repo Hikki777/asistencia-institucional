@@ -1,0 +1,46 @@
+{
+  "name": "asistencias-qr",
+  "version": "1.0.0",
+  "description": "Sistema de control de asistencias por QR con auto-reparación",
+  "main": "backend/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node backend/server.js",
+    "start": "node start.js && node backend/server.js",
+    "test": "node test.js",
+    "seed": "node backend/prisma/seed.js",
+    "prisma:studio": "npx prisma studio",
+    "prisma:push": "npx prisma db push",
+    "prisma:reset": "npx prisma migrate reset --force",
+    "info": "node start.js"
+  },
+  "keywords": [
+    "asistencias",
+    "qr",
+    "colegio",
+    "control"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "archiver": "^6.0.0",
+    "axios": "^1.13.1",
+    "bcrypt": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "fs-extra": "^11.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.2",
+    "qrcode": "^1.5.3",
+    "sharp": "^0.32.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "jimp": "^1.6.0",
+    "jsqr": "^1.4.0",
+    "prisma": "^5.0.0"
+  }
+}

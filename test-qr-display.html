@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mostrar QR para Pruebas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .selector {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #3b82f6;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+        
+        button.active {
+            background: #10b981;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            max-width: 90vw;
+            max-height: 80vh;
+        }
+        
+        #qrImage {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            image-rendering: crisp-edges;
+        }
+        
+        .info {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+            background: #374151;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.6;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Test de Escaneo QR</h1>
+    
+    <div class="selector">
+        <button onclick="showQR('alumno', 'A1762128509496')">Alumno Pedro</button>
+        <button onclick="showQR('alumno', 'A1762128514319')">Alumno Juan</button>
+        <button onclick="showQR('docente', 'D2026001')" class="active">Kevin Gabriel</button>
+        <button onclick="showQR('docente', 'P001')">Roberto</button>
+        <button onclick="showQR('docente', 'P002')">Laura</button>
+        <button onclick="showQR('ultra', 'D2026001')" style="background:#ef4444;">🔥 ULTRA KEVIN</button>
+        <button onclick="showQR('ultra', 'P001')" style="background:#ef4444;">🔥 ULTRA ROBERTO</button>
+    </div>
+    
+    <div class="qr-container">
+        <img id="qrImage" src="http://localhost:5000/uploads/qrs/docente_D2026001_ultra.png?nocache=1762313771646" alt="QR Code">
+    </div>
+    
+    <div class="info">
+        <div id="qrInfo">QR ULTRA - Kevin Gabriel (D2026001)</div>
+        <div style="margin-top: 10px; font-size: 14px; color: #6ee7b7;">
+            📱 Apunta tu webcam a este QR en la pantalla
+        </div>
+        <div style="margin-top: 5px; font-size: 12px; color: #fbbf24;">
+            ⚠️ Si no funciona desde pantalla, imprime el QR o usa tu teléfono
+        </div>
+    </div>
+    
+    <div class="instructions">
+        💡 <strong>Instrucciones:</strong><br>
+        1. Deja esta ventana abierta<br>
+        2. En otra pestaña/ventana, abre el escáner QR<br>
+        3. Apunta la webcam hacia esta pantalla (15-30cm)<br>
+        4. Mantén estable y con buena iluminación<br>
+        5. El botón ROJO muestra QR sin logo (más fácil de detectar)
+    </div>
+    
+    <script>
+        function showQR(tipo, carnet) {
+            const img = document.getElementById('qrImage');
+            const info = document.getElementById('qrInfo');
+            let filename, label;
+            
+            if (tipo === 'ultra') {
+                filename = `docente_${carnet}_ultra.png`;
+                label = `QR ULTRA - ${carnet}`;
+            } else if (tipo === 'simple') {
+                filename = `docente_${carnet}_simple.png`;
+                label = `QR Sin Logo - ${carnet}`;
+            } else if (tipo === 'alumno') {
+                filename = `alumno_${carnet}.png`;
+                label = `Alumno: ${carnet}`;
+            } else {
+                filename = `docente_${carnet}.png`;
+                label = `${carnet.startsWith('D') ? 'Docente' : 'Personal'}: ${carnet}`;
+            }
+            
+            img.src = `http://localhost:5000/uploads/qrs/${filename}?t=${Date.now()}`;
+            info.textContent = label;
+            
+            // Resaltar botón activo
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        // Recargar imagen cada 5 segundos para asegurar que no hay cache
+        setInterval(() => {
+            const img = document.getElementById('qrImage');
+            const currentSrc = img.src.split('?')[0];
+            img.src = `${currentSrc}?t=${Date.now()}`;
+        }, 5000);
+    </script>
+</body>
+</html>

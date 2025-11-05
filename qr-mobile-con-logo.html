@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR con Logo - Celular</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        
+        #qrImage {
+            display: block;
+            width: 100%;
+            max-width: 350px;
+            height: auto;
+        }
+        
+        .info {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid white;
+            border-radius: 12px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        button.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .instructions {
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 400px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo-badge {
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>📱 QR Institucional</h1>
+    <div class="subtitle">Con logo de la institución</div>
+    
+    <div class="logo-badge">✨ CON LOGO LCP</div>
+    
+    <div class="selector">
+        <button onclick="showQR('D2026001')" class="active">Kevin Gabriel</button>
+        <button onclick="showQR('P001')">Roberto</button>
+        <button onclick="showQR('P002')">Laura</button>
+        <button onclick="showQR('A1762128509496')">Pedro</button>
+    </div>
+    
+    <div class="qr-container">
+        <img id="qrImage" src="/uploads/qrs/docente_D2026001.png" alt="QR Code">
+    </div>
+    
+    <div class="info" id="qrInfo">Kevin Gabriel (D2026001)</div>
+    
+    <div class="instructions">
+        💡 <strong>Instrucciones:</strong><br>
+        1. Mantén esta pantalla encendida<br>
+        2. En tu PC, activa el escáner QR<br>
+        3. Apunta la webcam hacia este QR<br>
+        4. Mantén el teléfono estable a 30-50cm<br>
+        5. Asegura buena iluminación
+    </div>
+    
+    <script>
+        const users = {
+            'D2026001': { name: 'Kevin Gabriel', tipo: 'docente' },
+            'P001': { name: 'Roberto', tipo: 'docente' },
+            'P002': { name: 'Laura', tipo: 'docente' },
+            'A1762128509496': { name: 'Pedro', tipo: 'alumno' }
+        };
+        
+        function showQR(carnet) {
+            const img = document.getElementById('qrImage');
+            const info = document.getElementById('qrInfo');
+            const user = users[carnet];
+            
+            const tipo = user.tipo === 'alumno' ? 'alumno' : 'docente';
+            const filename = `${tipo}_${carnet}.png`;
+            
+            img.src = `/uploads/qrs/${filename}?t=${Date.now()}`;
+            info.textContent = `${user.name} (${carnet})`;
+            
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').catch(() => {});
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imprimir QR Codes</title>
+    <style>
+        @media print {
+            .no-print {
+                display: none;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        
+        .controls {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+        
+        .qr-card {
+            width: 8cm;
+            height: 11cm;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px;
+            display: inline-block;
+            text-align: center;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .qr-card h2 {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #1e40af;
+        }
+        
+        .qr-card img {
+            width: 6cm;
+            height: 6cm;
+            margin: 10px auto;
+            display: block;
+        }
+        
+        .qr-card .info {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        
+        .qr-card .carnet {
+            font-size: 20px;
+            font-weight: bold;
+            color: #059669;
+            margin: 10px 0;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls no-print">
+        <h1>📄 Sistema de Registro Institucional - QR Codes</h1>
+        <p>Estos QR codes están listos para imprimir en tarjetas de 8x11 cm</p>
+        <button onclick="window.print()">🖨️ Imprimir Todos</button>
+        <button onclick="location.reload()">🔄 Recargar</button>
+    </div>
+    
+    <div id="qr-container"></div>
+    
+    <script>
+        const users = [
+            { tipo: 'docente', carnet: 'D2026001', nombre: 'Kevin Gabriel Pérez García', rol: 'Docente' },
+            { tipo: 'docente', carnet: 'P001', nombre: 'Roberto Profesional Silva', rol: 'Personal' },
+            { tipo: 'docente', carnet: 'P002', nombre: 'Laura Enseñanza González', rol: 'Personal' },
+            { tipo: 'alumno', carnet: 'A1762128509496', nombre: 'Pedro Pérez García', rol: 'Alumno' },
+            { tipo: 'alumno', carnet: 'A1762128514319', nombre: 'Juan Pérez García', rol: 'Alumno' }
+        ];
+        
+        const container = document.getElementById('qr-container');
+        
+        users.forEach((user, index) => {
+            const card = document.createElement('div');
+            card.className = 'qr-card';
+            if ((index + 1) % 2 === 0) {
+                card.className += ' page-break';
+            }
+            
+            card.innerHTML = `
+                <h2>🏫 Sistema de Registro Institucional</h2>
+                <img src="http://localhost:5000/uploads/qrs/${user.tipo}_${user.carnet}.png" 
+                     alt="QR ${user.carnet}"
+                     onerror="this.src='http://localhost:5000/uploads/qrs/${user.tipo}_${user.carnet}_ultra.png'">
+                <div class="carnet">${user.carnet}</div>
+                <div class="info"><strong>${user.nombre}</strong></div>
+                <div class="info">${user.rol}</div>
+                <div class="info" style="font-size: 11px; color: #666; margin-top: 10px;">
+                    Escanear para registrar asistencia
+                </div>
+            `;
+            
+            container.appendChild(card);
+        });
+    </script>
+</body>
+</html>

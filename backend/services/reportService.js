@@ -37,7 +37,7 @@ class ReportService {
             jornada: true
           }
         },
-        docente: {
+        personal: {
           select: {
             carnet: true,
             nombres: true,
@@ -89,7 +89,7 @@ class ReportService {
       const tableData = {
         headers: ['Fecha/Hora', 'Carnet', 'Nombre Completo', 'Grado', 'Tipo', 'Estado'],
         rows: asistencias.map(a => {
-          const persona = a.alumno || a.docente;
+          const persona = a.alumno || a.personal;
           return [
             new Date(a.timestamp).toLocaleString('es-ES', { 
               day: '2-digit', 
@@ -147,14 +147,14 @@ class ReportService {
       where,
       include: {
         alumno: true,
-        docente: true
+        personal: true
       },
       orderBy: { timestamp: 'desc' }
     });
 
     // Preparar datos para Excel
     const datos = asistencias.map(a => {
-      const persona = a.alumno || a.docente;
+      const persona = a.alumno || a.personal;
       return {
         'Fecha': new Date(a.timestamp).toLocaleDateString('es-ES'),
         'Hora': new Date(a.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
@@ -272,8 +272,8 @@ class ReportService {
       where.alumno_id = parseInt(filtros.alumnoId);
     }
 
-    if (filtros.docenteId) {
-      where.docente_id = parseInt(filtros.docenteId);
+    if (filtros.personalId) {
+      where.personal_id = parseInt(filtros.personalId);
     }
 
     if (filtros.tipoEvento) {
@@ -284,7 +284,7 @@ class ReportService {
     if (filtros.grado) {
       where.OR = [
         { alumno: { grado: filtros.grado } },
-        { docente: { grado: filtros.grado } }
+        { personal: { grado: filtros.grado } }
       ];
     }
 

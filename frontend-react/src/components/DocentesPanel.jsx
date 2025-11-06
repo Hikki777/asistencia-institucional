@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, Briefcase, Sun } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { TableSkeleton } from './LoadingSpinner';
 
 const API_URL = 'http://localhost:5000/api';
 const client = axios.create({
@@ -48,7 +50,7 @@ export default function DocentesPanel() {
       setDocentes(response.data.docentes || []);
     } catch (error) {
       console.error('Error fetching docentes:', error);
-      alert('Error al cargar docentes');
+      toast.error('Error al cargar docentes: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -56,14 +58,15 @@ export default function DocentesPanel() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const toastId = toast.loading(editingDocente ? 'Actualizando docente...' : 'Creando docente...');
     
     try {
       if (editingDocente) {
         await client.put(`/docentes/${editingDocente.id}`, formData);
-        alert('Docente actualizado correctamente');
+        toast.success('Docente actualizado correctamente', { id: toastId });
       } else {
         await client.post('/docentes', formData);
-        alert('Docente creado correctamente');
+        toast.success('Docente creado correctamente', { id: toastId });
       }
       
       setShowModal(false);
@@ -78,7 +81,7 @@ export default function DocentesPanel() {
       });
       fetchDocentes();
     } catch (error) {
-      alert('Error: ' + (error.response?.data?.error || error.message));
+      toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
     }
   };
 
@@ -97,17 +100,20 @@ export default function DocentesPanel() {
 
   const handleDelete = async (id, nombre) => {
     if (!confirm(`¿Eliminar a ${nombre}?`)) return;
+    const toastId = toast.loading('Eliminando docente...');
     
     try {
       await client.delete(`/docentes/${id}`);
-      alert('Docente eliminado correctamente');
+      toast.success(`${nombre} eliminado correctamente`, { id: toastId });
       fetchDocentes();
     } catch (error) {
-      alert('Error: ' + (error.response?.data?.error || error.message));
+      toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
     }
   };
 
   const handleDownloadQR = async (id, nombre) => {
+    const toastId = toast.loading('Generando código QR...');
+    
     try {
       const response = await client.get(`/qr/${id}/png`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(response.data);
@@ -115,8 +121,9 @@ export default function DocentesPanel() {
       a.href = url;
       a.download = `qr-docente-${nombre || id}.png`;
       a.click();
+      toast.success('Código QR descargado', { id: toastId });
     } catch (error) {
-      alert('Error descargando QR: ' + error.message);
+      toast.error('Error descargando QR: ' + error.message, { id: toastId });
     }
   };
 
@@ -220,7 +227,7 @@ export default function DocentesPanel() {
         className="bg-white rounded-xl shadow-lg overflow-hidden"
       >
         {loading ? (
-          <div className="p-12 text-center text-gray-500">Cargando...</div>
+          <TableSkeleton rows={5} columns={7} />
         ) : filteredDocentes.length === 0 ? (
           <div className="p-12 text-center text-gray-500">
             <User size={48} className="mx-auto mb-4 text-gray-300" />
@@ -473,6 +480,31 @@ export default function DocentesPanel() {
         </div>
       )}
     </AnimatePresence>
+
+    {/* Toast notifications */}
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        duration: 3000,
+        style: {
+          background: '#fff',
+          color: '#363636',
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+        },
+        success: {
+          iconTheme: {
+            primary: '#10b981',
+            secondary: '#fff',
+          },
+        },
+        error: {
+          iconTheme: {
+            primary: '#ef4444',
+            secondary: '#fff',
+          },
+        },
+      }}
+    />
     </div>
   );
 }

@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, BookOpen, Sun } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import { alumnosAPI, qrAPI } from '../api/endpoints';
+import { TableSkeleton } from './LoadingSpinner';
 
 export default function AlumnosPanel() {
   const [alumnos, setAlumnos] = useState([]);
@@ -32,6 +34,7 @@ export default function AlumnosPanel() {
       setAlumnos(response.data.alumnos || []);
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Error al cargar alumnos: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -39,18 +42,48 @@ export default function AlumnosPanel() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const toastId = toast.loading(editingAlumno ? 'Actualizando alumno...' : 'Creando alumno...');
+    
+    // Optimistic update: actualizar UI inmediatamente
+    const tempId = Date.now(); // ID temporal para nuevo alumno
+    const optimisticAlumno = {
+      ...formData,
+      id: editingAlumno ? editingAlumno.id : tempId,
+      creado_en: new Date().toISOString()
+    };
+
+    // Backup para rollback en caso de error
+    const previousAlumnos = [...alumnos];
+
+    if (editingAlumno) {
+      // Actualizar: reemplazar alumno existente
+      setAlumnos(prev => prev.map(a => a.id === editingAlumno.id ? optimisticAlumno : a));
+    } else {
+      // Crear: agregar nuevo alumno al inicio
+      setAlumnos(prev => [optimisticAlumno, ...prev]);
+    }
+
+    // Cerrar modal inmediatamente para mejor UX
+    setShowModal(false);
+    setEditingAlumno(null);
+    setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', jornada: '', sexo: '' });
+
     try {
       if (editingAlumno) {
         await alumnosAPI.update(editingAlumno.id, formData);
+        toast.success('Alumno actualizado exitosamente', { id: toastId });
       } else {
-        await alumnosAPI.create(formData);
+        const response = await alumnosAPI.create(formData);
+        // Reemplazar ID temporal con ID real del servidor
+        setAlumnos(prev => prev.map(a => a.id === tempId ? { ...response.data.alumno, ...formData } : a));
+        toast.success('Alumno creado exitosamente', { id: toastId });
       }
-      setShowModal(false);
-      setEditingAlumno(null);
-      setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', jornada: '', sexo: '' });
+      // Refrescar para asegurar consistencia
       fetchAlumnos();
     } catch (error) {
-      alert('Error: ' + (error.response?.data?.error || error.message));
+      // Rollback: revertir a estado anterior
+      setAlumnos(previousAlumnos);
+      toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
     }
   };
 
@@ -69,15 +102,25 @@ export default function AlumnosPanel() {
 
   const handleDelete = async (id, nombre) => {
     if (!confirm(`¿Eliminar a ${nombre}?`)) return;
+    const toastId = toast.loading('Eliminando alumno...');
+    
+    // Optimistic update: eliminar de UI inmediatamente
+    const previousAlumnos = [...alumnos];
+    setAlumnos(prev => prev.filter(a => a.id !== id));
+    
     try {
       await alumnosAPI.delete(id);
-      fetchAlumnos();
+      toast.success(`${nombre} eliminado exitosamente`, { id: toastId });
     } catch (error) {
-      alert('Error: ' + (error.response?.data?.error || error.message));
+      // Rollback: restaurar alumno eliminado
+      setAlumnos(previousAlumnos);
+      toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
     }
   };
 
   const handleDownloadQR = async (id, carnet) => {
+    const toastId = toast.loading('Generando código QR...');
+    
     try {
       const blob = await qrAPI.download(id);
       const url = window.URL.createObjectURL(blob);
@@ -85,8 +128,9 @@ export default function AlumnosPanel() {
       a.href = url;
       a.download = `qr-${carnet}.png`;
       a.click();
+      toast.success('Código QR descargado', { id: toastId });
     } catch (error) {
-      alert('Error: ' + error.message);
+      toast.error('Error al descargar QR: ' + error.message, { id: toastId });
     }
   };
 
@@ -197,7 +241,7 @@ export default function AlumnosPanel() {
         className="bg-white rounded-xl shadow-lg overflow-hidden"
       >
         {loading ? (
-          <div className="p-12 text-center text-gray-500">Cargando...</div>
+          <TableSkeleton rows={5} columns={7} />
         ) : filteredAlumnos.length === 0 ? (
           <div className="p-12 text-center text-gray-500">
             <User size={48} className="mx-auto mb-4 text-gray-300" />
@@ -460,6 +504,31 @@ export default function AlumnosPanel() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Toast notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#fff',
+            color: '#363636',
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   );
 }

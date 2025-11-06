@@ -60,28 +60,43 @@ class ReportService {
 
     doc.pipe(stream);
 
-    // Encabezado
+    // Encabezado institucional
     doc.fontSize(18).font('Helvetica-Bold').text(institucion?.nombre || 'Instituto Educativo', { align: 'center' });
-    doc.fontSize(14).font('Helvetica').text('Reporte de Asistencias', { align: 'center' });
+    if (institucion?.direccion) {
+      doc.fontSize(10).font('Helvetica').text(institucion.direccion, { align: 'center' });
+    }
+    if (institucion?.telefono) {
+      doc.text(`Tel: ${institucion.telefono}`, { align: 'center' });
+    }
+    doc.moveDown();
+    doc.fontSize(14).font('Helvetica-Bold').text('REPORTE DE ASISTENCIAS', { align: 'center' });
     doc.moveDown();
 
     // Información del reporte
+    doc.fontSize(11).font('Helvetica-Bold').text('Información del Reporte:', { underline: true });
     doc.fontSize(10).font('Helvetica');
-    doc.text(`Fecha de generación: ${new Date().toLocaleString('es-ES')}`, { align: 'left' });
-    if (fechaInicio) doc.text(`Desde: ${new Date(fechaInicio).toLocaleDateString('es-ES')}`);
-    if (fechaFin) doc.text(`Hasta: ${new Date(fechaFin).toLocaleDateString('es-ES')}`);
-    if (personaTipo) doc.text(`Tipo: ${personaTipo === 'alumno' ? 'Alumnos' : 'Personal'}`);
-    if (grado) doc.text(`Grado: ${grado}`);
-    if (tipoEvento) doc.text(`Evento: ${tipoEvento === 'entrada' ? 'Entradas' : 'Salidas'}`);
-    doc.text(`Total de registros: ${asistencias.length}`);
-    doc.moveDown();
+    doc.text(`Fecha de generación: ${new Date().toLocaleString('es-ES')}`);
+    doc.text(`Generado por: Sistema de Registro Institucional`);
+    doc.moveDown(0.5);
+
+    // Filtros aplicados
+    doc.fontSize(11).font('Helvetica-Bold').text('Filtros Aplicados:', { underline: true });
+    doc.fontSize(10).font('Helvetica');
+    doc.text(`Fecha inicio: ${fechaInicio ? new Date(fechaInicio).toLocaleDateString('es-ES') : 'No especificado'}`);
+    doc.text(`Fecha fin: ${fechaFin ? new Date(fechaFin).toLocaleDateString('es-ES') : 'No especificado'}`);
+    doc.text(`Tipo de persona: ${personaTipo ? (personaTipo === 'alumno' ? 'Alumnos' : 'Personal') : 'Todos'}`);
+    doc.text(`Grado: ${grado || 'Todos'}`);
+    doc.text(`Tipo de evento: ${tipoEvento ? (tipoEvento === 'entrada' ? 'Entradas' : 'Salidas') : 'Todos'}`);
+    doc.moveDown(0.5);
 
     // Estadísticas
     const stats = this.calcularEstadisticas(asistencias);
-    doc.fontSize(12).font('Helvetica-Bold').text('Resumen:', { underline: true });
+    doc.fontSize(11).font('Helvetica-Bold').text('Resumen Estadístico:', { underline: true });
     doc.fontSize(10).font('Helvetica');
+    doc.text(`Total de registros: ${asistencias.length}`);
     doc.text(`Entradas: ${stats.entradas} | Salidas: ${stats.salidas}`);
-    doc.text(`Puntuales: ${stats.puntuales} | Tardes: ${stats.tardes}`);
+    doc.text(`Puntuales: ${stats.puntuales} | Tardíos: ${stats.tardes}`);
+    doc.text(`Registros por QR: ${stats.porQR} | Registros manuales: ${stats.manual}`);
     doc.moveDown();
 
     // Tabla de datos
@@ -140,7 +155,11 @@ class ReportService {
    * Generar reporte de asistencias en Excel
    */
   async generarReporteExcel(filtros = {}) {
+    const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
     const where = this.construirFiltros(filtros);
+
+    // Obtener institución
+    const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
 
     // Obtener datos
     const asistencias = await prisma.asistencia.findMany({
@@ -152,7 +171,39 @@ class ReportService {
       orderBy: { timestamp: 'desc' }
     });
 
-    // Preparar datos para Excel
+    // Estadísticas
+    const stats = this.calcularEstadisticas(asistencias);
+
+    // ===== HOJA 1: PORTADA E INFORMACIÓN =====
+    const infoData = [
+      ['REPORTE DE ASISTENCIAS'],
+      [''],
+      ['Institución:', institucion?.nombre || 'Instituto Educativo'],
+      ['Dirección:', institucion?.direccion || 'N/A'],
+      ['Teléfono:', institucion?.telefono || 'N/A'],
+      [''],
+      ['INFORMACIÓN DEL REPORTE'],
+      ['Fecha de generación:', new Date().toLocaleString('es-ES')],
+      ['Generado por:', 'Sistema de Registro Institucional'],
+      [''],
+      ['FILTROS APLICADOS'],
+      ['Fecha inicio:', fechaInicio ? new Date(fechaInicio).toLocaleDateString('es-ES') : 'No especificado'],
+      ['Fecha fin:', fechaFin ? new Date(fechaFin).toLocaleDateString('es-ES') : 'No especificado'],
+      ['Tipo de persona:', personaTipo ? (personaTipo === 'alumno' ? 'Alumnos' : 'Personal') : 'Todos'],
+      ['Grado:', grado || 'Todos'],
+      ['Tipo de evento:', tipoEvento ? (tipoEvento === 'entrada' ? 'Entradas' : 'Salidas') : 'Todos'],
+      [''],
+      ['RESUMEN ESTADÍSTICO'],
+      ['Total de registros:', asistencias.length],
+      ['Entradas:', stats.entradas],
+      ['Salidas:', stats.salidas],
+      ['Puntuales:', stats.puntuales],
+      ['Tardíos:', stats.tardes],
+      ['Registros por QR:', stats.porQR],
+      ['Registros manuales:', stats.manual]
+    ];
+
+    // ===== HOJA 2: DATOS DETALLADOS =====
     const datos = asistencias.map(a => {
       const persona = a.alumno || a.personal;
       return {
@@ -171,26 +222,25 @@ class ReportService {
       };
     });
 
-    // Estadísticas
-    const stats = this.calcularEstadisticas(asistencias);
-    const statsData = [
-      { 'Métrica': 'Total de registros', 'Valor': asistencias.length },
-      { 'Métrica': 'Entradas', 'Valor': stats.entradas },
-      { 'Métrica': 'Salidas', 'Valor': stats.salidas },
-      { 'Métrica': 'Puntuales', 'Valor': stats.puntuales },
-      { 'Métrica': 'Tardes', 'Valor': stats.tardes },
-      { 'Métrica': 'Por QR', 'Valor': stats.porQR },
-      { 'Métrica': 'Manual', 'Valor': stats.manual }
-    ];
-
     // Crear workbook
     const wb = XLSX.utils.book_new();
 
-    // Hoja de estadísticas
-    const wsStats = XLSX.utils.json_to_sheet(statsData);
-    XLSX.utils.book_append_sheet(wb, wsStats, 'Resumen');
+    // Agregar Hoja 1: Información y Resumen
+    const wsInfo = XLSX.utils.aoa_to_sheet(infoData);
+    
+    // Estilos para la hoja de información (ancho de columnas)
+    wsInfo['!cols'] = [
+      { wch: 25 }, // Columna A (etiquetas)
+      { wch: 50 }  // Columna B (valores)
+    ];
 
-    // Hoja de datos
+    // Fusionar celdas para el título
+    if (!wsInfo['!merges']) wsInfo['!merges'] = [];
+    wsInfo['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }); // Título
+
+    XLSX.utils.book_append_sheet(wb, wsInfo, 'Información');
+
+    // Agregar Hoja 2: Datos detallados
     const wsData = XLSX.utils.json_to_sheet(datos);
     
     // Ajustar anchos de columna

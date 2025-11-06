@@ -340,10 +340,11 @@ export default function ReportesPanel() {
             <h3 className="text-sm font-medium text-blue-800">Información sobre reportes</h3>
             <div className="mt-2 text-sm text-blue-700">
               <ul className="list-disc list-inside space-y-1">
-                <li><strong>PDF:</strong> Incluye encabezado institucional, estadísticas y tabla formateada</li>
-                <li><strong>Excel:</strong> Contiene dos hojas (Resumen + Datos) con todos los detalles</li>
-                <li>Los reportes se generan según los filtros seleccionados</li>
-                <li>Si no seleccionas filtros, se exportarán todos los registros del período</li>
+                <li><strong>PDF:</strong> Formato profesional con datos institucionales, filtros aplicados, estadísticas completas y tabla detallada</li>
+                <li><strong>Excel:</strong> Dos hojas: "Información" (datos institucionales + resumen) y "Asistencias" (datos detallados)</li>
+                <li>Ambos formatos incluyen: nombre de institución, dirección, teléfono y fecha de generación</li>
+                <li>Estadísticas: Total, entradas, salidas, puntuales, tardíos, por QR y manuales</li>
+                <li>Los filtros aplicados se muestran claramente en ambos reportes</li>
               </ul>
             </div>
           </div>

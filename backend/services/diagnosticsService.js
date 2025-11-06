@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const prisma = require('../prismaClient');
+const { logger } = require('../utils/logger');
 
 /**
  * Servicio de diagnóstico para detectar QR faltantes, corruptos o logo inválido
@@ -30,7 +31,7 @@ async function ejecutarDiagnosticos() {
 
     if (!institucion.logo_base64) {
       resultado.missing_logo = true;
-      console.warn('[DiagnosticsService] Logo not found in database');
+      logger.warn('⚠️ Logo no encontrado en base de datos');
     }
 
     // 2. Verificar cada QR
@@ -97,16 +98,16 @@ async function ejecutarDiagnosticos() {
       }
     }
 
-    console.log(`[DiagnosticsService] Diagnostics completed:`, {
+    logger.info({
       total: resultado.total_qrs,
       missing: resultado.missing_qrs.length,
       corrupt: resultado.corrupt_qrs.length,
       missing_logo: resultado.missing_logo
-    });
+    }, '🔍 Diagnóstico completado');
 
     return resultado;
   } catch (error) {
-    console.error('[DiagnosticsService] Error:', error.message);
+    logger.error({ err: error }, '❌ Error ejecutando diagnóstico');
     resultado.errors.push(error.message);
     return resultado;
   }
@@ -126,7 +127,7 @@ async function registrarDiagnostico(userId, diagnosticoData) {
       }
     });
   } catch (error) {
-    console.error('[DiagnosticsService] Error recording diagnostic:', error.message);
+    logger.error({ err: error, userId }, '❌ Error registrando diagnóstico en auditoría');
   }
 }
 
@@ -141,7 +142,7 @@ async function obtenerHistorial(limit = 10) {
       take: limit
     });
   } catch (error) {
-    console.error('[DiagnosticsService] Error fetching history:', error.message);
+    logger.error({ err: error, limit }, '❌ Error obteniendo historial de diagnósticos');
     return [];
   }
 }

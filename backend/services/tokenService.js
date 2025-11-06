@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { logger } = require('../utils/logger');
 
 /**
  * Servicio para generar y validar tokens HMAC para QR
@@ -46,7 +47,7 @@ function validarToken(tokenB64) {
       .digest('hex');
     
     if (expected !== signature) {
-      console.warn(`[TokenService] Invalid signature for token: ${tokenB64.substring(0, 20)}...`);
+      logger.warn({ tokenPreview: tokenB64.substring(0, 20) }, '⚠️ Firma de token inválida');
       return null;
     }
     
@@ -59,7 +60,7 @@ function validarToken(tokenB64) {
       valido: true
     };
   } catch (error) {
-    console.error(`[TokenService] Error validating token:`, error.message);
+    logger.error({ err: error }, '❌ Error validando token');
     return null;
   }
 }
@@ -80,7 +81,7 @@ function decodificarToken(tokenB64) {
       ts: parseInt(ts, 10)
     };
   } catch (error) {
-    console.error(`[TokenService] Error decoding token:`, error.message);
+    logger.error({ err: error }, '❌ Error decodificando token');
     return null;
   }
 }

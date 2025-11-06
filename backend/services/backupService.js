@@ -2,6 +2,7 @@ const archiver = require('archiver');
 const fs = require('fs-extra');
 const path = require('path');
 const prisma = require('../prismaClient');
+const { logger } = require('../utils/logger');
 
 /**
  * Servicio de backup comprimido
@@ -21,9 +22,9 @@ async function inicializarBackups() {
   try {
     await fs.ensureDir(BACKUPS_DIR);
     backupsInitialized = true;
-    console.log('[BackupService] Backups directory initialized:', BACKUPS_DIR);
+    logger.debug({ BACKUPS_DIR }, '📁 Directorio de backups inicializado');
   } catch (error) {
-    console.error('[BackupService] Error initializing backup directory:', error.message);
+    logger.error({ err: error }, '❌ Error inicializando directorio de backups');
   }
 }
 
@@ -49,7 +50,7 @@ async function crearBackup(userId = null) {
   };
 
   try {
-    console.log(`[BackupService] Starting backup: ${backupName}`);
+    logger.info({ backupName }, '💾 Iniciando backup');
 
     // Crear stream de escritura
     const output = fs.createWriteStream(backupPath);
@@ -76,12 +77,12 @@ async function crearBackup(userId = null) {
           });
         }
 
-        console.log(`✅ Backup completed: ${backupName} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
+        logger.info({ backupName, sizeMB: (stats.size / 1024 / 1024).toFixed(2) }, '✅ Backup completado');
         resolve(resultado);
       });
 
       archive.on('error', (err) => {
-        console.error('[BackupService] Archive error:', err.message);
+        logger.error({ err, backupName }, '❌ Error en archivo de backup');
         resultado.error = err.message;
         reject(err);
       });
@@ -105,7 +106,7 @@ async function crearBackup(userId = null) {
       archive.finalize();
     });
   } catch (error) {
-    console.error('[BackupService] Backup error:', error.message);
+    logger.error({ err: error }, '❌ Error creando backup');
     resultado.error = error.message;
     return resultado;
   }
@@ -135,7 +136,7 @@ async function listarBackups() {
 
     return backups.sort((a, b) => b.mtime - a.mtime);
   } catch (error) {
-    console.error('[BackupService] Error listing backups:', error.message);
+    logger.error({ err: error }, '❌ Error listando backups');
     return [];
   }
 }
@@ -151,13 +152,13 @@ async function descargarBackup(backupName) {
     
     // Validar que está en el directorio de backups
     if (!backupPath.startsWith(BACKUPS_DIR)) {
-      console.warn('[BackupService] Invalid backup path:', backupPath);
+      logger.warn({ backupPath }, '⚠️ Ruta de backup inválida');
       return null;
     }
 
     const exists = await fs.pathExists(backupPath);
     if (!exists) {
-      console.warn('[BackupService] Backup not found:', backupName);
+      logger.warn({ backupName }, '⚠️ Backup no encontrado');
       return null;
     }
 
@@ -168,7 +169,7 @@ async function descargarBackup(backupName) {
       name: backupName
     };
   } catch (error) {
-    console.error('[BackupService] Error downloading backup:', error.message);
+    logger.error({ err: error, backupName }, '❌ Error descargando backup');
     return null;
   }
 }
@@ -191,13 +192,13 @@ async function limpiarBackupsViejos(daysOld = 30) {
       if (stats.mtimeMs < cutoffTime) {
         await fs.remove(filePath);
         deleted++;
-        console.log(`[BackupService] Deleted old backup: ${file}`);
+        logger.debug({ file }, '🗑️ Backup antiguo eliminado');
       }
     }
 
     return deleted;
   } catch (error) {
-    console.error('[BackupService] Error cleaning old backups:', error.message);
+    logger.error({ err: error, daysOld }, '❌ Error limpiando backups antiguos');
     return 0;
   }
 }

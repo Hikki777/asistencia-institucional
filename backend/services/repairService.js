@@ -3,6 +3,7 @@ const path = require('path');
 const prisma = require('../prismaClient');
 const qrService = require('./qrService');
 const tokenService = require('./tokenService');
+const { logger } = require('../utils/logger');
 
 /**
  * Servicio de reparación automática de QR y logo
@@ -31,7 +32,7 @@ async function regenerarQrs(opciones = {}) {
         reason: 'missing_logo_in_database',
         message: 'No se puede regenerar sin logo. Suba el logo primero.'
       });
-      console.warn('[RepairService] Regeneration blocked: missing logo');
+      logger.warn('⚠️ Regeneración de QRs bloqueada: logo faltante en BD');
       return resultado;
     }
 
@@ -51,7 +52,7 @@ async function regenerarQrs(opciones = {}) {
       return resultado;
     }
 
-    console.log(`[RepairService] Starting regeneration of ${codigos.length} QR(s)`);
+    logger.info({ count: codigos.length }, `🔧 Iniciando regeneración de ${codigos.length} QR(s)`);
 
     // Regenerar cada QR
     for (const codigo of codigos) {
@@ -59,7 +60,7 @@ async function regenerarQrs(opciones = {}) {
         // Validar token
         const tokenData = tokenService.validarToken(codigo.token);
         if (!tokenData) {
-          console.warn(`[RepairService] Invalid token for QR ${codigo.id}`);
+          logger.warn({ qrId: codigo.id }, `⚠️ Token inválido para QR ${codigo.id}`);
           resultado.fallidos.push({
             id: codigo.id,
             reason: 'invalid_token',
@@ -115,9 +116,9 @@ async function regenerarQrs(opciones = {}) {
           png_path: relativePath
         });
 
-        console.log(`[RepairService] QR ${codigo.id} regenerated successfully`);
+        logger.debug({ qrId: codigo.id }, `✅ QR ${codigo.id} regenerado exitosamente`);
       } catch (error) {
-        console.error(`[RepairService] Error regenerating QR ${codigo.id}:`, error.message);
+        logger.error({ err: error, qrId: codigo.id }, `❌ Error regenerando QR ${codigo.id}`);
         resultado.fallidos.push({
           id: codigo.id,
           reason: 'generation_error',
@@ -143,14 +144,14 @@ async function regenerarQrs(opciones = {}) {
       });
     }
 
-    console.log(`[RepairService] Regeneration summary:`, {
+    logger.info({
       regenerados: resultado.regenerados.length,
       fallidos: resultado.fallidos.length
-    });
+    }, '🔧 Resumen de regeneración de QRs');
 
     return resultado;
   } catch (error) {
-    console.error('[RepairService] Fatal error during regeneration:', error.message);
+    logger.error({ err: error }, '❌ Error fatal durante regeneración');
     resultado.fallidos.push({
       reason: 'fatal_error',
       error: error.message
@@ -175,7 +176,7 @@ async function regenerarLogo(userId = null) {
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
     if (!institucion || !institucion.logo_base64) {
       resultado.error = 'Logo not found in database';
-      console.warn('[RepairService] Logo regeneration: logo not in DB');
+      logger.warn('⚠️ Regeneración de logo: logo no está en BD');
       return resultado;
     }
 
@@ -205,10 +206,10 @@ async function regenerarLogo(userId = null) {
       }
     });
 
-    console.log('[RepairService] Logo regenerated successfully');
+    logger.info('✅ Logo regenerado exitosamente');
     return resultado;
   } catch (error) {
-    console.error('[RepairService] Error regenerating logo:', error.message);
+    logger.error({ err: error }, '❌ Error regenerando logo');
     resultado.error = error.message;
     return resultado;
   }
@@ -219,7 +220,7 @@ async function regenerarLogo(userId = null) {
  * Si hay QR faltantes, intenta regenerarlos automáticamente
  */
 async function autoRepair() {
-  console.log('[RepairService] Auto-repair job started');
+  logger.info('🔧 Trabajo de auto-reparación iniciado');
   const startTime = Date.now();
 
   try {
@@ -228,7 +229,7 @@ async function autoRepair() {
     const diag = await diagnosticsService.ejecutarDiagnosticos();
 
     if (diag.missing_qrs.length === 0 && !diag.missing_logo) {
-      console.log('[RepairService] System is healthy, no repairs needed');
+      logger.info('✅ Sistema saludable, no se requieren reparaciones');
       return { healthy: true, duration: Date.now() - startTime };
     }
 
@@ -236,7 +237,7 @@ async function autoRepair() {
     if (diag.missing_logo) {
       const logoResult = await regenerarLogo(null);
       if (logoResult.success) {
-        console.log('[RepairService] Logo repaired');
+        logger.info('✅ Logo reparado');
       }
     }
 
@@ -245,10 +246,10 @@ async function autoRepair() {
       const idsARepara = diag.missing_qrs.map(q => q.id).slice(0, 100); // max 100 por batch
       const repairResult = await regenerarQrs({ ids: idsARepara, userId: null });
       
-      console.log('[RepairService] QR repair batch completed:', {
+      logger.info({
         regenerados: repairResult.regenerados.length,
         fallidos: repairResult.fallidos.length
-      });
+      }, '🔧 Lote de reparación de QR completado');
     }
 
     return { 
@@ -257,7 +258,7 @@ async function autoRepair() {
       duration: Date.now() - startTime
     };
   } catch (error) {
-    console.error('[RepairService] Auto-repair job failed:', error.message);
+    logger.error({ err: error }, '❌ Trabajo de auto-reparación falló');
     return {
       error: error.message,
       duration: Date.now() - startTime

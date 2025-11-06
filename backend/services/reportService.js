@@ -4,6 +4,7 @@ const ExcelJS = require('exceljs');
 const fs = require('fs-extra');
 const path = require('path');
 const prisma = require('../prismaClient');
+const { logger } = require('../utils/logger');
 
 class ReportService {
   constructor() {
@@ -21,11 +22,11 @@ class ReportService {
   async generarReportePDF(filtros = {}) {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
 
-    console.log('📄 Iniciando generación de PDF...');
+    logger.info({ filtros }, '📄 Iniciando generación de PDF');
     
     // Construir query con filtros
     const where = this.construirFiltros(filtros);
-    console.log('🔍 Filtros construidos:', JSON.stringify(where, null, 2));
+    logger.debug({ where }, '🔍 Filtros construidos');
 
     // Obtener datos
     const asistencias = await prisma.asistencia.findMany({
@@ -52,7 +53,7 @@ class ReportService {
       orderBy: { timestamp: 'desc' }
     });
 
-    console.log(`📊 Asistencias encontradas: ${asistencias.length}`);
+    logger.info({ count: asistencias.length }, `📊 Asistencias encontradas para reporte PDF`);
 
     // Obtener institución
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
@@ -76,12 +77,12 @@ class ReportService {
     if (fs.existsSync(logoPath)) {
       try {
         doc.image(logoPath, 50, startY, { width: 70, height: 70 });
-        console.log('✅ Logo agregado al PDF');
+        logger.debug('✅ Logo agregado al PDF');
       } catch (error) {
-        console.log('⚠️ No se pudo cargar el logo:', error.message);
+        logger.warn({ err: error }, '⚠️ No se pudo cargar el logo en PDF');
       }
     } else {
-      console.log('ℹ️ No se encontró logo institucional');
+      logger.debug('ℹ️ No se encontró logo institucional para PDF');
     }
 
     // Encabezado institucional (centrado al lado del logo)
@@ -123,7 +124,7 @@ class ReportService {
     let tableY = startY + 115;
     
     // Tabla de datos (manual para mayor control)
-    console.log('📋 Generando tabla con', asistencias.length, 'registros...');
+    logger.debug({ count: asistencias.length }, '📋 Generando tabla de asistencias en PDF');
     if (asistencias.length > 0) {
       // Encabezados de tabla
       const headers = ['Fecha/Hora', 'Carnet', 'Nombre Completo', 'Grado', 'Tipo', 'Estado'];
@@ -202,7 +203,7 @@ class ReportService {
         rowCount++;
       }
       
-      console.log(`✅ Tabla generada con ${rowCount} filas`);
+      logger.debug({ rowCount }, `✅ Tabla PDF generada con ${rowCount} filas`);
     } else {
       doc.fontSize(10).text('No se encontraron registros con los filtros aplicados.', 50, tableY, { align: 'center' });
     }
@@ -217,16 +218,16 @@ class ReportService {
 
     doc.end();
 
-    console.log('⏳ Esperando finalización del PDF...');
+    logger.debug({ fileName }, '⏳ Esperando finalización del PDF');
     
     // Esperar a que termine de escribir
     await new Promise((resolve, reject) => {
       stream.on('finish', () => {
-        console.log('✅ PDF generado exitosamente:', fileName);
+        logger.info({ fileName, filePath }, '✅ PDF generado exitosamente');
         resolve();
       });
       stream.on('error', (err) => {
-        console.error('❌ Error generando PDF:', err);
+        logger.error({ err, fileName }, '❌ Error generando PDF');
         reject(err);
       });
     });
@@ -241,7 +242,7 @@ class ReportService {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
     const where = this.construirFiltros(filtros);
 
-    console.log('📊 Iniciando generación de Excel...');
+    logger.info({ filtros }, '📊 Iniciando generación de Excel');
 
     // Obtener institución
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
@@ -256,7 +257,7 @@ class ReportService {
       orderBy: { timestamp: 'desc' }
     });
 
-    console.log(`📊 Asistencias encontradas: ${asistencias.length}`);
+    logger.info({ count: asistencias.length }, `📊 Asistencias encontradas para reporte Excel`);
 
     // Estadísticas
     const stats = this.calcularEstadisticas(asistencias);
@@ -290,9 +291,9 @@ class ReportService {
         });
         sheet.getRow(1).height = 30;
         sheet.getRow(2).height = 30;
-        console.log('✅ Logo agregado al Excel');
+        logger.debug('✅ Logo agregado al Excel');
       } catch (error) {
-        console.log('⚠️ No se pudo cargar el logo en Excel:', error.message);
+        logger.warn({ err: error }, '⚠️ No se pudo cargar el logo en Excel');
       }
     }
 
@@ -411,7 +412,7 @@ class ReportService {
     const filePath = path.join(this.reportsDir, fileName);
     
     await workbook.xlsx.writeFile(filePath);
-    console.log('✅ Excel generado exitosamente:', fileName);
+    logger.info({ fileName, filePath }, '✅ Excel generado exitosamente');
 
     return { filePath, fileName };
   }
@@ -517,11 +518,11 @@ class ReportService {
         
         if (now - stats.mtimeMs > oneHour) {
           await fs.unlink(filePath);
-          console.log(`🗑️  Archivo temporal eliminado: ${file}`);
+          logger.debug({ file }, `🗑️ Archivo temporal eliminado`);
         }
       }
     } catch (error) {
-      console.error('Error limpiando archivos temporales:', error);
+      logger.error({ err: error }, '❌ Error limpiando archivos temporales');
     }
   }
 }

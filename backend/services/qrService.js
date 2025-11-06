@@ -2,6 +2,7 @@ const QRCode = require('qrcode');
 const sharp = require('sharp');
 const fs = require('fs-extra');
 const path = require('path');
+const { logger } = require('../utils/logger');
 
 /**
  * Servicio para generar QR con logo institucional
@@ -18,9 +19,9 @@ async function inicializarDirectorios() {
   try {
     await fs.ensureDir(QRS_DIR);
     await fs.ensureDir(LOGOS_DIR);
-    console.log('[QRService] Directories initialized:', { QRS_DIR, LOGOS_DIR });
+    logger.debug({ QRS_DIR, LOGOS_DIR }, '📁 Directorios de QR inicializados');
   } catch (error) {
-    console.error('[QRService] Error initializing directories:', error.message);
+    logger.error({ err: error }, '❌ Error inicializando directorios de QR');
   }
 }
 
@@ -74,10 +75,10 @@ async function generarQrConLogo(token, logoBase64, outPath, size = 600) {
     // Mover archivo temporal al destino (transactional)
     await fs.move(tmpPath, outPath, { overwrite: true });
 
-    console.log(`[QRService] QR generated successfully: ${outPath}`);
+    logger.debug({ outPath }, '✅ QR generado exitosamente');
     return true;
   } catch (error) {
-    console.error(`[QRService] Error generating QR:`, error.message);
+    logger.error({ err: error, outPath }, '❌ Error generando QR');
     // Limpiar archivo temporal si existe
     const tmpPath = outPath + '.tmp';
     await fs.remove(tmpPath).catch(() => {});
@@ -104,10 +105,10 @@ async function generarQrPuro(token, outPath, size = 600) {
     await fs.writeFile(tmpPath, qrBuffer);
     await fs.move(tmpPath, outPath, { overwrite: true });
 
-    console.log(`[QRService] Pure QR generated: ${outPath}`);
+    logger.debug({ outPath }, '✅ QR puro generado');
     return true;
   } catch (error) {
-    console.error(`[QRService] Error generating pure QR:`, error.message);
+    logger.error({ err: error, outPath }, '❌ Error generando QR puro');
     await fs.remove(outPath + '.tmp').catch(() => {});
     return false;
   }
@@ -144,10 +145,10 @@ async function guardarLogo(logoBase64, filename = 'logo.png') {
     const logoBuffer = Buffer.from(base64Data, 'base64');
     await fs.writeFile(absolutePath, logoBuffer);
 
-    console.log(`[QRService] Logo saved: ${absolutePath}`);
+    logger.debug({ absolutePath, relativePath }, '✅ Logo guardado');
     return { relativePath, absolutePath };
   } catch (error) {
-    console.error(`[QRService] Error saving logo:`, error.message);
+    logger.error({ err: error, filename }, '❌ Error guardando logo');
     return null;
   }
 }
@@ -180,7 +181,7 @@ async function listarQrs() {
       absolutePath: path.join(QRS_DIR, f)
     }));
   } catch (error) {
-    console.error('[QRService] Error listing QRs:', error.message);
+    logger.error({ err: error }, '❌ Error listando QRs');
     return [];
   }
 }

@@ -138,7 +138,11 @@ class ReportService {
     doc.text(`Registros por QR: ${stats.porQR} | Registros manuales: ${stats.manual}`);
     doc.moveDown();
 
-    // Tabla de datos
+    // Tabla de datos - Nueva página para asegurar espacio
+    doc.addPage();
+    doc.fontSize(14).text('REGISTROS DE ASISTENCIA', { align: 'center', underline: true });
+    doc.moveDown(2);
+    
     console.log('📋 Generando tabla con', asistencias.length, 'registros...');
     if (asistencias.length > 0) {
       const tableData = {
@@ -164,12 +168,15 @@ class ReportService {
 
       console.log('📊 Tabla creada con', tableData.rows.length, 'filas');
       
-      // Usar pdfkit-table para crear la tabla
-      doc.table(tableData, {
+      // Usar pdfkit-table con configuración explícita
+      await doc.table(tableData, {
         prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9),
         prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
           doc.font('Helvetica').fontSize(8);
-        }
+        },
+        columnsSize: [90, 60, 130, 60, 50, 60],
+        x: 50,
+        y: doc.y
       });
       
       console.log('✅ Tabla agregada al PDF');
@@ -241,7 +248,7 @@ class ReportService {
       pageSetup: { paperSize: 9, orientation: 'portrait' }
     });
 
-    // Logo (si existe)
+    // Logo (si existe) - Ajustado para no interferir con el contenido
     let logoPath = path.join(__dirname, '../../uploads/logos/logo.png');
     if (!fs.existsSync(logoPath)) {
       logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
@@ -253,51 +260,59 @@ class ReportService {
           filename: logoPath,
           extension: 'png',
         });
+        // Posicionar logo en la primera columna con altura de 4 filas
         infoSheet.addImage(imageId, {
           tl: { col: 0, row: 0 },
-          ext: { width: 80, height: 80 }
+          br: { col: 1, row: 4 } // Desde columna A hasta B, filas 1-4
         });
+        // Ajustar altura de las filas del logo
+        for (let i = 1; i <= 4; i++) {
+          infoSheet.getRow(i).height = 20;
+        }
         console.log('✅ Logo agregado al Excel');
       } catch (error) {
         console.log('⚠️ No se pudo cargar el logo en Excel:', error.message);
       }
     }
 
-    // Encabezado institucional (ajustado para el logo)
-    infoSheet.mergeCells('B1:F1');
-    const titleCell = infoSheet.getCell('B1');
+    // Encabezado institucional (columnas C-F para no solaparse con logo)
+    infoSheet.mergeCells('C1:F1');
+    const titleCell = infoSheet.getCell('C1');
     titleCell.value = institucion?.nombre || 'Instituto Educativo';
-    titleCell.font = { size: 18, bold: true, color: { argb: 'FF1F4788' } };
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FF1F4788' } };
     titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
     if (institucion?.direccion) {
-      infoSheet.mergeCells('B2:F2');
-      const dirCell = infoSheet.getCell('B2');
+      infoSheet.mergeCells('C2:F2');
+      const dirCell = infoSheet.getCell('C2');
       dirCell.value = institucion.direccion;
       dirCell.font = { size: 10 };
+      dirCell.alignment = { vertical: 'middle', horizontal: 'left' };
     }
 
     if (institucion?.telefono) {
-      infoSheet.mergeCells('B3:F3');
-      const telCell = infoSheet.getCell('B3');
+      infoSheet.mergeCells('C3:F3');
+      const telCell = infoSheet.getCell('C3');
       telCell.value = `Tel: ${institucion.telefono}`;
       telCell.font = { size: 10 };
+      telCell.alignment = { vertical: 'middle', horizontal: 'left' };
     }
 
-    // Título del reporte
-    infoSheet.mergeCells('A5:F5');
-    const reportTitle = infoSheet.getCell('A5');
+    // Título del reporte (después del logo y encabezado)
+    infoSheet.mergeCells('A6:F6');
+    const reportTitle = infoSheet.getCell('A6');
     reportTitle.value = 'REPORTE DE ASISTENCIAS';
     reportTitle.font = { size: 16, bold: true };
-    reportTitle.alignment = { horizontal: 'center' };
+    reportTitle.alignment = { horizontal: 'center', vertical: 'middle' };
     reportTitle.fill = {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: 'FFE7E6E6' }
     };
+    infoSheet.getRow(6).height = 25;
 
     // Información del reporte
-    let currentRow = 7;
+    let currentRow = 8;
     infoSheet.getCell(`A${currentRow}`).value = 'INFORMACIÓN DEL REPORTE';
     infoSheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
     currentRow++;

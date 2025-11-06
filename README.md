@@ -12,6 +12,7 @@
 
 ## 📑 Tabla de Contenidos
 
+- [Inicio Rápido](#-inicio-rápido-nuevo)
 - [Características](#-características)
 - [Capturas de Pantalla](#-capturas-de-pantalla)
 - [Tecnologías](#-tecnologías)
@@ -25,6 +26,28 @@
 - [Contribuir](#-contribuir)
 - [Licencia](#-licencia)
 - [Contacto](#-contacto)
+
+---
+
+## 🚀 Inicio Rápido (NUEVO)
+
+### Iniciar el Sistema Completo
+```powershell
+.\start-all.ps1
+```
+
+✅ **Ventajas:**
+- Solo 3 ventanas (1 visible + 2 minimizadas)
+- Bajo consumo de recursos (~300MB RAM)
+- Abre automáticamente el navegador
+- Presiona `Ctrl+C` para detener todo
+
+### Detener el Sistema
+```powershell
+.\stop-all.ps1
+```
+
+📖 **Más información:** Ver [INICIO_RAPIDO.md](./INICIO_RAPIDO.md) para guía detallada.
 
 ---
 

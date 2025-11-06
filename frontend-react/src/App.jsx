@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { Menu, X, LogOut, Home, Settings, BarChart3, Wrench, User, Clock, Users } from 'lucide-react';
+import { Menu, X, LogOut, Home, Settings, BarChart3, Wrench, User, Clock, Users, FileText } from 'lucide-react';
 import { authAPI } from './api/endpoints';
 import Dashboard from './components/Dashboard';
 import AlumnosPanel from './components/AlumnosPanel';
@@ -9,6 +9,7 @@ import AsistenciasPanel from './components/AsistenciasPanel';
 import ConfiguracionPanel from './components/ConfiguracionPanel';
 import DiagnosticsPanel from './components/DiagnosticsPanel';
 import RepairPanel from './components/RepairPanel';
+import ReportesPanel from './components/ReportesPanel';
 import LoginPage from './pages/LoginPage';
 import './App.css';
 
@@ -74,6 +75,7 @@ function App() {
             <NavLink to="/alumnos" icon={BarChart3} label="Alumnos" />
             <NavLink to="/docentes" icon={Users} label="Docentes" />
             <NavLink to="/asistencias" icon={Clock} label="Asistencias" />
+            <NavLink to="/reportes" icon={FileText} label="Reportes" />
             <NavLink to="/configuracion" icon={Settings} label="Configuración" />
           </nav>
 
@@ -114,6 +116,7 @@ function App() {
               <Route path="/alumnos" element={isLoggedIn ? <AlumnosPanel /> : <Navigate to="/login" />} />
               <Route path="/docentes" element={isLoggedIn ? <DocentesPanel /> : <Navigate to="/login" />} />
               <Route path="/asistencias" element={isLoggedIn ? <AsistenciasPanel /> : <Navigate to="/login" />} />
+              <Route path="/reportes" element={isLoggedIn ? <ReportesPanel /> : <Navigate to="/login" />} />
               <Route path="/configuracion" element={isLoggedIn ? <ConfiguracionPanel /> : <Navigate to="/login" />} />
               <Route path="/diagnostics" element={isLoggedIn ? <DiagnosticsPanel /> : <Navigate to="/login" />} />
               <Route path="/repair" element={isLoggedIn ? <RepairPanel /> : <Navigate to="/login" />} />

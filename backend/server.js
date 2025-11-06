@@ -17,6 +17,7 @@ const authRoutes = require('./routes/auth');
 const alumnosRoutes = require('./routes/alumnos');
 const asistenciasRoutes = require('./routes/asistencias');
 const docentesRoutes = require('./routes/docentes');
+const reportesRoutes = require('./routes/reportes');
 
 // Verificar variables de entorno críticas
 const checkEnv = () => {
@@ -255,6 +256,7 @@ app.use('/api/alumnos', alumnosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/asistencias', asistenciasRoutes);
 app.use('/api/docentes', docentesRoutes);
+app.use('/api/reportes', reportesRoutes);
 
 // ============ RUTA DE DIAGNÓSTICO ============
 

@@ -5,6 +5,7 @@ const prisma = require('../prismaClient');
 const qrService = require('../services/qrService');
 const tokenService = require('../services/tokenService');
 const { verifyJWT } = require('../middlewares/auth');
+const { logger } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -123,7 +124,7 @@ router.post('/generar', async (req, res) => {
       }
     });
 
-    console.log(`✅ QR generated: ${persona_tipo}/${persona.carnet}`);
+    logger.info({ persona_tipo, carnet: persona.carnet, qrId: codigoQr.id }, `✅ QR generado: ${persona_tipo}/${persona.carnet}`);
 
     res.status(201).json({
       success: true,
@@ -139,7 +140,7 @@ router.post('/generar', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[POST /api/qr/generar]', error.message);
+    logger.error({ err: error, body: req.body }, '❌ Error generando QR');
     res.status(500).json({ error: error.message });
   }
 });
@@ -173,7 +174,7 @@ router.get('/:id/png', async (req, res) => {
     }
 
     // PNG falta: intentar regenerar
-    console.warn(`[GET /qr/:id/png] PNG missing for QR ${id}, regenerating...`);
+    logger.warn({ qrId: id }, `⚠️ PNG faltante para QR ${id}, regenerando...`);
 
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
     if (!institucion || !institucion.logo_base64) {
@@ -235,11 +236,11 @@ router.get('/:id/png', async (req, res) => {
       }
     });
 
-    console.log(`✅ QR regenerated and served: ${codigoQr.persona_tipo}/${carnet}`);
+    logger.info({ qrId: codigoQr.id, persona_tipo: codigoQr.persona_tipo, carnet }, '✅ QR regenerado y servido');
 
     res.sendFile(path.join(__dirname, '../../uploads', relativePath));
   } catch (error) {
-    console.error('[GET /api/qr/:id/png]', error.message);
+    logger.error({ err: error, qrId: req.params.id }, '❌ Error sirviendo/regenerando QR PNG');
     res.status(500).json({ error: error.message });
   }
 });
@@ -274,7 +275,7 @@ router.get('/listar/todos', async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[GET /api/qr/listar/todos]', error.message);
+    logger.error({ err: error }, '❌ Error listando QRs');
     res.status(500).json({ error: error.message });
   }
 });

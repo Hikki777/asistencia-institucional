@@ -3,6 +3,7 @@ const reportService = require('../services/reportService');
 const { verifyJWT } = require('../middlewares/auth');
 const { reportLimiter } = require('../middlewares/rateLimiter');
 const { validarGenerarReporte } = require('../middlewares/validation');
+const { logger } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -17,14 +18,14 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
   try {
     const filtros = req.body;
     
-    console.log('📄 Generando reporte PDF con filtros:', filtros);
+    logger.info({ filtros }, '📄 Generando reporte PDF');
     
     const { filePath, fileName } = await reportService.generarReportePDF(filtros);
     
     // Enviar archivo
     res.download(filePath, fileName, (err) => {
       if (err) {
-        console.error('Error enviando PDF:', err);
+        logger.error({ err, fileName }, '❌ Error enviando PDF');
         if (!res.headersSent) {
           res.status(500).json({ error: 'Error enviando archivo' });
         }
@@ -35,14 +36,14 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
         try {
           const fs = require('fs-extra');
           await fs.unlink(filePath);
-          console.log(`✅ Archivo temporal eliminado: ${fileName}`);
+          logger.debug({ fileName }, '🗑️ Archivo temporal eliminado');
         } catch (error) {
-          console.error('Error eliminando archivo temporal:', error);
+          logger.error({ err: error, fileName }, '❌ Error eliminando archivo temporal');
         }
       }, 5000);
     });
   } catch (error) {
-    console.error('[POST /api/reportes/pdf]', error.message);
+    logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte PDF');
     res.status(500).json({ error: error.message });
   }
 });
@@ -55,14 +56,14 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
   try {
     const filtros = req.body;
     
-    console.log('📊 Generando reporte Excel con filtros:', filtros);
+    logger.info({ filtros }, '📊 Generando reporte Excel');
     
     const { filePath, fileName } = await reportService.generarReporteExcel(filtros);
     
     // Enviar archivo
     res.download(filePath, fileName, (err) => {
       if (err) {
-        console.error('Error enviando Excel:', err);
+        logger.error({ err, fileName }, '❌ Error enviando Excel');
         if (!res.headersSent) {
           res.status(500).json({ error: 'Error enviando archivo' });
         }
@@ -73,14 +74,14 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
         try {
           const fs = require('fs-extra');
           await fs.unlink(filePath);
-          console.log(`✅ Archivo temporal eliminado: ${fileName}`);
+          logger.debug({ fileName }, '🗑️ Archivo temporal eliminado');
         } catch (error) {
-          console.error('Error eliminando archivo temporal:', error);
+          logger.error({ err: error, fileName }, '❌ Error eliminando archivo temporal');
         }
       }, 5000);
     });
   } catch (error) {
-    console.error('[POST /api/reportes/excel]', error.message);
+    logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte Excel');
     res.status(500).json({ error: error.message });
   }
 });
@@ -93,13 +94,13 @@ router.get('/alumno/:id/pdf', async (req, res) => {
   try {
     const alumnoId = req.params.id;
     
-    console.log(`📄 Generando reporte PDF para alumno ID: ${alumnoId}`);
+    logger.info({ alumnoId }, '📄 Generando reporte PDF para alumno');
     
     const { filePath, fileName } = await reportService.generarReporteAlumno(alumnoId, 'pdf');
     
     res.download(filePath, fileName, (err) => {
       if (err) {
-        console.error('Error enviando PDF:', err);
+        logger.error({ err, fileName, alumnoId }, '❌ Error enviando PDF');
         if (!res.headersSent) {
           res.status(500).json({ error: 'Error enviando archivo' });
         }
@@ -110,12 +111,12 @@ router.get('/alumno/:id/pdf', async (req, res) => {
           const fs = require('fs-extra');
           await fs.unlink(filePath);
         } catch (error) {
-          console.error('Error eliminando archivo temporal:', error);
+          logger.error({ err: error, fileName }, '❌ Error eliminando archivo temporal');
         }
       }, 5000);
     });
   } catch (error) {
-    console.error('[GET /api/reportes/alumno/:id/pdf]', error.message);
+    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte PDF de alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -128,13 +129,13 @@ router.get('/alumno/:id/excel', async (req, res) => {
   try {
     const alumnoId = req.params.id;
     
-    console.log(`📊 Generando reporte Excel para alumno ID: ${alumnoId}`);
+    logger.info({ alumnoId }, '📊 Generando reporte Excel para alumno');
     
     const { filePath, fileName } = await reportService.generarReporteAlumno(alumnoId, 'excel');
     
     res.download(filePath, fileName, (err) => {
       if (err) {
-        console.error('Error enviando Excel:', err);
+        logger.error({ err, fileName, alumnoId }, '❌ Error enviando Excel');
         if (!res.headersSent) {
           res.status(500).json({ error: 'Error enviando archivo' });
         }
@@ -145,12 +146,12 @@ router.get('/alumno/:id/excel', async (req, res) => {
           const fs = require('fs-extra');
           await fs.unlink(filePath);
         } catch (error) {
-          console.error('Error eliminando archivo temporal:', error);
+          logger.error({ err: error, fileName }, '❌ Error eliminando archivo temporal');
         }
       }, 5000);
     });
   } catch (error) {
-    console.error('[GET /api/reportes/alumno/:id/excel]', error.message);
+    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte Excel de alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -170,7 +171,7 @@ router.post('/limpiar', async (req, res) => {
     
     res.json({ success: true, message: 'Archivos temporales limpiados' });
   } catch (error) {
-    console.error('[POST /api/reportes/limpiar]', error.message);
+    logger.error({ err: error, userId: req.user.id }, '❌ Error limpiando archivos temporales');
     res.status(500).json({ error: error.message });
   }
 });

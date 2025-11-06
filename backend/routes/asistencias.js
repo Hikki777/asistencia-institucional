@@ -2,6 +2,7 @@ const express = require('express');
 const prisma = require('../prismaClient');
 const { verifyJWT } = require('../middlewares/auth');
 const { qrScanLimiter } = require('../middlewares/rateLimiter');
+const { logger } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -16,21 +17,21 @@ router.post('/', async (req, res) => {
   try {
     const { alumno_id, docente_id, tipo_evento, origen, dispositivo, observaciones, timestamp } = req.body;
 
-    console.log('📥 Backend recibió:', { alumno_id, docente_id, tipo_evento, origen });
+    logger.info({ alumno_id, docente_id, tipo_evento, origen }, '📥 Backend recibió registro de asistencia');
 
     // Validar que al menos uno de los IDs esté presente y tenga valor
     const hasAlumnoId = alumno_id !== undefined && alumno_id !== null && alumno_id !== '';
     const hasDocenteId = docente_id !== undefined && docente_id !== null && docente_id !== '';
 
     if (!hasAlumnoId && !hasDocenteId) {
-      console.log('❌ ERROR: No hay alumno_id ni docente_id válidos');
+      logger.error({ alumno_id, docente_id }, '❌ ERROR: No hay alumno_id ni docente_id válidos');
       return res.status(400).json({
         error: 'NUEVO ERROR: Debe proporcionar alumno_id o docente_id'
       });
     }
 
     if (!tipo_evento) {
-      console.log('❌ ERROR: No hay tipo_evento');
+      logger.error({ tipo_evento }, '❌ ERROR: No hay tipo_evento');
       return res.status(400).json({
         error: 'NUEVO ERROR: Falta tipo_evento'
       });
@@ -123,10 +124,10 @@ router.post('/', async (req, res) => {
       }
     });
 
-    console.log(`✅ Asistencia registrada: ${tipo_evento} - ${persona.carnet} (${persona_tipo})`);
+    logger.info({ tipo_evento, carnet: persona.carnet, persona_tipo }, `✅ Asistencia registrada: ${tipo_evento}`);
     res.status(201).json(asistencia);
   } catch (error) {
-    console.error('[POST /api/asistencias]', error.message);
+    logger.error({ err: error, body: req.body }, '❌ Error registrando asistencia');
     res.status(500).json({ error: error.message });
   }
 });
@@ -208,7 +209,7 @@ router.get('/', async (req, res) => {
       asistencias
     });
   } catch (error) {
-    console.error('[GET /api/asistencias]', error.message);
+    logger.error({ err: error, query: req.query }, '❌ Error listando asistencias');
     res.status(500).json({ error: error.message });
   }
 });
@@ -271,7 +272,7 @@ router.get('/hoy', async (req, res) => {
       asistencias
     });
   } catch (error) {
-    console.error('[GET /api/asistencias/hoy]', error.message);
+    logger.error({ err: error }, '❌ Error obteniendo asistencias de hoy');
     res.status(500).json({ error: error.message });
   }
 });
@@ -320,7 +321,7 @@ router.get('/stats', async (req, res) => {
       porDia
     });
   } catch (error) {
-    console.error('[GET /api/asistencias/stats]', error.message);
+    logger.error({ err: error, dias: req.query.dias }, '❌ Error obteniendo estadísticas');
     res.status(500).json({ error: error.message });
   }
 });
@@ -337,10 +338,10 @@ router.delete('/:id', async (req, res) => {
       where: { id }
     });
 
-    console.log(`✅ Asistencia eliminada: ${id}`);
+    logger.info({ asistenciaId: id }, '✅ Asistencia eliminada');
     res.json({ success: true, message: 'Asistencia eliminada' });
   } catch (error) {
-    console.error('[DELETE /api/asistencias/:id]', error.message);
+    logger.error({ err: error, asistenciaId: req.params.id }, '❌ Error eliminando asistencia');
     res.status(500).json({ error: error.message });
   }
 });

@@ -3,6 +3,7 @@ const diagnosticsService = require('../services/diagnosticsService');
 const repairService = require('../services/repairService');
 const prisma = require('../prismaClient');
 const { verifyJWT } = require('../middlewares/auth');
+const { logger } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.use(verifyJWT);
  */
 router.get('/qrs', async (req, res) => {
   try {
-    console.log('[GET /api/diagnostics/qrs] Diagnostic triggered');
+    logger.info({ userId: req.user?.id }, '🔍 Diagnóstico de QRs iniciado');
     
     const resultado = await diagnosticsService.ejecutarDiagnosticos();
 
@@ -24,7 +25,7 @@ router.get('/qrs', async (req, res) => {
 
     res.json(resultado);
   } catch (error) {
-    console.error('[GET /api/diagnostics/qrs]', error.message);
+    logger.error({ err: error }, '❌ Error ejecutando diagnóstico de QRs');
     res.status(500).json({ error: error.message });
   }
 });
@@ -48,7 +49,7 @@ router.get('/historial', async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[GET /api/diagnostics/historial]', error.message);
+    logger.error({ err: error, limit: req.query.limit }, '❌ Error obteniendo historial de diagnósticos');
     res.status(500).json({ error: error.message });
   }
 });
@@ -63,7 +64,7 @@ router.post('/qrs/regenerate', async (req, res) => {
     const { ids = [], all = false } = req.body;
     const userId = req.body.userId || null;
 
-    console.log('[POST /api/repair/qrs/regenerate]', { ids, all });
+    logger.info({ ids: ids.length, all, userId }, '🔧 Regeneración de QRs solicitada');
 
     // Ejecutar reparación
     const resultado = await repairService.regenerarQrs({
@@ -77,7 +78,7 @@ router.post('/qrs/regenerate', async (req, res) => {
       resultado
     });
   } catch (error) {
-    console.error('[POST /api/repair/qrs/regenerate]', error.message);
+    logger.error({ err: error, ids: req.body.ids, all: req.body.all }, '❌ Error regenerando QRs');
     res.status(500).json({ error: error.message });
   }
 });
@@ -90,7 +91,7 @@ router.post('/logo/regenerate', async (req, res) => {
   try {
     const userId = req.body.userId || null;
 
-    console.log('[POST /api/repair/logo/regenerate]');
+    logger.info({ userId }, '🔧 Regeneración de logo solicitada');
 
     const resultado = await repairService.regenerarLogo(userId);
 
@@ -103,7 +104,7 @@ router.post('/logo/regenerate', async (req, res) => {
       ...resultado
     });
   } catch (error) {
-    console.error('[POST /api/repair/logo/regenerate]', error.message);
+    logger.error({ err: error, userId: req.body.userId }, '❌ Error regenerando logo');
     res.status(500).json({ error: error.message });
   }
 });
@@ -114,7 +115,7 @@ router.post('/logo/regenerate', async (req, res) => {
  */
 router.post('/auto', async (req, res) => {
   try {
-    console.log('[POST /api/repair/auto] Manual auto-repair triggered');
+    logger.info({ userId: req.user?.id }, '🔧 Auto-reparación manual iniciada');
 
     const resultado = await repairService.autoRepair();
 
@@ -123,7 +124,7 @@ router.post('/auto', async (req, res) => {
       resultado
     });
   } catch (error) {
-    console.error('[POST /api/repair/auto]', error.message);
+    logger.error({ err: error }, '❌ Error en auto-reparación');
     res.status(500).json({ error: error.message });
   }
 });

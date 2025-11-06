@@ -37,8 +37,9 @@
 ```
 
 ✅ **Ventajas:**
-- Solo 3 ventanas (1 visible + 2 minimizadas)
-- Bajo consumo de recursos (~300MB RAM)
+- Solo 1 terminal de VS Code
+- Sin ventanas externas (CMD/PowerShell)
+- Consumo mínimo de recursos (~250MB RAM)
 - Abre automáticamente el navegador
 - Presiona `Ctrl+C` para detener todo
 

@@ -9,7 +9,8 @@
 
 **Características:**
 - ✓ Inicia backend y frontend automáticamente
-- ✓ Solo 3 ventanas (1 control + 2 minimizadas)
+- ✓ Todo en una sola terminal de VS Code (SIN ventanas externas)
+- ✓ Consumo mínimo de recursos (~250MB RAM)
 - ✓ Verificación automática de servicios
 - ✓ Abre el navegador automáticamente
 - ✓ Presiona `Ctrl+C` para detener TODO
@@ -60,6 +61,17 @@ npm run dev
 2. Espera 3 segundos
 3. Ejecuta: `.\start-all.ps1`
 
+### Ver logs de los servicios
+```powershell
+# Ver logs del backend
+Receive-Job <ID del backend>
+
+# Ver logs del frontend
+Receive-Job <ID del frontend>
+
+# Los IDs se muestran al iniciar el sistema
+```
+
 ### Puerto ocupado
 ```powershell
 # Ver qué proceso usa el puerto
@@ -71,21 +83,23 @@ netstat -ano | findstr ":5173"
 ```
 
 ### Muchas ventanas abiertas
-- El script `start-all.ps1` minimiza las ventanas automáticamente
-- Solo mantén abierta la ventana de control
-- Presiona `Ctrl+C` en la ventana de control para cerrar todo
+- El script `start-all.ps1` NO abre ventanas externas
+- Todo funciona en background dentro de VS Code
+- Solo verás una terminal activa
 
 ---
 
 ## 📊 Consumo de Recursos
 
-**Con start-all.ps1:**
-- 1 ventana de control visible
-- 2 ventanas minimizadas (backend + frontend)
-- ~300-400 MB RAM total
+**Con start-all.ps1 (OPTIMIZADO):**
+- 1 terminal de VS Code
+- Sin ventanas externas
+- ~250-300 MB RAM total
+- Servicios en PowerShell Jobs (background)
 
 **Scripts antiguos:**
-- Múltiples ventanas abiertas
+- Múltiples ventanas CMD/PowerShell externas
+- Múltiples terminales en VS Code
 - ~600-800 MB RAM
 
 ---
@@ -108,19 +122,23 @@ netstat -ano | findstr ":5173"
 
 ## 💡 Consejos
 
-- **NO cierres las ventanas minimizadas** (son backend y frontend)
-- **Ctrl+C en ventana de control** detiene ambos servicios
-- Si ves errores, revisa las **ventanas minimizadas** en la barra de tareas
-- El script **verifica automáticamente** que todo funcione antes de continuar
+- **Todo en VS Code** - No se abren ventanas externas
+- **Ctrl+C** detiene ambos servicios limpiamente
+- Si ves errores, usa `Receive-Job <ID>` para ver logs detallados
+- El navegador se abre automáticamente en http://localhost:5173
+- Los servicios corren en background usando PowerShell Jobs
+- Consumo mínimo de recursos: solo 1 terminal
 
 ---
 
 ## 📝 Notas
 
-- Los logs de backend y frontend están en sus ventanas minimizadas
+- Los servicios corren en PowerShell Jobs (background silencioso)
+- No se abren ventanas externas ni CMD
+- Todo funciona dentro de VS Code en una sola terminal
 - El sistema se detiene limpiamente con `Ctrl+C`
-- Si un servicio falla, el script lo detecta y muestra error
-- Las ventanas minimizadas se pueden restaurar para ver logs detallados
+- Para ver logs en tiempo real: `Receive-Job -Id <ID> -Keep`
+- Consumo optimizado: ~250MB RAM vs ~600MB antes
 
 ---
 

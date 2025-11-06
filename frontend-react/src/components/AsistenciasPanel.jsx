@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, UserCheck, UserX, Search, Calendar, TrendingUp, QrCode, Camera, CameraOff } from 'lucide-react';
 import axios from 'axios';
@@ -42,6 +42,27 @@ export default function AsistenciasPanel() {
   const isProcessingRef = useRef(false);
   const lastScannedQRRef = useRef('');
   const processingTimeoutRef = useRef(null);
+
+  // Optimización: Filtrar listas con useMemo para evitar re-cálculos innecesarios
+  const alumnosFiltrados = useMemo(() => {
+    if (!searchTerm) return alumnos;
+    const term = searchTerm.toLowerCase();
+    return alumnos.filter(a => 
+      a.nombres.toLowerCase().includes(term) ||
+      a.apellidos.toLowerCase().includes(term) ||
+      a.carnet.toLowerCase().includes(term)
+    );
+  }, [alumnos, searchTerm]);
+
+  const docentesFiltrados = useMemo(() => {
+    if (!searchTerm) return docentes;
+    const term = searchTerm.toLowerCase();
+    return docentes.filter(d => 
+      d.nombres.toLowerCase().includes(term) ||
+      d.apellidos.toLowerCase().includes(term) ||
+      d.carnet.toLowerCase().includes(term)
+    );
+  }, [docentes, searchTerm]);
 
   useEffect(() => {
     fetchAsistenciasHoy();
@@ -87,8 +108,8 @@ export default function AsistenciasPanel() {
     }
   };
 
-  // Función para reproducir sonido de beep tipo escáner
-  const playBeepSound = () => {
+  // Función para reproducir sonido de beep tipo escáner (optimizada con useCallback)
+  const playBeepSound = useCallback(() => {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -109,7 +130,7 @@ export default function AsistenciasPanel() {
     } catch (error) {
       console.log('Audio no disponible:', error);
     }
-  };
+  }, []);
 
   const handleRegistrarAsistencia = async (e) => {
     e.preventDefault();
@@ -859,15 +880,9 @@ export default function AsistenciasPanel() {
               
               {searchTerm && (
                 <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                  {/* Mostrar resultados combinados */}
+                  {/* Mostrar resultados combinados (optimizado con useMemo) */}
                   {/* Alumnos */}
-                  {alumnos
-                    .filter(a =>
-                      a.nombres.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      a.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      a.carnet.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((alumno) => (
+                  {alumnosFiltrados.map((alumno) => (
                       <button
                         key={`alumno-${alumno.id}`}
                         type="button"
@@ -889,14 +904,8 @@ export default function AsistenciasPanel() {
                       </button>
                     ))}
                   
-                  {/* Docentes */}
-                  {docentes
-                    .filter(d =>
-                      d.nombres.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      d.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      d.carnet.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((docente) => (
+                  {/* Docentes (optimizado con useMemo) */}
+                  {docentesFiltrados.map((docente) => (
                       <button
                         key={`docente-${docente.id}`}
                         type="button"

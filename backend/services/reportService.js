@@ -251,8 +251,24 @@ class ReportService {
     const asistencias = await prisma.asistencia.findMany({
       where,
       include: {
-        alumno: true,
-        personal: true
+        alumno: {
+          select: {
+            carnet: true,
+            nombres: true,
+            apellidos: true,
+            grado: true,
+            jornada: true
+          }
+        },
+        personal: {
+          select: {
+            carnet: true,
+            nombres: true,
+            apellidos: true,
+            grado: true,
+            jornada: true
+          }
+        }
       },
       orderBy: { timestamp: 'desc' }
     });

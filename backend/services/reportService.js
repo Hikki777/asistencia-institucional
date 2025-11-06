@@ -1,5 +1,6 @@
 const PDFDocument = require('pdfkit');
 require('pdfkit-table'); // Extiende PDFDocument
+const ExcelJS = require('exceljs');
 const XLSX = require('xlsx');
 const fs = require('fs-extra');
 const path = require('path');
@@ -71,9 +72,11 @@ class ReportService {
       logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
     }
     
+    let startY = 50; // Posición inicial
+    
     if (fs.existsSync(logoPath)) {
       try {
-        doc.image(logoPath, 50, 50, { width: 60, height: 60 });
+        doc.image(logoPath, 50, startY, { width: 60, height: 60 });
         console.log('✅ Logo agregado al PDF');
       } catch (error) {
         console.log('⚠️ No se pudo cargar el logo:', error.message);
@@ -82,19 +85,31 @@ class ReportService {
       console.log('ℹ️ No se encontró logo institucional');
     }
 
-    // Encabezado institucional (con espacio para logo)
-    doc.fontSize(18).font('Helvetica-Bold').text(institucion?.nombre || 'Instituto Educativo', 130, 55, { align: 'left' });
+    // Encabezado institucional (alineado con logo)
+    const headerX = 120;
+    doc.fontSize(16).font('Helvetica-Bold').text(institucion?.nombre || 'Instituto Educativo', headerX, startY);
+    startY += 20;
+    
     if (institucion?.direccion) {
-      doc.fontSize(10).font('Helvetica').text(institucion.direccion, 130, 75, { align: 'left' });
+      doc.fontSize(9).font('Helvetica').text(institucion.direccion, headerX, startY);
+      startY += 12;
     }
     if (institucion?.telefono) {
-      doc.text(`Tel: ${institucion.telefono}`, 130, 90, { align: 'left' });
+      doc.fontSize(9).text(`Tel: ${institucion.telefono}`, headerX, startY);
+      startY += 12;
     }
     
-    // Resetear posición y continuar
-    doc.moveDown(3);
-    doc.fontSize(14).font('Helvetica-Bold').text('REPORTE DE ASISTENCIAS', { align: 'center' });
-    doc.moveDown();
+    // Línea separadora
+    doc.moveTo(50, startY + 15).lineTo(550, startY + 15).stroke();
+    
+    // Título del reporte (posición absoluta después del encabezado)
+    doc.fontSize(14).font('Helvetica-Bold').text('REPORTE DE ASISTENCIAS', 50, startY + 25, { 
+      align: 'center',
+      width: 500
+    });
+    
+    // Continuar desde una posición fija
+    doc.y = startY + 50;
 
     // Información del reporte
     doc.fontSize(11).font('Helvetica-Bold').text('Información del Reporte:', { underline: true });
@@ -190,11 +205,13 @@ class ReportService {
   }
 
   /**
-   * Generar reporte de asistencias en Excel
+   * Generar reporte de asistencias en Excel con ExcelJS
    */
   async generarReporteExcel(filtros = {}) {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
     const where = this.construirFiltros(filtros);
+
+    console.log('📊 Iniciando generación de Excel...');
 
     // Obtener institución
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
@@ -209,29 +226,121 @@ class ReportService {
       orderBy: { timestamp: 'desc' }
     });
 
+    console.log(`📊 Asistencias encontradas: ${asistencias.length}`);
+
     // Estadísticas
     const stats = this.calcularEstadisticas(asistencias);
 
-    // ===== HOJA 1: PORTADA E INFORMACIÓN =====
-    const infoData = [
-      ['REPORTE DE ASISTENCIAS'],
-      [''],
-      ['Institución:', institucion?.nombre || 'Instituto Educativo'],
-      ['Dirección:', institucion?.direccion || 'N/A'],
-      ['Teléfono:', institucion?.telefono || 'N/A'],
-      [''],
-      ['INFORMACIÓN DEL REPORTE'],
-      ['Fecha de generación:', new Date().toLocaleString('es-ES')],
-      ['Generado por:', 'Sistema de Registro Institucional'],
-      [''],
-      ['FILTROS APLICADOS'],
-      ['Fecha inicio:', fechaInicio ? new Date(fechaInicio).toLocaleDateString('es-ES') : 'No especificado'],
-      ['Fecha fin:', fechaFin ? new Date(fechaFin).toLocaleDateString('es-ES') : 'No especificado'],
-      ['Tipo de persona:', personaTipo ? (personaTipo === 'alumno' ? 'Alumnos' : 'Personal') : 'Todos'],
-      ['Grado:', grado || 'Todos'],
-      ['Tipo de evento:', tipoEvento ? (tipoEvento === 'entrada' ? 'Entradas' : 'Salidas') : 'Todos'],
-      [''],
-      ['RESUMEN ESTADÍSTICO'],
+    // Crear workbook con ExcelJS
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Sistema de Registro Institucional';
+    workbook.created = new Date();
+
+    // ===== HOJA 1: INFORMACIÓN =====
+    const infoSheet = workbook.addWorksheet('Información', {
+      pageSetup: { paperSize: 9, orientation: 'portrait' }
+    });
+
+    // Logo (si existe)
+    let logoPath = path.join(__dirname, '../../uploads/logos/logo.png');
+    if (!fs.existsSync(logoPath)) {
+      logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
+    }
+
+    if (fs.existsSync(logoPath)) {
+      try {
+        const imageId = workbook.addImage({
+          filename: logoPath,
+          extension: 'png',
+        });
+        infoSheet.addImage(imageId, {
+          tl: { col: 0, row: 0 },
+          ext: { width: 80, height: 80 }
+        });
+        console.log('✅ Logo agregado al Excel');
+      } catch (error) {
+        console.log('⚠️ No se pudo cargar el logo en Excel:', error.message);
+      }
+    }
+
+    // Encabezado institucional (ajustado para el logo)
+    infoSheet.mergeCells('B1:F1');
+    const titleCell = infoSheet.getCell('B1');
+    titleCell.value = institucion?.nombre || 'Instituto Educativo';
+    titleCell.font = { size: 18, bold: true, color: { argb: 'FF1F4788' } };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
+
+    if (institucion?.direccion) {
+      infoSheet.mergeCells('B2:F2');
+      const dirCell = infoSheet.getCell('B2');
+      dirCell.value = institucion.direccion;
+      dirCell.font = { size: 10 };
+    }
+
+    if (institucion?.telefono) {
+      infoSheet.mergeCells('B3:F3');
+      const telCell = infoSheet.getCell('B3');
+      telCell.value = `Tel: ${institucion.telefono}`;
+      telCell.font = { size: 10 };
+    }
+
+    // Título del reporte
+    infoSheet.mergeCells('A5:F5');
+    const reportTitle = infoSheet.getCell('A5');
+    reportTitle.value = 'REPORTE DE ASISTENCIAS';
+    reportTitle.font = { size: 16, bold: true };
+    reportTitle.alignment = { horizontal: 'center' };
+    reportTitle.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE7E6E6' }
+    };
+
+    // Información del reporte
+    let currentRow = 7;
+    infoSheet.getCell(`A${currentRow}`).value = 'INFORMACIÓN DEL REPORTE';
+    infoSheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+    
+    infoSheet.getCell(`A${currentRow}`).value = 'Fecha de generación:';
+    infoSheet.getCell(`B${currentRow}`).value = new Date().toLocaleString('es-ES');
+    currentRow++;
+    
+    infoSheet.getCell(`A${currentRow}`).value = 'Generado por:';
+    infoSheet.getCell(`B${currentRow}`).value = 'Sistema de Registro Institucional';
+    currentRow += 2;
+
+    // Filtros aplicados
+    infoSheet.getCell(`A${currentRow}`).value = 'FILTROS APLICADOS';
+    infoSheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+    
+    infoSheet.getCell(`A${currentRow}`).value = 'Fecha inicio:';
+    infoSheet.getCell(`B${currentRow}`).value = fechaInicio ? new Date(fechaInicio).toLocaleDateString('es-ES') : 'No especificado';
+    currentRow++;
+    
+    infoSheet.getCell(`A${currentRow}`).value = 'Fecha fin:';
+    infoSheet.getCell(`B${currentRow}`).value = fechaFin ? new Date(fechaFin).toLocaleDateString('es-ES') : 'No especificado';
+    currentRow++;
+    
+    infoSheet.getCell(`A${currentRow}`).value = 'Tipo de persona:';
+    infoSheet.getCell(`B${currentRow}`).value = personaTipo ? (personaTipo === 'alumno' ? 'Alumnos' : 'Personal') : 'Todos';
+    currentRow++;
+    
+    infoSheet.getCell(`A${currentRow}`).value = 'Grado:';
+    infoSheet.getCell(`B${currentRow}`).value = grado || 'Todos';
+    currentRow++;
+    
+    infoSheet.getCell(`A${currentRow}`).value = 'Tipo de evento:';
+    infoSheet.getCell(`B${currentRow}`).value = tipoEvento ? (tipoEvento === 'entrada' ? 'Entradas' : 'Salidas') : 'Todos';
+    currentRow += 2;
+
+    // Resumen estadístico
+    infoSheet.getCell(`A${currentRow}`).value = 'RESUMEN ESTADÍSTICO';
+    infoSheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+    
+    const statsData = [
       ['Total de registros:', asistencias.length],
       ['Entradas:', stats.entradas],
       ['Salidas:', stats.salidas],
@@ -241,69 +350,76 @@ class ReportService {
       ['Registros manuales:', stats.manual]
     ];
 
-    // ===== HOJA 2: DATOS DETALLADOS =====
-    const datos = asistencias.map(a => {
-      const persona = a.alumno || a.personal;
-      return {
-        'Fecha': new Date(a.timestamp).toLocaleDateString('es-ES'),
-        'Hora': new Date(a.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-        'Carnet': persona?.carnet || 'N/A',
-        'Nombres': persona?.nombres || '',
-        'Apellidos': persona?.apellidos || '',
-        'Grado': persona?.grado || 'N/A',
-        'Jornada': persona?.jornada || 'N/A',
-        'Tipo Persona': a.persona_tipo === 'alumno' ? 'Alumno' : 'Personal',
-        'Tipo Evento': a.tipo_evento === 'entrada' ? 'Entrada' : 'Salida',
-        'Estado': a.estado_puntualidad?.toUpperCase() || 'N/A',
-        'Origen': a.origen,
-        'Observaciones': a.observaciones || ''
-      };
+    statsData.forEach(([label, value]) => {
+      infoSheet.getCell(`A${currentRow}`).value = label;
+      infoSheet.getCell(`B${currentRow}`).value = value;
+      infoSheet.getCell(`B${currentRow}`).font = { bold: true };
+      currentRow++;
     });
 
-    // Crear workbook
-    const wb = XLSX.utils.book_new();
-
-    // Agregar Hoja 1: Información y Resumen
-    const wsInfo = XLSX.utils.aoa_to_sheet(infoData);
-    
-    // Estilos para la hoja de información (ancho de columnas)
-    wsInfo['!cols'] = [
-      { wch: 25 }, // Columna A (etiquetas)
-      { wch: 50 }  // Columna B (valores)
-    ];
-
-    // Fusionar celdas para el título
-    if (!wsInfo['!merges']) wsInfo['!merges'] = [];
-    wsInfo['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }); // Título
-
-    XLSX.utils.book_append_sheet(wb, wsInfo, 'Información');
-
-    // Agregar Hoja 2: Datos detallados
-    const wsData = XLSX.utils.json_to_sheet(datos);
-    
     // Ajustar anchos de columna
-    const colWidths = [
-      { wch: 12 }, // Fecha
-      { wch: 8 },  // Hora
-      { wch: 12 }, // Carnet
-      { wch: 20 }, // Nombres
-      { wch: 20 }, // Apellidos
-      { wch: 12 }, // Grado
-      { wch: 12 }, // Jornada
-      { wch: 12 }, // Tipo Persona
-      { wch: 10 }, // Tipo Evento
-      { wch: 10 }, // Estado
-      { wch: 10 }, // Origen
-      { wch: 30 }  // Observaciones
-    ];
-    wsData['!cols'] = colWidths;
+    infoSheet.getColumn('A').width = 25;
+    infoSheet.getColumn('B').width = 40;
 
-    XLSX.utils.book_append_sheet(wb, wsData, 'Asistencias');
+    // ===== HOJA 2: DATOS DETALLADOS =====
+    const dataSheet = workbook.addWorksheet('Asistencias');
+
+    // Encabezados
+    const headers = ['Fecha', 'Hora', 'Carnet', 'Nombres', 'Apellidos', 'Grado', 'Jornada', 
+                     'Tipo Persona', 'Tipo Evento', 'Estado', 'Origen', 'Observaciones'];
+    
+    dataSheet.addRow(headers);
+    
+    // Estilo de encabezados
+    const headerRow = dataSheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1F4788' }
+    };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 20;
+
+    // Datos
+    asistencias.forEach(a => {
+      const persona = a.alumno || a.personal;
+      dataSheet.addRow([
+        new Date(a.timestamp).toLocaleDateString('es-ES'),
+        new Date(a.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+        persona?.carnet || 'N/A',
+        persona?.nombres || '',
+        persona?.apellidos || '',
+        persona?.grado || 'N/A',
+        persona?.jornada || 'N/A',
+        a.persona_tipo === 'alumno' ? 'Alumno' : 'Personal',
+        a.tipo_evento === 'entrada' ? 'Entrada' : 'Salida',
+        a.estado_puntualidad?.toUpperCase() || 'N/A',
+        a.origen,
+        a.observaciones || ''
+      ]);
+    });
+
+    // Ajustar anchos de columna
+    dataSheet.getColumn(1).width = 12;
+    dataSheet.getColumn(2).width = 8;
+    dataSheet.getColumn(3).width = 12;
+    dataSheet.getColumn(4).width = 20;
+    dataSheet.getColumn(5).width = 20;
+    dataSheet.getColumn(6).width = 12;
+    dataSheet.getColumn(7).width = 12;
+    dataSheet.getColumn(8).width = 12;
+    dataSheet.getColumn(9).width = 10;
+    dataSheet.getColumn(10).width = 10;
+    dataSheet.getColumn(11).width = 10;
+    dataSheet.getColumn(12).width = 30;
 
     // Guardar archivo
     const fileName = `reporte_asistencias_${Date.now()}.xlsx`;
     const filePath = path.join(this.reportsDir, fileName);
-    XLSX.writeFile(wb, filePath);
+    
+    await workbook.xlsx.writeFile(filePath);
+    console.log('✅ Excel generado exitosamente:', fileName);
 
     return { filePath, fileName };
   }

@@ -5,7 +5,9 @@
   "main": "backend/server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "node backend/server.js",
+    "dev": "npx nodemon backend/server.js",
+    "dev:backend": "npx nodemon backend/server.js",
+    "dev:frontend": "cd frontend-react && npm run dev",
     "start": "node start.js && node backend/server.js",
     "test": "node test.js",
     "seed": "node backend/prisma/seed.js",

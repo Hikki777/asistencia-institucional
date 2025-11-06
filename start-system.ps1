@@ -30,8 +30,8 @@ Write-Host "Verificando Backend..." -ForegroundColor Yellow
 $backendOK = $false
 for ($i = 0; $i -lt 10; $i++) {
     try {
-        $resp = Invoke-WebRequest -Uri "http://localhost:5000/api/health" -TimeoutSec 2 -ErrorAction Stop
-        if ($resp.StatusCode -eq 200) {
+        $resp = Invoke-RestMethod -Uri "http://localhost:5000/api/health" -Method Get -TimeoutSec 2 -ErrorAction Stop
+        if ($resp) {
             $backendOK = $true
             break
         }
@@ -67,8 +67,8 @@ Write-Host "Verificando Frontend..." -ForegroundColor Yellow
 $frontendOK = $false
 for ($i = 0; $i -lt 5; $i++) {
     try {
-        $resp = Invoke-WebRequest -Uri "http://localhost:5173" -TimeoutSec 2 -ErrorAction Stop
-        if ($resp.StatusCode -eq 200) {
+        $resp = Invoke-RestMethod -Uri "http://localhost:5173" -Method Get -TimeoutSec 2 -ErrorAction Stop
+        if ($resp) {
             $frontendOK = $true
             break
         }

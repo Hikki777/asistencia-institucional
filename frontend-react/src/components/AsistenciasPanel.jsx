@@ -35,8 +35,13 @@ export default function AsistenciasPanel() {
   const [searchTerm, setSearchTerm] = useState('');
   const [scannerActive, setScannerActive] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [modalData, setModalData] = useState(null);
   const html5QrCodeRef = useRef(null);
   const scannerActiveRef = useRef(false);
+  const isProcessingRef = useRef(false);
+  const lastScannedQRRef = useRef('');
+  const processingTimeoutRef = useRef(null);
 
   useEffect(() => {
     fetchAsistenciasHoy();
@@ -45,6 +50,9 @@ export default function AsistenciasPanel() {
     
     return () => {
       stopScanner();
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -76,6 +84,30 @@ export default function AsistenciasPanel() {
       setDocentes(response.data.docentes || []);
     } catch (error) {
       console.error('Error fetching docentes:', error);
+    }
+  };
+
+  // Función para reproducir sonido de beep tipo escáner
+  const playBeepSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Configurar el sonido tipo beep de supermercado
+      oscillator.frequency.value = 2800; // Frecuencia alta para beep
+      oscillator.type = 'square'; // Onda cuadrada para sonido más nítido
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    } catch (error) {
+      console.log('Audio no disponible:', error);
     }
   };
 
@@ -112,9 +144,53 @@ export default function AsistenciasPanel() {
 
       console.log('📤 Enviando:', requestData);
 
-      await client.post('/asistencias', requestData);
+      const response = await client.post('/asistencias', requestData);
       
-      alert(`${tipoEvento === 'entrada' ? 'Entrada' : 'Salida'} registrada correctamente`);
+      // Reproducir sonido de beep tipo escáner
+      playBeepSound();
+
+      // Buscar datos completos de la persona para el modal
+      console.log('🔍 Buscando datos para modal de registro manual...');
+      let personaData = null;
+      
+      if (tipoPersona === 'alumno') {
+        const alumno = alumnos.find(a => a.id === parseInt(selectedAlumno));
+        console.log('👨‍🎓 Alumno encontrado:', alumno);
+        personaData = {
+          tipo: 'Alumno',
+          nombre: alumno?.nombre || alumno?.nombres || 'Desconocido',
+          apellido: alumno?.apellido || alumno?.apellidos || '',
+          carnet: alumno?.carnet || `ID: ${selectedAlumno}`,
+          grado: alumno?.grado || 'N/A',
+          seccion: alumno?.seccion || 'N/A'
+        };
+      } else {
+        const docente = docentes.find(d => d.id === parseInt(selectedDocente));
+        console.log('👨‍🏫 Docente encontrado:', docente);
+        personaData = {
+          tipo: 'Personal',
+          nombre: docente?.nombre || docente?.nombres || 'Desconocido',
+          apellido: docente?.apellido || docente?.apellidos || '',
+          carnet: docente?.carnet || `ID: ${selectedDocente}`,
+          cargo: docente?.cargo || 'N/A',
+          departamento: docente?.departamento || 'N/A'
+        };
+      }
+
+      // Mostrar modal con los datos
+      setModalData({
+        ...personaData,
+        tipoEvento: tipoEvento === 'entrada' ? 'ENTRADA' : 'SALIDA',
+        hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      });
+      setShowModal(true);
+
+      // Cerrar modal automáticamente después de 3 segundos
+      setTimeout(() => {
+        setShowModal(false);
+      }, 3000);
+
+      // Limpiar formulario
       setSelectedAlumno('');
       setSelectedDocente('');
       setSearchTerm('');
@@ -163,10 +239,19 @@ export default function AsistenciasPanel() {
       
       // Callback cuando se detecta QR
       const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        // Evitar múltiples escaneos del mismo QR usando refs
+        if (isProcessingRef.current || lastScannedQRRef.current === decodedText) {
+          console.log('⏭️ QR ya procesándose o recién escaneado, ignorando...');
+          return;
+        }
+
         console.log('🎉🎉🎉 ¡QR DETECTADO CON HTML5-QRCODE! 🎉🎉🎉');
         console.log('📱 Contenido:', decodedText);
-        console.log('� Resultado completo:', decodedResult);
+        console.log('📋 Resultado completo:', decodedResult);
         
+        // Marcar como procesando usando ref (inmediato, no espera render)
+        isProcessingRef.current = true;
+        lastScannedQRRef.current = decodedText;
         setScanMessage('✅ ¡QR DETECTADO! Procesando...');
         
         // Vibrar
@@ -180,6 +265,16 @@ export default function AsistenciasPanel() {
         }).catch(err => {
           console.error('❌ Error procesando:', err);
           setScanMessage(`❌ Error: ${err.message}`);
+        }).finally(() => {
+          // Permitir nuevo escaneo después de 3 segundos
+          if (processingTimeoutRef.current) {
+            clearTimeout(processingTimeoutRef.current);
+          }
+          processingTimeoutRef.current = setTimeout(() => {
+            isProcessingRef.current = false;
+            lastScannedQRRef.current = '';
+            console.log('🔓 Listo para escanear nuevo QR');
+          }, 3000);
         });
       };
       
@@ -474,11 +569,11 @@ export default function AsistenciasPanel() {
       };
 
       if (parsedData.tipo === 'alumno') {
-        requestData.alumno_id = parsedData.id;
+        requestData.alumno_id = parseInt(parsedData.id);
         console.log('👨‍🎓 Registrando alumno ID:', parsedData.id);
-      } else if (parsedData.tipo === 'docente') {
-        // CORRECCIÓN: usar personal_id en lugar de docente_id
-        requestData.personal_id = parsedData.id;
+      } else if (parsedData.tipo === 'docente' || parsedData.tipo === 'personal') {
+        // Backend espera docente_id (aunque internamente use Personal)
+        requestData.docente_id = parseInt(parsedData.id);
         console.log('👨‍🏫 Registrando personal ID:', parsedData.id);
       } else {
         console.error('❌ Tipo desconocido:', parsedData.tipo);
@@ -490,18 +585,56 @@ export default function AsistenciasPanel() {
       const response = await client.post('/asistencias', requestData);
       console.log('✅ Respuesta del servidor:', response.data);
 
-      setScanMessage(`✅ ${tipoEvento === 'entrada' ? 'Entrada' : 'Salida'} registrada - ${parsedData.carnet || `ID: ${parsedData.id}`}`);
+      // Reproducir sonido de beep tipo escáner
+      playBeepSound();
+
+      // Buscar datos completos de la persona
+      console.log('🔍 Buscando datos de la persona...');
+      console.log('📊 Alumnos disponibles:', alumnos.length);
+      console.log('📊 Docentes disponibles:', docentes.length);
+      console.log('🎯 Buscando ID:', parseInt(parsedData.id), 'Tipo:', parsedData.tipo);
       
-      // Reproducir sonido de éxito si está disponible
-      if (window.Audio) {
-        try {
-          const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiJ0/LPgDQGIHHF8N+TQgwTYLnq66lXFApGnt/yu20iAjmG0fPOgjUHIXLF7+CfUQ8cYbzq7asaGQpGn9/yuG4iAjmJ0fLNgzQHHnLC7+GYTxIWYbvq7KwZGwlGnt/ytW8iAzqH0fPMhDMHHnLC7+GYTxEWYrzq7KwaGQpGnN/zt28iAzqH0fPMgzMHHnPB7+OYThIWYbvq7KwYGwlGnt/ytW8hAzqK0PLNgzMHHnLB7+GZThIVYrzr7KwZGwlGnN/yt28hAzqH0PLMhDMHHnLB7+GYThIWYbvp7KwYGwlGnt/ytW8iAzqH0fPMgzQGHnPB7+GYTxIVYbzq7KwaGQlGnN/yt28hAzqH0PLMhDMHHnPB7+GaTxEXYr7q7KwaGQlGnt/ytW8hAzqH0PLMgzMHHnLB7+GYTxIVYbvq7KsZGQlGnt/xsm8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KwaGQlGn9/xtG8hAzqH0PLMhDMHHnLB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMHHnPB7+GZTxEWYrzq7KsZGQlGnt/ytG8hAzqH0fPMhDMH'); 
-          audio.play();
-        } catch (audioError) {
-          // Ignorar errores de audio
-          console.log('Audio no disponible');
-        }
+      let personaData = null;
+      if (parsedData.tipo === 'alumno') {
+        const alumno = alumnos.find(a => a.id === parseInt(parsedData.id));
+        console.log('👨‍🎓 Alumno encontrado:', alumno);
+        personaData = {
+          tipo: 'Alumno',
+          nombre: alumno?.nombre || alumno?.nombres || 'Desconocido',
+          apellido: alumno?.apellido || alumno?.apellidos || '',
+          carnet: alumno?.carnet || parsedData.carnet || `ID: ${parsedData.id}`,
+          grado: alumno?.grado || 'N/A',
+          seccion: alumno?.seccion || 'N/A'
+        };
+      } else {
+        const docente = docentes.find(d => d.id === parseInt(parsedData.id));
+        console.log('👨‍🏫 Docente encontrado:', docente);
+        personaData = {
+          tipo: 'Personal',
+          nombre: docente?.nombre || docente?.nombres || 'Desconocido',
+          apellido: docente?.apellido || docente?.apellidos || '',
+          carnet: docente?.carnet || parsedData.carnet || `ID: ${parsedData.id}`,
+          cargo: docente?.cargo || 'N/A',
+          departamento: docente?.departamento || 'N/A'
+        };
       }
+
+      console.log('📋 Datos del modal:', personaData);
+
+      // Mostrar modal con los datos
+      setModalData({
+        ...personaData,
+        tipoEvento: tipoEvento === 'entrada' ? 'ENTRADA' : 'SALIDA',
+        hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      });
+      setShowModal(true);
+
+      // Cerrar modal automáticamente después de 3 segundos
+      setTimeout(() => {
+        setShowModal(false);
+      }, 3000);
+
+      setScanMessage(`✅ ${tipoEvento === 'entrada' ? 'Entrada' : 'Salida'} registrada - ${parsedData.carnet || `ID: ${parsedData.id}`}`);
       
       setTimeout(() => setScanMessage('✅ Cámara lista. Escaneando códigos QR...'), 2000);
       fetchAsistenciasHoy();
@@ -916,6 +1049,106 @@ export default function AsistenciasPanel() {
           </div>
         )}
       </motion.div>
+
+      {/* Modal de confirmación de asistencia */}
+      {showModal && modalData && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={() => setShowModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icono de éxito */}
+            <div className="flex justify-center mb-4">
+              <div className={`rounded-full p-4 ${modalData.tipoEvento === 'ENTRADA' ? 'bg-green-100' : 'bg-orange-100'}`}>
+                {modalData.tipoEvento === 'ENTRADA' ? (
+                  <UserCheck className={`text-green-600 w-16 h-16`} />
+                ) : (
+                  <UserX className={`text-orange-600 w-16 h-16`} />
+                )}
+              </div>
+            </div>
+
+            {/* Tipo de evento */}
+            <h3 className={`text-3xl font-bold text-center mb-6 ${modalData.tipoEvento === 'ENTRADA' ? 'text-green-600' : 'text-orange-600'}`}>
+              {modalData.tipoEvento}
+            </h3>
+
+            {/* Información de la persona - Orden según formularios */}
+            <div className="space-y-4 text-center">
+              {/* 1. Tipo */}
+              <div>
+                <p className="text-gray-500 text-sm">Tipo</p>
+                <p className="text-xl font-semibold text-gray-800">{modalData.tipo}</p>
+              </div>
+
+              {/* 2. Carnet */}
+              <div>
+                <p className="text-gray-500 text-sm">Carnet</p>
+                <p className="text-xl font-semibold text-blue-600">{modalData.carnet}</p>
+              </div>
+
+              {/* 3 y 4. Nombres y Apellidos */}
+              <div>
+                <p className="text-gray-500 text-sm">Nombre Completo</p>
+                <p className="text-2xl font-bold text-gray-900">{modalData.nombre} {modalData.apellido}</p>
+              </div>
+
+              {/* 5. Grado/Sección (para Alumnos) */}
+              {modalData.grado && (
+                <div className="flex justify-center gap-8">
+                  <div>
+                    <p className="text-gray-500 text-sm">Grado</p>
+                    <p className="text-lg font-semibold text-gray-800">{modalData.grado}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Sección</p>
+                    <p className="text-lg font-semibold text-gray-800">{modalData.seccion}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* 5. Cargo y Departamento (para Personal) */}
+              {modalData.cargo && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-500 text-sm">Cargo</p>
+                    <p className="text-lg font-semibold text-gray-800">{modalData.cargo}</p>
+                  </div>
+                  {modalData.departamento && modalData.departamento !== 'N/A' && (
+                    <div>
+                      <p className="text-gray-500 text-sm">Departamento</p>
+                      <p className="text-lg font-semibold text-gray-800">{modalData.departamento}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 6. Hora de registro */}
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-gray-500 text-sm">Hora de registro</p>
+                <p className="text-2xl font-bold text-gray-900">{modalData.hora}</p>
+              </div>
+            </div>
+
+            {/* Botón de cerrar */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
+            >
+              Cerrar
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

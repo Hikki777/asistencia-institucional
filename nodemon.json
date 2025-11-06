@@ -1,0 +1,19 @@
+{
+  "watch": [
+    "backend/**/*.js",
+    "backend/**/*.json",
+    "backend/prisma/schema.prisma"
+  ],
+  "ignore": [
+    "backend/node_modules/**",
+    "node_modules/**",
+    "uploads/**",
+    "backups/**"
+  ],
+  "ext": "js,json,prisma",
+  "delay": "1000",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "verbose": true
+}

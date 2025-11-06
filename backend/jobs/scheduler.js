@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const repairService = require('../services/repairService');
 const diagnosticsService = require('../services/diagnosticsService');
 const backupService = require('../services/backupService');
+const { logger } = require('../utils/logger');
 
 /**
  * Scheduler para tareas automáticas
@@ -16,43 +17,43 @@ const jobs = [];
  * Iniciar todas las tareas programadas
  */
 function iniciar() {
-  console.log('[Scheduler] Initializing cron jobs...');
+  logger.info('⏰ Inicializando tareas programadas (cron jobs)');
 
   // Job 1: Diagnóstico y Auto-Reparación cada 6 horas
   const diagnosticJob = cron.schedule('0 */6 * * *', async () => {
-    console.log('\n⏱️  [Scheduler] Running diagnostic job...');
+    logger.info('⏱️ Ejecutando tarea de diagnóstico programada');
     try {
       const result = await repairService.autoRepair();
-      console.log('[Scheduler] Diagnostic job completed:', result);
+      logger.info({ result }, '✅ Tarea de diagnóstico completada');
     } catch (error) {
-      console.error('[Scheduler] Diagnostic job failed:', error.message);
+      logger.error({ err: error }, '❌ Tarea de diagnóstico falló');
     }
   });
   jobs.push({ name: 'diagnostics', task: diagnosticJob });
 
   // Job 2: Backup diario a las 2 AM
   const backupJob = cron.schedule('0 2 * * *', async () => {
-    console.log('\n⏱️  [Scheduler] Running backup job...');
+    logger.info('⏱️ Ejecutando tarea de backup programada');
     try {
       const result = await backupService.crearBackup();
-      console.log('[Scheduler] Backup job completed:', result);
+      logger.info({ result }, '✅ Tarea de backup completada');
     } catch (error) {
-      console.error('[Scheduler] Backup job failed:', error.message);
+      logger.error({ err: error }, '❌ Tarea de backup falló');
     }
   });
   jobs.push({ name: 'backup', task: backupJob });
 
-  console.log(`✅ Scheduler initialized with ${jobs.length} jobs`);
+  logger.info({ count: jobs.length }, `✅ Scheduler inicializado con ${jobs.length} tareas`);
 }
 
 /**
  * Detener todas las tareas programadas
  */
 function detener() {
-  console.log('[Scheduler] Stopping all jobs...');
+  logger.info('⏸️ Deteniendo todas las tareas programadas');
   jobs.forEach(job => {
     job.task.stop();
-    console.log(`  - Job stopped: ${job.name}`);
+    logger.debug({ jobName: job.name }, `Tarea detenida: ${job.name}`);
   });
   jobs.length = 0;
 }
@@ -61,7 +62,7 @@ function detener() {
  * Ejecutar diagnóstico manualmente
  */
 async function ejecutarDiagnosticoManual() {
-  console.log('[Scheduler] Manual diagnostic triggered');
+  logger.info('🔧 Diagnóstico manual disparado');
   return await repairService.autoRepair();
 }
 
@@ -69,7 +70,7 @@ async function ejecutarDiagnosticoManual() {
  * Ejecutar backup manualmente
  */
 async function ejecutarBackupManual() {
-  console.log('[Scheduler] Manual backup triggered');
+  logger.info('💾 Backup manual disparado');
   return await backupService.crearBackup();
 }
 

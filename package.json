@@ -9,7 +9,11 @@
     "dev:backend": "npx nodemon backend/server.js",
     "dev:frontend": "cd frontend-react && npm run dev",
     "start": "node start.js && node backend/server.js",
-    "test": "node test.js",
+    "pretest": "node setup-test-db.js",
+    "test": "cross-env NODE_ENV=test jest --coverage --verbose",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:unit": "cross-env NODE_ENV=test jest --testPathPattern=unit",
+    "test:integration": "cross-env NODE_ENV=test jest --testPathPattern=integration",
     "seed": "node backend/prisma/seed.js",
     "prisma:studio": "npx prisma studio",
     "prisma:push": "npx prisma db push",
@@ -33,19 +37,25 @@
     "dotenv": "^17.2.3",
     "exceljs": "^4.4.0",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.0",
     "fs-extra": "^11.1.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.2",
     "pdfkit": "^0.17.2",
     "pdfkit-table": "^0.1.99",
     "qrcode": "^1.5.3",
-    "sharp": "^0.32.6",
-    "xlsx": "^0.18.5"
+    "sharp": "^0.32.6"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
     "jimp": "^1.6.0",
     "jsqr": "^1.4.0",
-    "prisma": "^5.0.0"
+    "prisma": "^5.0.0",
+    "supertest": "^7.1.4"
   }
 }

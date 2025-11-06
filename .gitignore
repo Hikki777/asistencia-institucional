@@ -18,6 +18,7 @@ frontend-react/node_modules/
 *.sqlite3
 prisma/dev.db
 backend/prisma/dev.db
+backend/prisma/test.db
 
 # Logs
 logs
@@ -59,6 +60,8 @@ desktop.ini
 # Testing
 coverage/
 .nyc_output/
+*.test.db
+jest-results.json
 
 # Temporary files
 *.tmp

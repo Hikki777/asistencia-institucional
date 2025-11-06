@@ -4,6 +4,11 @@ const { PrismaClient } = require('@prisma/client');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { 
+  validarCrearDocente, 
+  validarActualizarDocente, 
+  validarId 
+} = require('../middlewares/validation');
 
 const prisma = new PrismaClient();
 
@@ -88,7 +93,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/docentes - Crear nuevo docente
-router.post('/', upload.single('foto'), async (req, res) => {
+router.post('/', upload.single('foto'), validarCrearDocente, async (req, res) => {
   try {
     const { carnet, nombres, apellidos, sexo, grado, jornada } = req.body;
 
@@ -129,7 +134,7 @@ router.post('/', upload.single('foto'), async (req, res) => {
 });
 
 // PUT /api/docentes/:id - Actualizar docente
-router.put('/:id', upload.single('foto'), async (req, res) => {
+router.put('/:id', upload.single('foto'), validarActualizarDocente, async (req, res) => {
   try {
     const { id } = req.params;
     const { carnet, nombres, apellidos, sexo, grado, jornada, estado } = req.body;

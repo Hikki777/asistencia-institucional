@@ -2,11 +2,13 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const prisma = require('../prismaClient');
 const { signJWT, verifyJWT } = require('../middlewares/auth');
+const { loginLimiter } = require('../middlewares/rateLimiter');
+const { validarLogin } = require('../middlewares/validation');
 
 const router = express.Router();
 
-// POST /api/auth/login
-router.post('/login', async (req, res) => {
+// POST /api/auth/login - Con rate limiting y validación
+router.post('/login', loginLimiter, validarLogin, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {

@@ -1,6 +1,11 @@
 const express = require('express');
 const prisma = require('../prismaClient');
 const { verifyJWT } = require('../middlewares/auth');
+const { 
+  validarCrearAlumno, 
+  validarActualizarAlumno, 
+  validarId 
+} = require('../middlewares/validation');
 
 const router = express.Router();
 
@@ -51,7 +56,7 @@ router.get('/', async (req, res) => {
  * GET /api/alumnos/:id
  * Obtener alumno por ID
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', validarId, async (req, res) => {
   try {
     const alumno = await prisma.alumno.findUnique({
       where: { id: parseInt(req.params.id) },
@@ -76,7 +81,7 @@ router.get('/:id', async (req, res) => {
  * POST /api/alumnos
  * Crear nuevo alumno
  */
-router.post('/', async (req, res) => {
+router.post('/', validarCrearAlumno, async (req, res) => {
   try {
     const { carnet, nombres, apellidos, sexo, grado, jornada } = req.body;
 
@@ -126,7 +131,7 @@ router.post('/', async (req, res) => {
  * PUT /api/alumnos/:id
  * Actualizar alumno
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', validarActualizarAlumno, async (req, res) => {
   try {
     const { nombres, apellidos, sexo, grado, jornada, estado } = req.body;
     const id = parseInt(req.params.id);

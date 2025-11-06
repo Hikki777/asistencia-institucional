@@ -1,7 +1,6 @@
 const PDFDocument = require('pdfkit');
 require('pdfkit-table'); // Extiende PDFDocument
 const ExcelJS = require('exceljs');
-const XLSX = require('xlsx');
 const fs = require('fs-extra');
 const path = require('path');
 const prisma = require('../prismaClient');
@@ -76,7 +75,7 @@ class ReportService {
     
     if (fs.existsSync(logoPath)) {
       try {
-        doc.image(logoPath, 50, startY, { width: 60, height: 60 });
+        doc.image(logoPath, 50, startY, { width: 70, height: 70 });
         console.log('✅ Logo agregado al PDF');
       } catch (error) {
         console.log('⚠️ No se pudo cargar el logo:', error.message);
@@ -85,103 +84,127 @@ class ReportService {
       console.log('ℹ️ No se encontró logo institucional');
     }
 
-    // Encabezado institucional (alineado con logo)
-    const headerX = 120;
-    doc.fontSize(16).font('Helvetica-Bold').text(institucion?.nombre || 'Instituto Educativo', headerX, startY);
-    startY += 20;
+    // Encabezado institucional (centrado al lado del logo)
+    const headerX = 130;
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#1F4788')
+      .text(institucion?.nombre || 'Instituto Educativo', headerX, startY + 10, { align: 'left' });
     
-    if (institucion?.direccion) {
-      doc.fontSize(9).font('Helvetica').text(institucion.direccion, headerX, startY);
-      startY += 12;
+    doc.fontSize(10).font('Helvetica').fillColor('#000000');
+    if (institucion?.direccion || institucion?.telefono) {
+      const infoText = [];
+      if (institucion?.direccion) infoText.push(institucion.direccion);
+      if (institucion?.telefono) infoText.push(`Tel: ${institucion.telefono}`);
+      doc.text(infoText.join(' | '), headerX, startY + 35);
     }
-    if (institucion?.telefono) {
-      doc.fontSize(9).text(`Tel: ${institucion.telefono}`, headerX, startY);
-      startY += 12;
-    }
+    
+    // Título del reporte
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('#000000')
+      .text('REPORTE DE ASISTENCIAS', 50, startY + 55, {
+        align: 'center',
+        width: 500
+      });
     
     // Línea separadora
-    doc.moveTo(50, startY + 15).lineTo(550, startY + 15).stroke();
+    doc.moveTo(50, startY + 75).lineTo(550, startY + 75).stroke();
     
-    // Título del reporte (posición absoluta después del encabezado)
-    doc.fontSize(14).font('Helvetica-Bold').text('REPORTE DE ASISTENCIAS', 50, startY + 25, { 
-      align: 'center',
-      width: 500
-    });
-    
-    // Continuar desde una posición fija
-    doc.y = startY + 50;
-
-    // Información del reporte
-    doc.fontSize(11).font('Helvetica-Bold').text('Información del Reporte:', { underline: true });
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Fecha de generación: ${new Date().toLocaleString('es-ES')}`);
-    doc.text(`Generado por: Sistema de Registro Institucional`);
-    doc.moveDown(0.5);
-
-    // Filtros aplicados
-    doc.fontSize(11).font('Helvetica-Bold').text('Filtros Aplicados:', { underline: true });
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Fecha inicio: ${fechaInicio ? new Date(fechaInicio).toLocaleDateString('es-ES') : 'No especificado'}`);
-    doc.text(`Fecha fin: ${fechaFin ? new Date(fechaFin).toLocaleDateString('es-ES') : 'No especificado'}`);
-    doc.text(`Tipo de persona: ${personaTipo ? (personaTipo === 'alumno' ? 'Alumnos' : 'Personal') : 'Todos'}`);
-    doc.text(`Grado: ${grado || 'Todos'}`);
-    doc.text(`Tipo de evento: ${tipoEvento ? (tipoEvento === 'entrada' ? 'Entradas' : 'Salidas') : 'Todos'}`);
-    doc.moveDown(0.5);
-
-    // Estadísticas
+    // Información compacta de filtros y estadísticas
+    doc.fontSize(9).font('Helvetica');
     const stats = this.calcularEstadisticas(asistencias);
-    doc.fontSize(11).font('Helvetica-Bold').text('Resumen Estadístico:', { underline: true });
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Total de registros: ${asistencias.length}`);
-    doc.text(`Entradas: ${stats.entradas} | Salidas: ${stats.salidas}`);
-    doc.text(`Puntuales: ${stats.puntuales} | Tardíos: ${stats.tardes}`);
-    doc.text(`Registros por QR: ${stats.porQR} | Registros manuales: ${stats.manual}`);
-    doc.moveDown();
-
-    // Tabla de datos - Nueva página para asegurar espacio
-    doc.addPage();
-    doc.fontSize(14).text('REGISTROS DE ASISTENCIA', { align: 'center', underline: true });
-    doc.moveDown(2);
+    const filterInfo = [];
+    if (fechaInicio) filterInfo.push(`Desde: ${new Date(fechaInicio).toLocaleDateString('es-ES')}`);
+    if (fechaFin) filterInfo.push(`Hasta: ${new Date(fechaFin).toLocaleDateString('es-ES')}`);
+    if (personaTipo) filterInfo.push(`Tipo: ${personaTipo === 'alumno' ? 'Alumnos' : 'Personal'}`);
+    if (grado) filterInfo.push(`Grado: ${grado}`);
     
+    const infoLine = `Filtros: ${filterInfo.length > 0 ? filterInfo.join(' | ') : 'Ninguno'} • Total: ${asistencias.length} | Entradas: ${stats.entradas} | Salidas: ${stats.salidas} | Puntuales: ${stats.puntuales} | Tardíos: ${stats.tardes}`;
+    doc.text(infoLine, 50, startY + 85, { align: 'center', width: 500 });
+    
+    // Posición para la tabla
+    let tableY = startY + 115;
+    
+    // Tabla de datos (manual para mayor control)
     console.log('📋 Generando tabla con', asistencias.length, 'registros...');
     if (asistencias.length > 0) {
-      const tableData = {
-        headers: ['Fecha/Hora', 'Carnet', 'Nombre Completo', 'Grado', 'Tipo', 'Estado'],
-        rows: asistencias.map(a => {
-          const persona = a.alumno || a.personal;
-          return [
-            new Date(a.timestamp).toLocaleString('es-ES', { 
-              day: '2-digit', 
-              month: '2-digit', 
-              year: '2-digit',
-              hour: '2-digit', 
-              minute: '2-digit' 
-            }),
-            persona?.carnet || 'N/A',
-            `${persona?.nombres || ''} ${persona?.apellidos || ''}`.trim() || 'Desconocido',
-            persona?.grado || 'N/A',
-            a.tipo_evento === 'entrada' ? 'ENT' : 'SAL',
-            a.estado_puntualidad?.toUpperCase() || 'N/A'
-          ];
-        })
-      };
-
-      console.log('📊 Tabla creada con', tableData.rows.length, 'filas');
+      // Encabezados de tabla
+      const headers = ['Fecha/Hora', 'Carnet', 'Nombre Completo', 'Grado', 'Tipo', 'Estado'];
+      const colWidths = [85, 60, 160, 60, 45, 50];
+      const startX = 50;
       
-      // Usar pdfkit-table con configuración explícita
-      await doc.table(tableData, {
-        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9),
-        prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
-          doc.font('Helvetica').fontSize(8);
-        },
-        columnsSize: [90, 60, 130, 60, 50, 60],
-        x: 50,
-        y: doc.y
+      // Dibujar encabezados
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#FFFFFF');
+      doc.rect(startX, tableY, 460, 20).fill('#1F4788');
+      
+      let currentX = startX + 5;
+      doc.fillColor('#FFFFFF');
+      headers.forEach((header, i) => {
+        doc.text(header, currentX, tableY + 5, { width: colWidths[i] - 10, align: 'center' });
+        currentX += colWidths[i];
       });
       
-      console.log('✅ Tabla agregada al PDF');
+      tableY += 20;
+      
+      // Dibujar filas de datos
+      doc.fontSize(8).font('Helvetica').fillColor('#000000');
+      let rowCount = 0;
+      
+      for (const a of asistencias) {
+        // Verificar si necesitamos nueva página
+        if (tableY > 720) {
+          doc.addPage();
+          tableY = 50;
+          
+          // Re-dibujar encabezados en nueva página
+          doc.fontSize(9).font('Helvetica-Bold').fillColor('#FFFFFF');
+          doc.rect(startX, tableY, 460, 20).fill('#1F4788');
+          
+          currentX = startX + 5;
+          doc.fillColor('#FFFFFF');
+          headers.forEach((header, i) => {
+            doc.text(header, currentX, tableY + 5, { width: colWidths[i] - 10, align: 'center' });
+            currentX += colWidths[i];
+          });
+          
+          tableY += 20;
+          doc.fontSize(8).font('Helvetica').fillColor('#000000');
+        }
+        
+        const persona = a.alumno || a.personal;
+        const rowData = [
+          new Date(a.timestamp).toLocaleString('es-ES', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: '2-digit',
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+          persona?.carnet || 'N/A',
+          `${persona?.nombres || ''} ${persona?.apellidos || ''}`.trim() || 'Desconocido',
+          persona?.grado || 'N/A',
+          a.tipo_evento === 'entrada' ? 'ENT' : 'SAL',
+          a.estado_puntualidad?.toUpperCase() || 'N/A'
+        ];
+        
+        // Fondo alternado
+        if (rowCount % 2 === 0) {
+          doc.rect(startX, tableY, 460, 18).fillAndStroke('#F9F9F9', '#E0E0E0');
+        } else {
+          doc.rect(startX, tableY, 460, 18).stroke('#E0E0E0');
+        }
+        
+        // Dibujar datos
+        currentX = startX + 5;
+        rowData.forEach((data, i) => {
+          doc.text(String(data), currentX, tableY + 4, { width: colWidths[i] - 10, align: 'center' });
+          currentX += colWidths[i];
+        });
+        
+        tableY += 18;
+        rowCount++;
+      }
+      
+      console.log(`✅ Tabla generada con ${rowCount} filas`);
     } else {
-      doc.fontSize(10).text('No se encontraron registros con los filtros aplicados.', { align: 'center' });
+      doc.fontSize(10).text('No se encontraron registros con los filtros aplicados.', 50, tableY, { align: 'center' });
     }
 
     // Footer
@@ -243,12 +266,12 @@ class ReportService {
     workbook.creator = 'Sistema de Registro Institucional';
     workbook.created = new Date();
 
-    // ===== HOJA 1: INFORMACIÓN =====
-    const infoSheet = workbook.addWorksheet('Información', {
-      pageSetup: { paperSize: 9, orientation: 'portrait' }
+    // ===== HOJA ÚNICA: REPORTE DE ASISTENCIAS =====
+    const sheet = workbook.addWorksheet('Reporte de Asistencias', {
+      pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true }
     });
 
-    // Logo (si existe) - Ajustado para no interferir con el contenido
+    // Fila 1: Logo en A1 y Nombre de institución en C1
     let logoPath = path.join(__dirname, '../../uploads/logos/logo.png');
     if (!fs.existsSync(logoPath)) {
       logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
@@ -260,174 +283,128 @@ class ReportService {
           filename: logoPath,
           extension: 'png',
         });
-        // Posicionar logo en la primera columna con altura de 4 filas
-        infoSheet.addImage(imageId, {
+        // Logo en A1:A2 (solo columna A)
+        sheet.addImage(imageId, {
           tl: { col: 0, row: 0 },
-          br: { col: 1, row: 4 } // Desde columna A hasta B, filas 1-4
+          ext: { width: 60, height: 60 }
         });
-        // Ajustar altura de las filas del logo
-        for (let i = 1; i <= 4; i++) {
-          infoSheet.getRow(i).height = 20;
-        }
+        sheet.getRow(1).height = 30;
+        sheet.getRow(2).height = 30;
         console.log('✅ Logo agregado al Excel');
       } catch (error) {
         console.log('⚠️ No se pudo cargar el logo en Excel:', error.message);
       }
     }
 
-    // Encabezado institucional (columnas C-F para no solaparse con logo)
-    infoSheet.mergeCells('C1:F1');
-    const titleCell = infoSheet.getCell('C1');
+    // Nombre de la institución en C1:L1 (para no chocar con logo en A1)
+    sheet.mergeCells('C1:L1');
+    const titleCell = sheet.getCell('C1');
     titleCell.value = institucion?.nombre || 'Instituto Educativo';
-    titleCell.font = { size: 16, bold: true, color: { argb: 'FF1F4788' } };
+    titleCell.font = { size: 18, bold: true, color: { argb: 'FF1F4788' } };
     titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
-    if (institucion?.direccion) {
-      infoSheet.mergeCells('C2:F2');
-      const dirCell = infoSheet.getCell('C2');
-      dirCell.value = institucion.direccion;
-      dirCell.font = { size: 10 };
-      dirCell.alignment = { vertical: 'middle', horizontal: 'left' };
-    }
-
-    if (institucion?.telefono) {
-      infoSheet.mergeCells('C3:F3');
-      const telCell = infoSheet.getCell('C3');
-      telCell.value = `Tel: ${institucion.telefono}`;
-      telCell.font = { size: 10 };
-      telCell.alignment = { vertical: 'middle', horizontal: 'left' };
-    }
-
-    // Título del reporte (después del logo y encabezado)
-    infoSheet.mergeCells('A6:F6');
-    const reportTitle = infoSheet.getCell('A6');
+    // Fila 4: Título del reporte
+    sheet.mergeCells('A4:L4');
+    const reportTitle = sheet.getCell('A4');
     reportTitle.value = 'REPORTE DE ASISTENCIAS';
-    reportTitle.font = { size: 16, bold: true };
+    reportTitle.font = { size: 14, bold: true };
     reportTitle.alignment = { horizontal: 'center', vertical: 'middle' };
     reportTitle.fill = {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: 'FFE7E6E6' }
     };
-    infoSheet.getRow(6).height = 25;
+    sheet.getRow(4).height = 25;
 
-    // Información del reporte
-    let currentRow = 8;
-    infoSheet.getCell(`A${currentRow}`).value = 'INFORMACIÓN DEL REPORTE';
-    infoSheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
-    currentRow++;
-    
-    infoSheet.getCell(`A${currentRow}`).value = 'Fecha de generación:';
-    infoSheet.getCell(`B${currentRow}`).value = new Date().toLocaleString('es-ES');
-    currentRow++;
-    
-    infoSheet.getCell(`A${currentRow}`).value = 'Generado por:';
-    infoSheet.getCell(`B${currentRow}`).value = 'Sistema de Registro Institucional';
-    currentRow += 2;
+    // Fila 6: Filtros y estadísticas
+    sheet.mergeCells('A6:L6');
+    const filterCell = sheet.getCell('A6');
+    const filterParts = [];
+    if (fechaInicio) filterParts.push(`Desde: ${new Date(fechaInicio).toLocaleDateString('es-ES')}`);
+    if (fechaFin) filterParts.push(`Hasta: ${new Date(fechaFin).toLocaleDateString('es-ES')}`);
+    filterCell.value = `Filtros: ${filterParts.length > 0 ? filterParts.join(' | ') : 'Sin filtros'} • Total: ${asistencias.length} | Entradas: ${stats.entradas} | Salidas: ${stats.salidas} | Puntuales: ${stats.puntuales} | Tardíos: ${stats.tardes}`;
+    filterCell.font = { size: 10, italic: true };
+    filterCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.getRow(6).height = 20;
 
-    // Filtros aplicados
-    infoSheet.getCell(`A${currentRow}`).value = 'FILTROS APLICADOS';
-    infoSheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
-    currentRow++;
+    // Fila 8: Encabezados de la tabla
+    const headers = ['Fecha', 'Hora', 'Carnet', 'Nombre Completo', 'Grado', 'Tipo', 'Evento', 'Estado', 'Origen'];
+    const headerRow = sheet.getRow(8);
     
-    infoSheet.getCell(`A${currentRow}`).value = 'Fecha inicio:';
-    infoSheet.getCell(`B${currentRow}`).value = fechaInicio ? new Date(fechaInicio).toLocaleDateString('es-ES') : 'No especificado';
-    currentRow++;
-    
-    infoSheet.getCell(`A${currentRow}`).value = 'Fecha fin:';
-    infoSheet.getCell(`B${currentRow}`).value = fechaFin ? new Date(fechaFin).toLocaleDateString('es-ES') : 'No especificado';
-    currentRow++;
-    
-    infoSheet.getCell(`A${currentRow}`).value = 'Tipo de persona:';
-    infoSheet.getCell(`B${currentRow}`).value = personaTipo ? (personaTipo === 'alumno' ? 'Alumnos' : 'Personal') : 'Todos';
-    currentRow++;
-    
-    infoSheet.getCell(`A${currentRow}`).value = 'Grado:';
-    infoSheet.getCell(`B${currentRow}`).value = grado || 'Todos';
-    currentRow++;
-    
-    infoSheet.getCell(`A${currentRow}`).value = 'Tipo de evento:';
-    infoSheet.getCell(`B${currentRow}`).value = tipoEvento ? (tipoEvento === 'entrada' ? 'Entradas' : 'Salidas') : 'Todos';
-    currentRow += 2;
-
-    // Resumen estadístico
-    infoSheet.getCell(`A${currentRow}`).value = 'RESUMEN ESTADÍSTICO';
-    infoSheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
-    currentRow++;
-    
-    const statsData = [
-      ['Total de registros:', asistencias.length],
-      ['Entradas:', stats.entradas],
-      ['Salidas:', stats.salidas],
-      ['Puntuales:', stats.puntuales],
-      ['Tardíos:', stats.tardes],
-      ['Registros por QR:', stats.porQR],
-      ['Registros manuales:', stats.manual]
-    ];
-
-    statsData.forEach(([label, value]) => {
-      infoSheet.getCell(`A${currentRow}`).value = label;
-      infoSheet.getCell(`B${currentRow}`).value = value;
-      infoSheet.getCell(`B${currentRow}`).font = { bold: true };
-      currentRow++;
+    headers.forEach((header, index) => {
+      const cell = headerRow.getCell(index + 1);
+      cell.value = header;
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1F4788' }
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
     });
+    headerRow.height = 25;
 
-    // Ajustar anchos de columna
-    infoSheet.getColumn('A').width = 25;
-    infoSheet.getColumn('B').width = 40;
-
-    // ===== HOJA 2: DATOS DETALLADOS =====
-    const dataSheet = workbook.addWorksheet('Asistencias');
-
-    // Encabezados
-    const headers = ['Fecha', 'Hora', 'Carnet', 'Nombres', 'Apellidos', 'Grado', 'Jornada', 
-                     'Tipo Persona', 'Tipo Evento', 'Estado', 'Origen', 'Observaciones'];
-    
-    dataSheet.addRow(headers);
-    
-    // Estilo de encabezados
-    const headerRow = dataSheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF1F4788' }
-    };
-    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
-    headerRow.height = 20;
-
-    // Datos
-    asistencias.forEach(a => {
+    // Datos de asistencias (comienza en fila 9)
+    let currentRow = 9;
+    asistencias.forEach((a, index) => {
       const persona = a.alumno || a.personal;
-      dataSheet.addRow([
+      const row = sheet.getRow(currentRow);
+      
+      const rowData = [
         new Date(a.timestamp).toLocaleDateString('es-ES'),
         new Date(a.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
         persona?.carnet || 'N/A',
-        persona?.nombres || '',
-        persona?.apellidos || '',
+        `${persona?.nombres || ''} ${persona?.apellidos || ''}`.trim() || 'N/A',
         persona?.grado || 'N/A',
-        persona?.jornada || 'N/A',
-        a.persona_tipo === 'alumno' ? 'Alumno' : 'Personal',
+        a.alumno ? 'Alumno' : 'Personal',
         a.tipo_evento === 'entrada' ? 'Entrada' : 'Salida',
         a.estado_puntualidad?.toUpperCase() || 'N/A',
-        a.origen,
-        a.observaciones || ''
-      ]);
+        a.origen || 'N/A'
+      ];
+
+      rowData.forEach((value, colIndex) => {
+        const cell = row.getCell(colIndex + 1);
+        cell.value = value;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+          left: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+          bottom: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+          right: { style: 'thin', color: { argb: 'FFD3D3D3' } }
+        };
+        
+        // Colores específicos para ciertas columnas
+        if (colIndex === 5) { // Columna Tipo
+          cell.font = { color: { argb: value === 'Alumno' ? 'FFFF8C00' : 'FF000000' } };
+        }
+        if (colIndex === 6) { // Columna Evento
+          cell.font = { color: { argb: value === 'Entrada' ? 'FF0000FF' : 'FFFF0000' } };
+        }
+        if (colIndex === 7) { // Columna Estado
+          cell.font = { color: { argb: value === 'TARDE' ? 'FFFF0000' : 'FF000000' } };
+        }
+      });
+
+      row.height = 20;
+      currentRow++;
     });
 
-    // Ajustar anchos de columna
-    dataSheet.getColumn(1).width = 12;
-    dataSheet.getColumn(2).width = 8;
-    dataSheet.getColumn(3).width = 12;
-    dataSheet.getColumn(4).width = 20;
-    dataSheet.getColumn(5).width = 20;
-    dataSheet.getColumn(6).width = 12;
-    dataSheet.getColumn(7).width = 12;
-    dataSheet.getColumn(8).width = 12;
-    dataSheet.getColumn(9).width = 10;
-    dataSheet.getColumn(10).width = 10;
-    dataSheet.getColumn(11).width = 10;
-    dataSheet.getColumn(12).width = 30;
+    // Ajustar anchos de columna (columna A más angosta para el logo)
+    sheet.getColumn(1).width = 12;  // Fecha
+    sheet.getColumn(2).width = 8;   // Hora
+    sheet.getColumn(3).width = 12;  // Carnet
+    sheet.getColumn(4).width = 30;  // Nombre Completo
+    sheet.getColumn(5).width = 12;  // Grado
+    sheet.getColumn(6).width = 10;  // Tipo
+    sheet.getColumn(7).width = 10;  // Evento
+    sheet.getColumn(8).width = 10;  // Estado
+    sheet.getColumn(9).width = 10;  // Origen
 
     // Guardar archivo
     const fileName = `reporte_asistencias_${Date.now()}.xlsx`;

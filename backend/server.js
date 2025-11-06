@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs-extra');
 require('dotenv').config();
@@ -9,6 +10,7 @@ const qrService = require('./services/qrService');
 const backupService = require('./services/backupService');
 const diagnosticsService = require('./services/diagnosticsService');
 const scheduler = require('./jobs/scheduler');
+const { apiLimiter } = require('./middlewares/rateLimiter');
 
 // Importar rutas
 const qrRoutes = require('./routes/qr');
@@ -34,8 +36,43 @@ checkEnv();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// ============ MIDDLEWARE DE SEGURIDAD ============
+
+// Helmet: Protección de headers HTTP
+app.use(helmet({
+  contentSecurityPolicy: false, // Deshabilitado para permitir inline scripts en HTML
+  crossOriginEmbedderPolicy: false
+}));
+
+// CORS: Configuración segura
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (móviles, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Rate limiting general para toda la API
+app.use('/api', apiLimiter);
+
+// Body parsers
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -81,8 +118,11 @@ app.get('/api/health', (req, res) => {
 
 // ============ RUTAS DE INICIALIZACIÓN ============
 
+// Importar validaciones para institución
+const { validarInicializarInstitucion, validarActualizarInstitucion } = require('./middlewares/validation');
+
 // Inicializar institución (primera ejecución)
-app.post('/api/institucion/init', async (req, res) => {
+app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res) => {
   try {
     const { nombre, horario_inicio, margen_puntualidad_min, logo_base64, admin_email, admin_password } = req.body;
 
@@ -192,7 +232,7 @@ app.get('/api/institucion', async (req, res) => {
 });
 
 // PUT /api/institucion - Actualizar datos institucionales
-app.put('/api/institucion', async (req, res) => {
+app.put('/api/institucion', validarActualizarInstitucion, async (req, res) => {
   try {
     const { nombre, horario_inicio, margen_puntualidad_min, logo_base64 } = req.body;
 

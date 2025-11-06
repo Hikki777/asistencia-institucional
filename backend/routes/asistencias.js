@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../prismaClient');
 const { verifyJWT } = require('../middlewares/auth');
+const { qrScanLimiter } = require('../middlewares/rateLimiter');
 
 const router = express.Router();
 

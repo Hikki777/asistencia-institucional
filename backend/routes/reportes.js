@@ -1,6 +1,8 @@
 const express = require('express');
 const reportService = require('../services/reportService');
 const { verifyJWT } = require('../middlewares/auth');
+const { reportLimiter } = require('../middlewares/rateLimiter');
+const { validarGenerarReporte } = require('../middlewares/validation');
 
 const router = express.Router();
 
@@ -11,7 +13,7 @@ router.use(verifyJWT);
  * POST /api/reportes/pdf
  * Generar reporte en PDF con filtros
  */
-router.post('/pdf', async (req, res) => {
+router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
   try {
     const filtros = req.body;
     
@@ -49,7 +51,7 @@ router.post('/pdf', async (req, res) => {
  * POST /api/reportes/excel
  * Generar reporte en Excel con filtros
  */
-router.post('/excel', async (req, res) => {
+router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => {
   try {
     const filtros = req.body;
     

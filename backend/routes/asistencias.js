@@ -3,6 +3,7 @@ const prisma = require('../prismaClient');
 const { verifyJWT } = require('../middlewares/auth');
 const { qrScanLimiter } = require('../middlewares/rateLimiter');
 const { logger } = require('../utils/logger');
+const { cacheMiddleware, invalidateCacheMiddleware } = require('../middlewares/cache');
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ router.use(verifyJWT);
  * POST /api/asistencias
  * Registrar una asistencia (entrada o salida)
  */
-router.post('/', async (req, res) => {
+router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res) => {
   try {
     const { alumno_id, docente_id, tipo_evento, origen, dispositivo, observaciones, timestamp } = req.body;
 
@@ -134,12 +135,12 @@ router.post('/', async (req, res) => {
 
 /**
  * GET /api/asistencias
- * Listar asistencias con filtros
+ * Listar asistencias con filtros y paginación cursor (cacheado 2 min)
  */
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware('list'), async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 100, 500);
-    const skip = Math.max(parseInt(req.query.skip) || 0, 0);
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;
     const fecha = req.query.fecha; // YYYY-MM-DD
     const alumno_id = req.query.alumno_id;
     const docente_id = req.query.docente_id;
@@ -174,8 +175,8 @@ router.get('/', async (req, res) => {
 
     const asistencias = await prisma.asistencia.findMany({
       where,
-      skip,
-      take: limit,
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
       orderBy: { timestamp: 'desc' },
       include: {
         alumno: {
@@ -201,12 +202,21 @@ router.get('/', async (req, res) => {
       }
     });
 
+    const hasMore = asistencias.length > limit;
+    const items = hasMore ? asistencias.slice(0, limit) : asistencias;
+    const nextCursor = hasMore ? items[items.length - 1].id : null;
+
     const total = await prisma.asistencia.count({ where });
 
     res.json({
       total,
-      count: asistencias.length,
-      asistencias
+      count: items.length,
+      asistencias: items,
+      pagination: {
+        nextCursor,
+        hasMore,
+        limit
+      }
     });
   } catch (error) {
     logger.error({ err: error, query: req.query }, '❌ Error listando asistencias');
@@ -281,7 +291,7 @@ router.get('/hoy', async (req, res) => {
  * GET /api/asistencias/stats
  * Obtener estadísticas de asistencias
  */
-router.get('/stats', async (req, res) => {
+router.get('/stats', cacheMiddleware('stats'), async (req, res) => {
   try {
     const dias = parseInt(req.query.dias) || 7;
     const fechaInicio = new Date();

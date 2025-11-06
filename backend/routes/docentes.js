@@ -10,6 +10,7 @@ const {
   validarId 
 } = require('../middlewares/validation');
 const { logger } = require('../utils/logger');
+const { cacheMiddleware, invalidateCacheMiddleware } = require('../middlewares/cache');
 
 const prisma = new PrismaClient();
 
@@ -44,11 +45,18 @@ const upload = multer({
   }
 });
 
-// GET /api/docentes - Listar todos los docentes
-router.get('/', async (req, res) => {
+// GET /api/docentes - Listar todos los docentes con paginación cursor (cacheado 2 min)
+router.get('/', cacheMiddleware('list'), async (req, res) => {
   try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;
+    const estado = req.query.estado || 'activo';
+
     const docentes = await prisma.personal.findMany({
-      orderBy: { apellidos: 'asc' },
+      where: { estado },
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+      orderBy: { id: 'asc' },
       include: {
         codigos_qr: {
           where: { vigente: true },
@@ -57,9 +65,24 @@ router.get('/', async (req, res) => {
       }
     });
 
-    res.json({ docentes });
+    const hasMore = docentes.length > limit;
+    const items = hasMore ? docentes.slice(0, limit) : docentes;
+    const nextCursor = hasMore ? items[items.length - 1].id : null;
+
+    const total = await prisma.personal.count({ where: { estado } });
+
+    res.json({
+      total,
+      count: items.length,
+      docentes: items,
+      pagination: {
+        nextCursor,
+        hasMore,
+        limit
+      }
+    });
   } catch (error) {
-    logger.error({ err: error }, '❌ Error al listar docentes');
+    logger.error({ err: error, query: req.query }, '❌ Error al listar docentes');
     res.status(500).json({ error: error.message });
   }
 });
@@ -95,7 +118,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/docentes - Crear nuevo docente
-router.post('/', upload.single('foto'), validarCrearDocente, async (req, res) => {
+router.post('/', invalidateCacheMiddleware('/api/docentes'), upload.single('foto'), validarCrearDocente, async (req, res) => {
   try {
     const { carnet, nombres, apellidos, sexo, grado, jornada } = req.body;
 
@@ -136,7 +159,7 @@ router.post('/', upload.single('foto'), validarCrearDocente, async (req, res) =>
 });
 
 // PUT /api/docentes/:id - Actualizar docente
-router.put('/:id', upload.single('foto'), validarActualizarDocente, async (req, res) => {
+router.put('/:id', invalidateCacheMiddleware('/api/docentes'), upload.single('foto'), validarActualizarDocente, async (req, res) => {
   try {
     const { id } = req.params;
     const { carnet, nombres, apellidos, sexo, grado, jornada, estado } = req.body;
@@ -182,7 +205,7 @@ router.put('/:id', upload.single('foto'), validarActualizarDocente, async (req, 
 });
 
 // DELETE /api/docentes/:id - Eliminar docente
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', invalidateCacheMiddleware('/api/docentes'), async (req, res) => {
   try {
     const { id } = req.params;
 

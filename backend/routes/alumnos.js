@@ -7,6 +7,7 @@ const {
   validarId 
 } = require('../middlewares/validation');
 const { logger } = require('../utils/logger');
+const { cacheMiddleware, invalidateCacheMiddleware } = require('../middlewares/cache');
 
 const router = express.Router();
 
@@ -15,18 +16,19 @@ router.use(verifyJWT);
 
 /**
  * GET /api/alumnos
- * Listar todos los alumnos
+ * Listar todos los alumnos con paginación cursor (cacheado 2 min)
  */
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware('list'), async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 100, 500);
-    const skip = Math.max(parseInt(req.query.skip) || 0, 0);
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;
     const estado = req.query.estado || 'activo';
 
     const alumnos = await prisma.alumno.findMany({
       where: { estado },
-      skip,
-      take: limit,
+      take: limit + 1, // +1 para saber si hay más páginas
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+      orderBy: { id: 'asc' },
       select: {
         id: true,
         carnet: true,
@@ -40,12 +42,21 @@ router.get('/', async (req, res) => {
       }
     });
 
+    const hasMore = alumnos.length > limit;
+    const items = hasMore ? alumnos.slice(0, limit) : alumnos;
+    const nextCursor = hasMore ? items[items.length - 1].id : null;
+
     const total = await prisma.alumno.count({ where: { estado } });
 
     res.json({
       total,
-      count: alumnos.length,
-      alumnos
+      count: items.length,
+      alumnos: items,
+      pagination: {
+        nextCursor,
+        hasMore,
+        limit
+      }
     });
   } catch (error) {
     logger.error({ err: error, query: req.query }, '❌ Error al listar alumnos');
@@ -83,7 +94,7 @@ router.get('/:id', validarId, async (req, res) => {
  * POST /api/alumnos
  * Crear nuevo alumno
  */
-router.post('/', validarCrearAlumno, async (req, res) => {
+router.post('/', invalidateCacheMiddleware('/api/alumnos'), validarCrearAlumno, async (req, res) => {
   try {
     const { carnet, nombres, apellidos, sexo, grado, jornada } = req.body;
 
@@ -133,7 +144,7 @@ router.post('/', validarCrearAlumno, async (req, res) => {
  * PUT /api/alumnos/:id
  * Actualizar alumno
  */
-router.put('/:id', validarActualizarAlumno, async (req, res) => {
+router.put('/:id', invalidateCacheMiddleware('/api/alumnos'), validarActualizarAlumno, async (req, res) => {
   try {
     const { nombres, apellidos, sexo, grado, jornada, estado } = req.body;
     const id = parseInt(req.params.id);
@@ -172,7 +183,7 @@ router.put('/:id', validarActualizarAlumno, async (req, res) => {
  * DELETE /api/alumnos/:id
  * Inactivar alumno (soft delete)
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', invalidateCacheMiddleware('/api/alumnos'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 

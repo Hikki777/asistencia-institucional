@@ -66,13 +66,20 @@ class ReportService {
     doc.pipe(stream);
 
     // Logo institucional (si existe)
-    const logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
+    let logoPath = path.join(__dirname, '../../uploads/logos/logo.png');
+    if (!fs.existsSync(logoPath)) {
+      logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
+    }
+    
     if (fs.existsSync(logoPath)) {
       try {
         doc.image(logoPath, 50, 50, { width: 60, height: 60 });
+        console.log('✅ Logo agregado al PDF');
       } catch (error) {
-        console.log('No se pudo cargar el logo:', error.message);
+        console.log('⚠️ No se pudo cargar el logo:', error.message);
       }
+    } else {
+      console.log('ℹ️ No se encontró logo institucional');
     }
 
     // Encabezado institucional (con espacio para logo)

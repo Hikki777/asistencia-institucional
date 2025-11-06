@@ -1,5 +1,5 @@
 const PDFDocument = require('pdfkit');
-const PDFTable = require('pdfkit-table');
+require('pdfkit-table'); // Extiende PDFDocument
 const XLSX = require('xlsx');
 const fs = require('fs-extra');
 const path = require('path');
@@ -21,8 +21,11 @@ class ReportService {
   async generarReportePDF(filtros = {}) {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
 
+    console.log('📄 Iniciando generación de PDF...');
+    
     // Construir query con filtros
     const where = this.construirFiltros(filtros);
+    console.log('🔍 Filtros construidos:', JSON.stringify(where, null, 2));
 
     // Obtener datos
     const asistencias = await prisma.asistencia.findMany({
@@ -49,6 +52,8 @@ class ReportService {
       orderBy: { timestamp: 'desc' }
     });
 
+    console.log(`📊 Asistencias encontradas: ${asistencias.length}`);
+
     // Obtener institución
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
 
@@ -60,15 +65,27 @@ class ReportService {
 
     doc.pipe(stream);
 
-    // Encabezado institucional
-    doc.fontSize(18).font('Helvetica-Bold').text(institucion?.nombre || 'Instituto Educativo', { align: 'center' });
+    // Logo institucional (si existe)
+    const logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
+    if (fs.existsSync(logoPath)) {
+      try {
+        doc.image(logoPath, 50, 50, { width: 60, height: 60 });
+      } catch (error) {
+        console.log('No se pudo cargar el logo:', error.message);
+      }
+    }
+
+    // Encabezado institucional (con espacio para logo)
+    doc.fontSize(18).font('Helvetica-Bold').text(institucion?.nombre || 'Instituto Educativo', 130, 55, { align: 'left' });
     if (institucion?.direccion) {
-      doc.fontSize(10).font('Helvetica').text(institucion.direccion, { align: 'center' });
+      doc.fontSize(10).font('Helvetica').text(institucion.direccion, 130, 75, { align: 'left' });
     }
     if (institucion?.telefono) {
-      doc.text(`Tel: ${institucion.telefono}`, { align: 'center' });
+      doc.text(`Tel: ${institucion.telefono}`, 130, 90, { align: 'left' });
     }
-    doc.moveDown();
+    
+    // Resetear posición y continuar
+    doc.moveDown(3);
     doc.fontSize(14).font('Helvetica-Bold').text('REPORTE DE ASISTENCIAS', { align: 'center' });
     doc.moveDown();
 
@@ -100,6 +117,7 @@ class ReportService {
     doc.moveDown();
 
     // Tabla de datos
+    console.log('📋 Generando tabla con', asistencias.length, 'registros...');
     if (asistencias.length > 0) {
       const tableData = {
         headers: ['Fecha/Hora', 'Carnet', 'Nombre Completo', 'Grado', 'Tipo', 'Estado'],
@@ -109,25 +127,30 @@ class ReportService {
             new Date(a.timestamp).toLocaleString('es-ES', { 
               day: '2-digit', 
               month: '2-digit', 
+              year: '2-digit',
               hour: '2-digit', 
               minute: '2-digit' 
             }),
             persona?.carnet || 'N/A',
             `${persona?.nombres || ''} ${persona?.apellidos || ''}`.trim() || 'Desconocido',
             persona?.grado || 'N/A',
-            a.tipo_evento.toUpperCase(),
-            a.estado_puntualidad?.toUpperCase() || '-'
+            a.tipo_evento === 'entrada' ? 'ENT' : 'SAL',
+            a.estado_puntualidad?.toUpperCase() || 'N/A'
           ];
         })
       };
 
-      doc.moveDown();
+      console.log('📊 Tabla creada con', tableData.rows.length, 'filas');
+      
+      // Usar pdfkit-table para crear la tabla
       doc.table(tableData, {
         prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9),
-        prepareRow: () => doc.font('Helvetica').fontSize(8),
-        width: 500,
-        columnsSize: [80, 60, 120, 60, 50, 60]
+        prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+          doc.font('Helvetica').fontSize(8);
+        }
       });
+      
+      console.log('✅ Tabla agregada al PDF');
     } else {
       doc.fontSize(10).text('No se encontraron registros con los filtros aplicados.', { align: 'center' });
     }
@@ -142,10 +165,18 @@ class ReportService {
 
     doc.end();
 
+    console.log('⏳ Esperando finalización del PDF...');
+    
     // Esperar a que termine de escribir
     await new Promise((resolve, reject) => {
-      stream.on('finish', resolve);
-      stream.on('error', reject);
+      stream.on('finish', () => {
+        console.log('✅ PDF generado exitosamente:', fileName);
+        resolve();
+      });
+      stream.on('error', (err) => {
+        console.error('❌ Error generando PDF:', err);
+        reject(err);
+      });
     });
 
     return { filePath, fileName };

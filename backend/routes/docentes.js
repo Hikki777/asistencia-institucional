@@ -9,6 +9,7 @@ const {
   validarActualizarDocente, 
   validarId 
 } = require('../middlewares/validation');
+const { logger } = require('../utils/logger');
 
 const prisma = new PrismaClient();
 
@@ -58,7 +59,7 @@ router.get('/', async (req, res) => {
 
     res.json({ docentes });
   } catch (error) {
-    console.error('[GET /api/docentes]', error.message);
+    logger.error({ err: error }, '❌ Error al listar docentes');
     res.status(500).json({ error: error.message });
   }
 });
@@ -82,12 +83,13 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!docente) {
+      logger.warn({ docenteId: req.params.id }, '⚠️ Docente no encontrado');
       return res.status(404).json({ error: 'Docente no encontrado' });
     }
 
     res.json({ docente });
   } catch (error) {
-    console.error('[GET /api/docentes/:id]', error.message);
+    logger.error({ err: error, docenteId: req.params.id }, '❌ Error al obtener docente');
     res.status(500).json({ error: error.message });
   }
 });
@@ -125,10 +127,10 @@ router.post('/', upload.single('foto'), validarCrearDocente, async (req, res) =>
       }
     });
 
-    console.log(`✅ Docente creado: ${docente.nombres} ${docente.apellidos}`);
+    logger.info({ docenteId: docente.id, carnet, nombres, apellidos }, '✅ Docente creado');
     res.status(201).json({ docente });
   } catch (error) {
-    console.error('[POST /api/docentes]', error.message);
+    logger.error({ err: error, body: req.body }, '❌ Error al crear docente');
     res.status(500).json({ error: error.message });
   }
 });
@@ -171,10 +173,10 @@ router.put('/:id', upload.single('foto'), validarActualizarDocente, async (req, 
       }
     });
 
-    console.log(`✅ Docente actualizado: ${docenteActualizado.nombres} ${docenteActualizado.apellidos}`);
+    logger.info({ docenteId: id, campos: Object.keys(req.body) }, '✅ Docente actualizado');
     res.json({ docente: docenteActualizado });
   } catch (error) {
-    console.error('[PUT /api/docentes/:id]', error.message);
+    logger.error({ err: error, docenteId: req.params.id }, '❌ Error al actualizar docente');
     res.status(500).json({ error: error.message });
   }
 });
@@ -204,10 +206,10 @@ router.delete('/:id', async (req, res) => {
       where: { id: parseInt(id) }
     });
 
-    console.log(`✅ Docente eliminado: ${docente.nombres} ${docente.apellidos}`);
+    logger.info({ docenteId: id, nombres: docente.nombres, apellidos: docente.apellidos }, '✅ Docente eliminado');
     res.json({ message: 'Docente eliminado correctamente' });
   } catch (error) {
-    console.error('[DELETE /api/docentes/:id]', error.message);
+    logger.error({ err: error, docenteId: req.params.id }, '❌ Error al eliminar docente');
     res.status(500).json({ error: error.message });
   }
 });

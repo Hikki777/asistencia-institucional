@@ -5,6 +5,10 @@ const path = require('path');
 const fs = require('fs-extra');
 require('dotenv').config();
 
+// Importar logger PRIMERO
+const { logger, logSystemStart, setupGlobalErrorHandlers } = require('./utils/logger');
+const { requestLogger, attachRequestId } = require('./middlewares/requestLogger');
+
 const prisma = require('./prismaClient');
 const qrService = require('./services/qrService');
 const backupService = require('./services/backupService');
@@ -26,15 +30,25 @@ const checkEnv = () => {
   const required = ['JWT_SECRET', 'HMAC_SECRET'];
   const missing = required.filter(v => !process.env[v]);
   if (missing.length > 0) {
-    console.error('❌ Missing environment variables:', missing.join(', '));
+    logger.fatal({ missing }, '❌ Faltan variables de entorno críticas');
     process.exit(1);
   }
+  logger.info({ variables: required }, '✅ Variables de entorno verificadas');
 };
 
 checkEnv();
 
+// Configurar handlers globales de errores
+setupGlobalErrorHandlers();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// ============ MIDDLEWARE DE LOGGING ============
+
+// Request ID y logging (ANTES de otros middlewares)
+app.use(attachRequestId);
+app.use(requestLogger);
 
 // ============ MIDDLEWARE DE SEGURIDAD ============
 
@@ -60,7 +74,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.warn(`⚠️ CORS blocked origin: ${origin}`);
+      logger.warn({ origin, allowedOrigins }, '⚠️ CORS bloqueó origen no permitido');
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -191,7 +205,7 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
       }
     });
 
-    console.log(`✅ Institución inicializada: ${nombre}`);
+    logger.info({ institucion: nombre, adminEmail: admin.email }, '✅ Institución inicializada exitosamente');
     return res.status(201).json({
       success: true,
       institucion,
@@ -199,7 +213,7 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
       message: 'Institución y admin creados exitosamente'
     });
   } catch (error) {
-    console.error('[POST /api/institucion/init]', error.message);
+    logger.error({ err: error, body: req.body }, '❌ Error al inicializar institución');
     res.status(500).json({ error: error.message });
   }
 });
@@ -221,12 +235,13 @@ app.get('/api/institucion', async (req, res) => {
     });
 
     if (!institucion) {
+      logger.warn('⚠️ Intento de acceder a institución no inicializada');
       return res.status(404).json({ error: 'Institución no inicializada' });
     }
 
     res.json(institucion);
   } catch (error) {
-    console.error('[GET /api/institucion]', error.message);
+    logger.error({ err: error }, '❌ Error al obtener institución');
     res.status(500).json({ error: error.message });
   }
 });
@@ -255,7 +270,7 @@ app.put('/api/institucion', validarActualizarInstitucion, async (req, res) => {
         updateData.logo_path = logoResult.relativePath;
 
         // Regenerar todos los QRs con el nuevo logo
-        console.log('🔄 Regenerando QRs con nuevo logo...');
+        logger.info('🔄 Regenerando QRs con nuevo logo...');
         const qrs = await prisma.codigoQr.findMany({
           include: { alumno: true, personal: true }
         });
@@ -271,7 +286,7 @@ app.put('/api/institucion', validarActualizarInstitucion, async (req, res) => {
             });
           }
         }
-        console.log(`✅ ${qrs.length} QRs regenerados con nuevo logo`);
+        logger.info({ count: qrs.length }, `✅ QRs regenerados con nuevo logo`);
       }
     }
 
@@ -280,10 +295,10 @@ app.put('/api/institucion', validarActualizarInstitucion, async (req, res) => {
       data: updateData
     });
 
-    console.log('✅ Institución actualizada');
+    logger.info({ campos: Object.keys(updateData) }, '✅ Institución actualizada');
     res.json(institucionActualizada);
   } catch (error) {
-    console.error('[PUT /api/institucion]', error.message);
+    logger.error({ err: error }, '❌ Error al actualizar institución');
     res.status(500).json({ error: error.message });
   }
 });
@@ -306,15 +321,20 @@ app.use('/api/reportes', reportesRoutes);
  */
 app.get('/api/diagnostics/qrs', async (req, res) => {
   try {
-    console.log('[GET /api/diagnostics/qrs] Diagnostic triggered');
+    logger.info({ requestId: req.id }, '🔍 Iniciando diagnóstico de QRs');
     const resultado = await diagnosticsService.ejecutarDiagnosticos();
     
     // Registrar en auditoria
     await diagnosticsService.registrarDiagnostico(null, resultado);
     
+    logger.info({ 
+      totalIssues: resultado.resumen?.total_issues || 0,
+      duration: resultado.timestamp
+    }, '✅ Diagnóstico de QRs completado');
+    
     res.json(resultado);
   } catch (error) {
-    console.error('[GET /api/diagnostics/qrs]', error.message);
+    logger.error({ err: error, requestId: req.id }, '❌ Error en diagnóstico de QRs');
     res.status(500).json({ error: error.message });
   }
 });
@@ -322,10 +342,17 @@ app.get('/api/diagnostics/qrs', async (req, res) => {
 // ============ ERROR HANDLER ============
 
 app.use((err, req, res, next) => {
-  console.error('[ErrorHandler]', err.message);
+  logger.error({ 
+    err, 
+    requestId: req.id,
+    url: req.url,
+    method: req.method
+  }, '❌ Error no capturado en la aplicación');
+  
   res.status(500).json({
     error: 'Internal Server Error',
-    message: err.message
+    message: process.env.NODE_ENV === 'production' ? 'Ha ocurrido un error interno' : err.message,
+    requestId: req.id
   });
 });
 
@@ -334,47 +361,51 @@ app.use((err, req, res, next) => {
 async function iniciar() {
   try {
     // Conectar BD
-    console.log('[Startup] Testing database connection...');
+    logger.info('🔌 Probando conexión a base de datos...');
     await prisma.$queryRaw`SELECT 1`;
-    console.log('✅ Database connected');
+    logger.info('✅ Base de datos conectada correctamente');
 
     // Inicializar directorios y backups
-    console.log('[Startup] Initializing backups...');
+    logger.info('💾 Inicializando sistema de backups...');
     await backupService.inicializarBackups();
+    logger.info('✅ Backups inicializados');
     
-    console.log('[Startup] Initializing QR directories...');
+    logger.info('📁 Inicializando directorios de QR...');
     await qrService.inicializarDirectorios();
-    console.log('✅ Directories initialized');
+    logger.info('✅ Directorios QR creados');
 
     // Iniciar scheduler
-    console.log('[Startup] Starting scheduler...');
+    logger.info('⏰ Iniciando scheduler de tareas...');
     scheduler.iniciar();
-    console.log('✅ Scheduler started');
+    logger.info('✅ Scheduler activo');
 
     // Iniciar servidor con Promise
     return new Promise((resolve, reject) => {
       const server = app.listen(PORT, '0.0.0.0', () => {
-        console.log(`\n🚀 Servidor ejecutándose en http://localhost:${PORT}`);
-        console.log(`📋 API Health: http://localhost:${PORT}/api/health`);
-        console.log(`📝 Documentación: http://localhost:${PORT}/api-docs`);
-        console.log(`[Startup] Server ready and listening on 0.0.0.0:${PORT}`);
+        logSystemStart({
+          port: PORT,
+          databaseUrl: process.env.DATABASE_URL
+        });
+        
+        logger.info(`📋 API Health: http://localhost:${PORT}/api/health`);
+        logger.info(`📝 API Docs: http://localhost:${PORT}/api-docs`);
+        
         resolve(server);
       });
       
       server.on('error', (err) => {
-        console.error('❌ Server listen error:', err.message);
+        logger.fatal({ err }, '❌ Error al iniciar servidor');
         reject(err);
       });
     });
   } catch (error) {
-    console.error('❌ Startup error:', error.message);
-    console.error(error.stack);
+    logger.fatal({ err: error }, '❌ Error crítico durante el inicio');
     process.exit(1);
   }
 }
 
 iniciar().catch(err => {
-  console.error('❌ Failed to start server:', err);
+  logger.fatal({ err }, '❌ Fallo al iniciar el servidor');
   process.exit(1);
 });
 

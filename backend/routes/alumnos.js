@@ -6,6 +6,7 @@ const {
   validarActualizarAlumno, 
   validarId 
 } = require('../middlewares/validation');
+const { logger } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -47,7 +48,7 @@ router.get('/', async (req, res) => {
       alumnos
     });
   } catch (error) {
-    console.error('[GET /api/alumnos]', error.message);
+    logger.error({ err: error, query: req.query }, '❌ Error al listar alumnos');
     res.status(500).json({ error: error.message });
   }
 });
@@ -67,12 +68,13 @@ router.get('/:id', validarId, async (req, res) => {
     });
 
     if (!alumno) {
+      logger.warn({ alumnoId: req.params.id }, '⚠️ Alumno no encontrado');
       return res.status(404).json({ error: 'Alumno no encontrado' });
     }
 
     res.json(alumno);
   } catch (error) {
-    console.error('[GET /api/alumnos/:id]', error.message);
+    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al obtener alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -119,10 +121,10 @@ router.post('/', validarCrearAlumno, async (req, res) => {
       }
     });
 
-    console.log(`✅ Alumno creado: ${carnet}`);
+    logger.info({ alumnoId: alumno.id, carnet, nombres, apellidos }, '✅ Alumno creado');
     res.status(201).json(alumno);
   } catch (error) {
-    console.error('[POST /api/alumnos]', error.message);
+    logger.error({ err: error, body: req.body }, '❌ Error al crear alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -158,10 +160,10 @@ router.put('/:id', validarActualizarAlumno, async (req, res) => {
       }
     });
 
-    console.log(`✅ Alumno actualizado: ${id}`);
+    logger.info({ alumnoId: id, campos: Object.keys(req.body) }, '✅ Alumno actualizado');
     res.json(alumno);
   } catch (error) {
-    console.error('[PUT /api/alumnos/:id]', error.message);
+    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al actualizar alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -189,10 +191,10 @@ router.delete('/:id', async (req, res) => {
       }
     });
 
-    console.log(`✅ Alumno inactivado: ${id}`);
+    logger.info({ alumnoId: id }, '✅ Alumno inactivado');
     res.json({ success: true, message: 'Alumno inactivado' });
   } catch (error) {
-    console.error('[DELETE /api/alumnos/:id]', error.message);
+    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al inactivar alumno');
     res.status(500).json({ error: error.message });
   }
 });

@@ -185,7 +185,7 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
             carnet: true,
             nombres: true,
             apellidos: true,
-            categoria: true,
+            grado: true,
             jornada: true
           }
         },
@@ -250,7 +250,7 @@ router.get('/hoy', async (req, res) => {
             carnet: true,
             nombres: true,
             apellidos: true,
-            categoria: true,
+            grado: true,
             jornada: true
           }
         },

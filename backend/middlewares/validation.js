@@ -125,10 +125,11 @@ exports.validarCrearDocente = [
     .optional()
     .isIn(['M', 'F']).withMessage('El sexo debe ser M o F'),
   
-  body('grado')
+  body('categoria')
     .optional()
     .trim()
-    .isLength({ max: 50 }).withMessage('El grado no puede exceder 50 caracteres'),
+    .isIn(['Director', 'Directora', 'Docente', 'Secretaria', 'Secretario', 'Operativo', 'Auxiliar'])
+    .withMessage('Categoría inválida. Debe ser: Director, Directora, Docente, Secretaria, Secretario, Operativo o Auxiliar'),
   
   body('jornada')
     .optional()
@@ -167,10 +168,11 @@ exports.validarActualizarDocente = [
     .optional()
     .isIn(['M', 'F']).withMessage('El sexo debe ser M o F'),
   
-  body('grado')
+  body('categoria')
     .optional()
     .trim()
-    .isLength({ max: 50 }).withMessage('El grado no puede exceder 50 caracteres'),
+    .isIn(['Director', 'Directora', 'Docente', 'Secretaria', 'Secretario', 'Operativo', 'Auxiliar'])
+    .withMessage('Categoría inválida'),
   
   body('jornada')
     .optional()

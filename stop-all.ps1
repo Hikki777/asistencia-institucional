@@ -6,8 +6,19 @@ Write-Host "  DETENIENDO SISTEMA" -ForegroundColor Red
 Write-Host "================================" -ForegroundColor Red
 Write-Host ""
 
+# Detener jobs de PowerShell primero
+Write-Host "[1/4] Deteniendo jobs de PowerShell..." -ForegroundColor Yellow
+$jobs = Get-Job -ErrorAction SilentlyContinue
+if ($jobs) {
+    $jobs | Stop-Job -ErrorAction SilentlyContinue
+    $jobs | Remove-Job -Force -ErrorAction SilentlyContinue
+    Write-Host "  ✓ Jobs detenidos: $($jobs.Count)" -ForegroundColor Green
+} else {
+    Write-Host "  ⓘ No hay jobs activos" -ForegroundColor Gray
+}
+
 # Detener todos los procesos de Node.js
-Write-Host "[1/3] Deteniendo procesos Node.js..." -ForegroundColor Yellow
+Write-Host "[2/4] Deteniendo procesos Node.js..." -ForegroundColor Yellow
 $nodeProcesses = Get-Process -Name node -ErrorAction SilentlyContinue
 if ($nodeProcesses) {
     $nodeProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -19,7 +30,7 @@ if ($nodeProcesses) {
 Start-Sleep -Seconds 2
 
 # Liberar puertos
-Write-Host "[2/3] Liberando puertos 5000 y 5173..." -ForegroundColor Yellow
+Write-Host "[3/4] Liberando puertos 5000 y 5173..." -ForegroundColor Yellow
 $port5000 = Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue
 $port5173 = Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue
 
@@ -38,7 +49,7 @@ if (-not $port5000 -and -not $port5173) {
 }
 
 # Verificación final
-Write-Host "[3/3] Verificando limpieza..." -ForegroundColor Yellow
+Write-Host "[4/4] Verificando limpieza..." -ForegroundColor Yellow
 Start-Sleep -Seconds 1
 
 $remainingNodes = Get-Process -Name node -ErrorAction SilentlyContinue

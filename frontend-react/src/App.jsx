@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { Menu, X, LogOut, Home, Settings, BarChart3, Wrench, User, Clock, Users, FileText } from 'lucide-react';
 import { authAPI } from './api/endpoints';
+import ErrorBoundary from './components/ErrorBoundary';
 import Dashboard from './components/Dashboard';
 import AlumnosPanel from './components/AlumnosPanel';
-import DocentesPanel from './components/DocentesPanel';
+import PersonalPanel from './components/PersonalPanel';
 import AsistenciasPanel from './components/AsistenciasPanel';
 import ConfiguracionPanel from './components/ConfiguracionPanel';
 import DiagnosticsPanel from './components/DiagnosticsPanel';
@@ -48,14 +49,16 @@ function App() {
   // El router maneja /login sin token, el resto requiere token
 
   return (
-    <Router>
-      <div className="flex h-screen bg-gray-100">
-        {/* Sidebar */}
-        <aside
-          className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white transform transition duration-200 ease-in-out ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 md:static`}
-        >
+    <ErrorBoundary fallbackMessage="Ha ocurrido un error en la aplicación. Por favor, recarga la página.">
+      <Router>
+        <div className="flex h-screen bg-gray-100">
+          {/* Sidebar - Solo mostrar si está autenticado */}
+          {isLoggedIn && (
+          <aside
+            className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white transform transition duration-200 ease-in-out ${
+              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            } md:translate-x-0 md:static`}
+          >
           <div className="p-6 border-b border-blue-700">
             <h1 className="text-2xl font-bold">🎓 Gestión Institucional</h1>
             <p className="text-sm text-blue-200">Registro de Asistencias</p>
@@ -73,7 +76,7 @@ function App() {
           <nav className="p-4 space-y-2">
             <NavLink to="/" icon={Home} label="Dashboard" />
             <NavLink to="/alumnos" icon={BarChart3} label="Alumnos" />
-            <NavLink to="/docentes" icon={Users} label="Docentes" />
+            <NavLink to="/docentes" icon={Users} label="Personal" />
             <NavLink to="/asistencias" icon={Clock} label="Asistencias" />
             <NavLink to="/reportes" icon={FileText} label="Reportes" />
             <NavLink to="/configuracion" icon={Settings} label="Configuración" />
@@ -89,16 +92,19 @@ function App() {
             </button>
           </div>
         </aside>
+          )}
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          {/* Mobile Menu */}
+          {/* Mobile Menu - Solo mostrar si está autenticado */}
+          {isLoggedIn && (
           <div className="md:hidden bg-blue-900 text-white p-4 flex items-center justify-between">
             <h1 className="text-xl font-bold">🎓 Registro Institucional</h1>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2">
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
+          )}
 
           {/* Close sidebar when clicking outside on mobile */}
           {sidebarOpen && (
@@ -114,7 +120,7 @@ function App() {
               <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <LoginPage />} />
               <Route path="/" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
               <Route path="/alumnos" element={isLoggedIn ? <AlumnosPanel /> : <Navigate to="/login" />} />
-              <Route path="/docentes" element={isLoggedIn ? <DocentesPanel /> : <Navigate to="/login" />} />
+              <Route path="/docentes" element={isLoggedIn ? <PersonalPanel /> : <Navigate to="/login" />} />
               <Route path="/asistencias" element={isLoggedIn ? <AsistenciasPanel /> : <Navigate to="/login" />} />
               <Route path="/reportes" element={isLoggedIn ? <ReportesPanel /> : <Navigate to="/login" />} />
               <Route path="/configuracion" element={isLoggedIn ? <ConfiguracionPanel /> : <Navigate to="/login" />} />
@@ -125,6 +131,7 @@ function App() {
         </div>
       </div>
     </Router>
+    </ErrorBoundary>
   );
 }
 

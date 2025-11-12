@@ -57,27 +57,27 @@ async function main() {
       }
     }
 
-    // Crear personal
+    // Crear docentes
     const personal = [
       {
-        carnet: 'P001',
+        carnet: 'D001',
         nombres: 'Roberto',
         apellidos: 'Profesional Silva',
         sexo: 'M',
-        grado: 'Docente',
+        categoria: 'Docente',
         jornada: 'Matutina'
       },
       {
-        carnet: 'P002',
+        carnet: 'D002',
         nombres: 'Laura',
         apellidos: 'Enseñanza González',
         sexo: 'F',
-        grado: 'Docente',
+        categoria: 'Directora',
         jornada: 'Vespertina'
       }
     ];
 
-    console.log('👨‍🏫 Creando personal...');
+    console.log('👨‍🏫 Creando docentes...');
     for (const p of personal) {
       const existing = await prisma.personal.findUnique({
         where: { carnet: p.carnet }
@@ -104,3 +104,5 @@ async function main() {
 }
 
 main().catch(console.error);
+
+

@@ -48,32 +48,32 @@ model Alumno {
 }
 
 // Personal (maestros, administrativos, etc.)
-model Docente {
+model Personal {
   id             Int      @id @default(autoincrement())
   carnet         String   @unique
   nombres        String
   apellidos      String
   sexo           String?
-  grado          String? // ej: "Docente", "Administrativo"
+  categoria      String? // "Director", "Directora", "Docente", "Secretaria", "Secretario", "Operativo", "Auxiliar"
   jornada        String?
   estado         String   @default("activo")
   foto_path      String?
   creado_en      DateTime @default(now())
   actualizado_en DateTime @updatedAt
 
-  codigos_qr  CodigoQr[]   @relation("docente_qr")
-  asistencias Asistencia[] @relation("docente_asistencia")
+  codigos_qr  CodigoQr[]   @relation("personal_qr")
+  asistencias Asistencia[] @relation("personal_asistencia")
 
   @@index([estado])
-  @@map("docentes")
+  @@map("personal")
 }
 
 // Códigos QR generados
 model CodigoQr {
   id            Int       @id @default(autoincrement())
-  persona_tipo  String // "alumno" o "docente"
+  persona_tipo  String // "alumno" o "personal"
   alumno_id     Int?
-  docente_id    Int?
+  personal_id   Int?
   token         String    @unique // Token HMAC firmado en base64url
   png_path      String? // Ruta relativa al PNG generado
   vigente       Boolean   @default(true)
@@ -81,11 +81,11 @@ model CodigoQr {
   regenerado_en DateTime? // Última regeneración
 
   // Relaciones
-  alumno  Alumno?  @relation("alumno_qr", fields: [alumno_id], references: [id], onDelete: Cascade)
-  docente Docente? @relation("docente_qr", fields: [docente_id], references: [id], onDelete: Cascade)
+  alumno   Alumno?   @relation("alumno_qr", fields: [alumno_id], references: [id], onDelete: Cascade)
+  personal Personal? @relation("personal_qr", fields: [personal_id], references: [id], onDelete: Cascade)
 
   @@unique([persona_tipo, alumno_id])
-  @@unique([persona_tipo, docente_id])
+  @@unique([persona_tipo, personal_id])
   @@index([token])
   @@index([vigente])
   @@map("codigos_qr")
@@ -94,9 +94,9 @@ model CodigoQr {
 // Registro de asistencias
 model Asistencia {
   id                 Int      @id @default(autoincrement())
-  persona_tipo       String // "alumno" o "docente"
+  persona_tipo       String // "alumno" o "personal"
   alumno_id          Int?
-  docente_id         Int?
+  personal_id        Int?
   tipo_evento        String // "entrada" o "salida"
   timestamp          DateTime @default(now())
   origen             String   @default("QR") // "QR" o "Manual"
@@ -105,8 +105,8 @@ model Asistencia {
   observaciones      String?
   creado_en          DateTime @default(now())
 
-  alumno  Alumno?  @relation("alumno_asistencia", fields: [alumno_id], references: [id], onDelete: SetNull)
-  docente Docente? @relation("docente_asistencia", fields: [docente_id], references: [id], onDelete: SetNull)
+  alumno   Alumno?   @relation("alumno_asistencia", fields: [alumno_id], references: [id], onDelete: SetNull)
+  personal Personal? @relation("personal_asistencia", fields: [personal_id], references: [id], onDelete: SetNull)
 
   @@index([timestamp])
   @@index([persona_tipo])

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../prismaClient');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -11,8 +11,6 @@ const {
 } = require('../middlewares/validation');
 const { logger } = require('../utils/logger');
 const { cacheMiddleware, invalidateCacheMiddleware } = require('../middlewares/cache');
-
-const prisma = new PrismaClient();
 
 // Configurar multer para subida de fotos
 const storage = multer.diskStorage({
@@ -45,8 +43,8 @@ const upload = multer({
   }
 });
 
-// GET /api/docentes - Listar todos los docentes con paginación cursor (cacheado 2 min)
-router.get('/', cacheMiddleware('list'), async (req, res) => {
+// GET /api/docentes - Listar todos los docentes con paginación cursor (sin caché temporalmente)
+router.get('/', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;
@@ -74,7 +72,7 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
     res.json({
       total,
       count: items.length,
-      docentes: items,
+      personal: items,
       pagination: {
         nextCursor,
         hasMore,
@@ -118,9 +116,16 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/docentes - Crear nuevo docente
-router.post('/', invalidateCacheMiddleware('/api/docentes'), upload.single('foto'), validarCrearDocente, async (req, res) => {
+router.post('/', invalidateCacheMiddleware('/api/docentes'), (req, res, next) => {
+  // Solo aplicar multer si el Content-Type es multipart/form-data
+  if (req.is('multipart/form-data')) {
+    upload.single('foto')(req, res, next);
+  } else {
+    next();
+  }
+}, validarCrearDocente, async (req, res) => {
   try {
-    const { carnet, nombres, apellidos, sexo, grado, jornada } = req.body;
+    const { carnet, nombres, apellidos, sexo, categoria, jornada } = req.body;
 
     // Validar campos requeridos
     if (!carnet || !nombres || !apellidos) {
@@ -144,7 +149,7 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), upload.single('foto
         nombres,
         apellidos,
         sexo: sexo || null,
-        grado: grado || 'Docente',
+        categoria: categoria || 'Docente',
         jornada: jornada || null,
         foto_path
       }
@@ -159,10 +164,17 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), upload.single('foto
 });
 
 // PUT /api/docentes/:id - Actualizar docente
-router.put('/:id', invalidateCacheMiddleware('/api/docentes'), upload.single('foto'), validarActualizarDocente, async (req, res) => {
+router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) => {
+  // Solo aplicar multer si el Content-Type es multipart/form-data
+  if (req.is('multipart/form-data')) {
+    upload.single('foto')(req, res, next);
+  } else {
+    next();
+  }
+}, validarActualizarDocente, async (req, res) => {
   try {
     const { id } = req.params;
-    const { carnet, nombres, apellidos, sexo, grado, jornada, estado } = req.body;
+    const { carnet, nombres, apellidos, sexo, categoria, jornada, estado } = req.body;
 
     const docente = await prisma.personal.findUnique({
       where: { id: parseInt(id) }
@@ -189,7 +201,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), upload.single('fo
         nombres: nombres || docente.nombres,
         apellidos: apellidos || docente.apellidos,
         sexo: sexo !== undefined ? sexo : docente.sexo,
-        grado: grado || docente.grado,
+        categoria: categoria || docente.categoria,
         jornada: jornada !== undefined ? jornada : docente.jornada,
         estado: estado || docente.estado,
         foto_path
@@ -238,3 +250,6 @@ router.delete('/:id', invalidateCacheMiddleware('/api/docentes'), async (req, re
 });
 
 module.exports = router;
+
+
+

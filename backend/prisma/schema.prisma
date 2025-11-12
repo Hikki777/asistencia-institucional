@@ -56,7 +56,7 @@ model Personal {
   nombres           String
   apellidos         String
   sexo              String?
-  grado             String?   // ej: "Docente", "Administrativo"
+  categoria         String?   // "Director", "Directora", "Docente", "Secretaria", "Secretario", "Operativo", "Auxiliar"
   jornada           String?
   estado            String    @default("activo")
   foto_path         String?

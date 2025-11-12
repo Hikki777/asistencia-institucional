@@ -1,0 +1,37 @@
+✓ Eliminado: DocentesPanel.jsx (reemplazado por PersonalPanel)
+✓ Eliminado: AlumnosPanel_OLD.jsx
+✓ Eliminado: AsistenciasPanel_OLD_ZXING.jsx
+✓ Eliminado: Carpeta frontend/ (HTML estático no usado)
+✓ Eliminado: test.js
+✓ Eliminado: test-auth.js
+✓ Eliminado: test-qr-content.js
+✓ Eliminado: test-qr-display.html
+✓ Eliminado: check-login.js
+✓ Eliminado: check-logo.js
+✓ Eliminado: check-user.js
+✓ Eliminado: setup-test-db.js
+✓ Eliminado: qr-mobile.html
+✓ Eliminado: qr-mobile-con-logo.html
+✓ Eliminado: imprimir-qr.html
+✓ Eliminado: generar-asistencias-demo.js
+✓ Eliminado: generar-qrs-sin-logo.js
+✓ Eliminado: generar-qrs-ultra.js
+✓ Eliminado: regenerar-qrs-sin-logo.js
+✓ Eliminado: regenerar-qrs.js
+✓ Eliminado: aplicar-optimizaciones.ps1
+✓ Eliminado: exportar-node-modules.ps1
+✓ Eliminado: COMANDOS_POWERSHELL.md
+✓ Eliminado: COMANDOS_UTILES.md
+✓ Eliminado: DIAGNOSTICO_Y_REPARACION.md
+✓ Eliminado: ESTADO_ACTUAL.md
+✓ Eliminado: MEJORAS_PRE_GITHUB.md
+✓ Eliminado: OBSERVABILIDAD_APLICADA.md
+✓ Eliminado: OPTIMIZACIONES_APLICADAS.md
+✓ Eliminado: OPTIMIZACIONES_Y_ROADMAP.md
+✓ Eliminado: PERFORMANCE_OPTIMIZADO.md
+✓ Eliminado: PROXIMOS_PASOS.md
+✓ Eliminado: SEGURIDAD_APLICADA.md
+✓ Eliminado: TESTING_Y_CICD.md
+✓ Eliminado: UX_FRONTEND_MEJORADO.md
+✓ Eliminado: INSTRUCCIONES_TRANSFERENCIA.md
+✓ Eliminado: README_COMPLETO.md

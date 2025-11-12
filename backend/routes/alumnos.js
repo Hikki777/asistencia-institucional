@@ -16,9 +16,9 @@ router.use(verifyJWT);
 
 /**
  * GET /api/alumnos
- * Listar todos los alumnos con paginación cursor (cacheado 2 min)
+ * Listar todos los alumnos con paginación cursor (sin caché temporalmente)
  */
-router.get('/', cacheMiddleware('list'), async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;

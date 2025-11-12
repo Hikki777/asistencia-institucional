@@ -1,345 +1,687 @@
-# 🎓 Sistema de Registro Institucional
+# 🎓 Sistema de Registro Institucional# 🎓 Sistema de Registro Institucional
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
+Sistema completo de gestión de asistencias para instituciones educativas con códigos QR, panel administrativo React y sistema de auto-reparación.[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/tu-usuario/sistema-registro-institucional/pulls)
 
-> Sistema completo de gestión de asistencias para instituciones educativas con códigos QR, panel administrativo React y auto-reparación automática.
+## ✨ Características Principales[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/tu-usuario/sistema-registro-institucional/pulls)
 
-**Desarrollado por:** [Kevin Gabriel Pérez García](https://github.com/tu-usuario)
 
----
 
-## 📑 Tabla de Contenidos
+- 📱 **Registro con QR**: Escaneo mediante webcam para registro rápido> Sistema completo de gestión de asistencias para instituciones educativas con códigos QR, panel administrativo React y auto-reparación automática.
+
+- ✍️ **Entrada Manual**: Sistema alternativo de búsqueda y selección
+
+- 👥 **Gestión Completa**: CRUD de alumnos y personal**Desarrollado por:** [Kevin Gabriel Pérez García](https://github.com/tu-usuario)
+
+- 📊 **Dashboard en Tiempo Real**: Estadísticas, gráficos y métricas
+
+- 🖨️ **Impresión de QR**: Generador de tarjetas profesionales---
+
+- 🔐 **Autenticación JWT**: Sistema seguro con tokens
+
+- 🔄 **Auto-Reparación**: Diagnóstico automático cada 6 horas## 📑 Tabla de Contenidos
+
+- 💾 **Backups Automáticos**: Respaldos diarios de base de datos
 
 - [Inicio Rápido](#-inicio-rápido-nuevo)
-- [Características](#-características)
-- [Capturas de Pantalla](#-capturas-de-pantalla)
-- [Tecnologías](#-tecnologías)
-- [Requisitos Previos](#-requisitos-previos)
-- [Instalación](#-instalación)
-- [Configuración](#-configuración)
-- [Uso](#-uso)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [API Documentation](#-api-documentation)
-- [Scripts Disponibles](#-scripts-disponibles)
-- [Contribuir](#-contribuir)
-- [Licencia](#-licencia)
-- [Contacto](#-contacto)
 
----
+## 🚀 Inicio Rápido- [Características](#-características)
+
+- [Capturas de Pantalla](#-capturas-de-pantalla)
+
+### Requisitos Previos- [Tecnologías](#-tecnologías)
+
+- [Requisitos Previos](#-requisitos-previos)
+
+- Node.js v18.0.0 o superior- [Instalación](#-instalación)
+
+- npm v9.0.0 o superior- [Configuración](#-configuración)
+
+- [Uso](#-uso)
+
+### Instalación- [Estructura del Proyecto](#-estructura-del-proyecto)
+
+- [API Documentation](#-api-documentation)
+
+```powershell- [Scripts Disponibles](#-scripts-disponibles)
+
+# 1. Clonar el repositorio- [Contribuir](#-contribuir)
+
+git clone https://github.com/Hikki777/asistencia-institucional.git- [Licencia](#-licencia)
+
+cd asistencia-institucional- [Contacto](#-contacto)
+
+
+
+# 2. Instalar dependencias del proyecto---
+
+npm install
 
 ## 🚀 Inicio Rápido (NUEVO)
 
-### Iniciar el Sistema Completo
-```powershell
-.\start-all.ps1
+# 3. Instalar dependencias del frontend
+
+cd frontend-react### Iniciar el Sistema Completo
+
+npm install```powershell
+
+cd ...\start-all.ps1
+
 ```
 
-✅ **Ventajas:**
+# 4. Generar cliente Prisma
+
+npx prisma generate✅ **Ventajas:**
+
 - Solo 1 terminal de VS Code
-- Sin ventanas externas (CMD/PowerShell)
-- Consumo mínimo de recursos (~250MB RAM)
+
+# 5. Aplicar migraciones a la base de datos- Sin ventanas externas (CMD/PowerShell)
+
+npx prisma migrate deploy- Consumo mínimo de recursos (~250MB RAM)
+
 - Abre automáticamente el navegador
-- Presiona `Ctrl+C` para detener todo
+
+# 6. (Opcional) Poblar con datos de prueba- Presiona `Ctrl+C` para detener todo
+
+node backend/prisma/seed.js
 
 ### Detener el Sistema
-```powershell
-.\stop-all.ps1
-```
 
-📖 **Más información:** Ver [INICIO_RAPIDO.md](./INICIO_RAPIDO.md) para guía detallada.
+# 7. Crear usuario administrador```powershell
 
----
+node crear-admin.js.\stop-all.ps1
 
-## ✨ Características
+``````
+
+
+
+### Iniciar el Sistema📖 **Más información:** Ver [INICIO_RAPIDO.md](./INICIO_RAPIDO.md) para guía detallada.
+
+
+
+```powershell---
+
+# Opción 1: Script automático (Recomendado)
+
+# Libera puertos automáticamente, sin ventanas externas## ✨ Características
+
+.\start-auto.ps1
 
 ### 🎯 Funcionalidades Principales
 
-- **📱 Registro con QR**: Escaneo de códigos QR mediante webcam para registro rápido
-- **✍️ Entrada Manual**: Sistema alternativo de búsqueda y selección para registro
+# Opción 2: Comando NPM integrado
+
+npm run dev- **📱 Registro con QR**: Escaneo de códigos QR mediante webcam para registro rápido
+
+```- **✍️ Entrada Manual**: Sistema alternativo de búsqueda y selección para registro
+
 - **👥 Gestión Completa**: CRUD de alumnos y personal docente/administrativo
-- **📊 Dashboard en Tiempo Real**: Estadísticas, gráficos y métricas de asistencia
+
+### Detener el Sistema- **📊 Dashboard en Tiempo Real**: Estadísticas, gráficos y métricas de asistencia
+
 - **🏫 Multi-Institución**: Configuración personalizable por institución
-- **🖨️ Impresión de QR**: Generador de tarjetas QR profesionales listas para imprimir
-- **🔐 Autenticación JWT**: Sistema seguro de login con tokens
-- **🔄 Auto-Reparación**: Diagnóstico y regeneración automática de QR cada 6 horas
+
+```powershell- **🖨️ Impresión de QR**: Generador de tarjetas QR profesionales listas para imprimir
+
+.\stop-all.ps1- **🔐 Autenticación JWT**: Sistema seguro de login con tokens
+
+```- **🔄 Auto-Reparación**: Diagnóstico y regeneración automática de QR cada 6 horas
+
 - **💾 Backups Automáticos**: Respaldos diarios de base de datos
-- **🌙 Interfaz Moderna**: UI/UX con Tailwind CSS y animaciones Framer Motion
 
-### 🛠️ Características Técnicas
+### Acceso al Sistema- **🌙 Interfaz Moderna**: UI/UX con Tailwind CSS y animaciones Framer Motion
 
-- **API REST** completa con documentación
+
+
+- **Frontend**: http://localhost:5173### 🛠️ Características Técnicas
+
+- **Backend API**: http://localhost:5000
+
+- **Health Check**: http://localhost:5000/api/health- **API REST** completa con documentación
+
 - **Validación** de datos en frontend y backend
-- **Scheduler** para tareas automatizadas
-- **Logging** de auditoría completo
-- **Responsive Design** compatible con móviles
+
+**Credenciales por defecto:**- **Scheduler** para tareas automatizadas
+
+- Email: `admin@test.edu`- **Logging** de auditoría completo
+
+- Contraseña: `admin123`- **Responsive Design** compatible con móviles
+
 - **Hot Reload** en desarrollo
 
----
-
-## 📸 Capturas de Pantalla
-
-### Dashboard Principal
-*(Agrega tu captura aquí)*
-
-### Panel de Asistencias con Escaneo QR
-*(Agrega tu captura aquí)*
-
-### Gestión de Alumnos
-*(Agrega tu captura aquí)*
-
-### Tarjetas QR para Imprimir
-*(Agrega tu captura aquí)*
+## 🏗️ Tecnologías
 
 ---
-
-## 🚀 Tecnologías
 
 ### Frontend
-- **React 18** - Biblioteca UI
-- **Vite** - Build tool y dev server
-- **TailwindCSS** - Framework CSS utility-first
-- **Framer Motion** - Animaciones
-- **Recharts** - Gráficos y visualizaciones
+
+- **React 18** - Biblioteca UI## 📸 Capturas de Pantalla
+
+- **Vite** - Build tool ultrarrápido
+
+- **TailwindCSS** - Framework CSS utility-first### Dashboard Principal
+
+- **Framer Motion** - Animaciones fluidas*(Agrega tu captura aquí)*
+
 - **html5-qrcode** - Escaneo de códigos QR
-- **Lucide React** - Iconos modernos
 
-### Backend
-- **Node.js v18+** - Runtime JavaScript
+- **Recharts** - Gráficos y visualizaciones### Panel de Asistencias con Escaneo QR
+
+- **Lucide React** - Iconos modernos*(Agrega tu captura aquí)*
+
+
+
+### Backend### Gestión de Alumnos
+
+- **Node.js v18+** - Runtime JavaScript*(Agrega tu captura aquí)*
+
 - **Express.js** - Framework web
-- **Prisma ORM** - Manejo de base de datos
-- **SQLite** - Base de datos (desarrollo)
-- **JWT (jsonwebtoken)** - Autenticación
-- **bcryptjs** - Encriptación de contraseñas
+
+- **Prisma ORM** - Manejo de base de datos### Tarjetas QR para Imprimir
+
+- **SQLite** - Base de datos (desarrollo)*(Agrega tu captura aquí)*
+
+- **JWT** - Autenticación con tokens
+
+- **bcryptjs** - Encriptación de contraseñas---
+
 - **QRCode + Sharp** - Generación de QR con logos
-- **node-cron** - Tareas programadas
 
----
+- **node-cron** - Tareas programadas## 🚀 Tecnologías
 
-## 📋 Requisitos Previos
 
-Antes de comenzar, asegúrate de tener instalado:
 
-- **Node.js** v18.0.0 o superior ([Descargar](https://nodejs.org/))
-- **npm** v9.0.0 o superior (incluido con Node.js)
-- **Git** ([Descargar](https://git-scm.com/))
+## 📁 Estructura del Proyecto### Frontend
 
-Verifica las versiones instaladas:
+- **React 18** - Biblioteca UI
 
-```bash
-node --version  # Debe ser >= v18.0.0
-npm --version   # Debe ser >= 9.0.0
-git --version
-```
+```- **Vite** - Build tool y dev server
 
----
+Sistema de Registro Institucional/- **TailwindCSS** - Framework CSS utility-first
 
-## 🛠️ Instalación
+├── backend/- **Framer Motion** - Animaciones
 
-### 1. Clonar el Repositorio
+│   ├── prisma/- **Recharts** - Gráficos y visualizaciones
 
-```bash
-git clone https://github.com/tu-usuario/sistema-registro-institucional.git
-cd sistema-registro-institucional
-```
+│   │   ├── schema.prisma     # Esquema de base de datos- **html5-qrcode** - Escaneo de códigos QR
 
-### 2. Instalar Dependencias del Backend
+│   │   ├── seed.js           # Datos de prueba- **Lucide React** - Iconos modernos
 
-```bash
+│   │   └── migrations/       # Historial de migraciones
+
+│   ├── routes/               # Rutas de la API### Backend
+
+│   │   ├── auth.js           # Autenticación- **Node.js v18+** - Runtime JavaScript
+
+│   │   ├── alumnos.js        # CRUD alumnos- **Express.js** - Framework web
+
+│   │   ├── docentes.js       # CRUD personal- **Prisma ORM** - Manejo de base de datos
+
+│   │   ├── asistencias.js    # Registro asistencias- **SQLite** - Base de datos (desarrollo)
+
+│   │   ├── qr.js             # Generación QR- **JWT (jsonwebtoken)** - Autenticación
+
+│   │   └── repair.js         # Auto-reparación- **bcryptjs** - Encriptación de contraseñas
+
+│   ├── services/             # Lógica de negocio- **QRCode + Sharp** - Generación de QR con logos
+
+│   ├── middlewares/          # Middlewares (auth, validation, cache)- **node-cron** - Tareas programadas
+
+│   ├── jobs/                 # Tareas programadas (scheduler)
+
+│   └── server.js             # Servidor principal---
+
+├── frontend-react/
+
+│   ├── src/## 📋 Requisitos Previos
+
+│   │   ├── components/       # Componentes React
+
+│   │   │   ├── Dashboard.jsxAntes de comenzar, asegúrate de tener instalado:
+
+│   │   │   ├── AlumnosPanel.jsx
+
+│   │   │   ├── PersonalPanel.jsx- **Node.js** v18.0.0 o superior ([Descargar](https://nodejs.org/))
+
+│   │   │   ├── AsistenciasPanel.jsx- **npm** v9.0.0 o superior (incluido con Node.js)
+
+│   │   │   └── ...- **Git** ([Descargar](https://git-scm.com/))
+
+│   │   ├── pages/            # Páginas
+
+│   │   ├── api/              # Cliente API AxiosVerifica las versiones instaladas:
+
+│   │   ├── App.jsx
+
+│   │   └── main.jsx```bash
+
+│   └── vite.config.jsnode --version  # Debe ser >= v18.0.0
+
+├── uploads/npm --version   # Debe ser >= 9.0.0
+
+│   ├── qrs/                  # Códigos QR generadosgit --version
+
+│   ├── logos/                # Logo institucional```
+
+│   └── fotos/                # Fotos de usuarios
+
+├── backups/                  # Respaldos automáticos---
+
+├── logs/                     # Logs del sistema
+
+├── dev.db                    # Base de datos SQLite## 🛠️ Instalación
+
+├── .env                      # Variables de entorno
+
+├── package.json              # Dependencias del proyecto### 1. Clonar el Repositorio
+
+├── start-auto.ps1            # Script de inicio automatizado
+
+├── stop-all.ps1              # Script de detención```bash
+
+├── cleanup.ps1               # Script de limpiezagit clone https://github.com/tu-usuario/sistema-registro-institucional.git
+
+├── check-data.js             # Verificar datos en BDcd sistema-registro-institucional
+
+├── list-data.js              # Listar datos de prueba```
+
+├── crear-admin.js            # Crear usuario admin
+
+├── reset-password.js         # Resetear contraseña### 2. Instalar Dependencias del Backend
+
+└── README.md
+
+``````bash
+
 npm install
-```
 
-### 3. Instalar Dependencias del Frontend
+## 📡 API Principal```
 
-```bash
-cd frontend-react
-npm install
-cd ..
-```
 
-### 4. Inicializar Base de Datos
+
+### Autenticación### 3. Instalar Dependencias del Frontend
+
+- `POST /api/auth/login` - Iniciar sesión y obtener token JWT
 
 ```bash
+
+### Personal (Docentes/Administrativos)cd frontend-react
+
+- `GET /api/docentes` - Listar personalnpm install
+
+- `GET /api/docentes/:id` - Obtener por IDcd ..
+
+- `POST /api/docentes` - Crear miembro del personal```
+
+- `PUT /api/docentes/:id` - Actualizar
+
+- `DELETE /api/docentes/:id` - Eliminar### 4. Inicializar Base de Datos
+
+
+
+**Categorías disponibles:** Director, Directora, Docente, Secretaria, Secretario, Operativo, Auxiliar```bash
+
 # Generar cliente Prisma
-npx prisma generate
 
-# Aplicar migraciones
-npx prisma migrate dev --name init
-```
+### Alumnosnpx prisma generate
+
+- `GET /api/alumnos` - Listar alumnos
+
+- `GET /api/alumnos/:id` - Obtener por ID# Aplicar migraciones
+
+- `POST /api/alumnos` - Crear alumnonpx prisma migrate dev --name init
+
+- `PUT /api/alumnos/:id` - Actualizar```
+
+- `DELETE /api/alumnos/:id` - Eliminar
 
 ### 5. (Opcional) Poblar con Datos de Prueba
 
-```bash
-node backend/prisma/seed.js
-```
+### Códigos QR
 
----
+- `POST /api/qr/generar` - Generar código QR```bash
 
-## ⚙️ Configuración
+- `GET /api/qr/:id/png` - Obtener imagen PNG del QRnode backend/prisma/seed.js
 
-### Variables de Entorno
+- `GET /api/qr/listar/todos` - Listar todos los QR```
 
-Crea un archivo `.env` en la raíz del proyecto:
 
-```env
-# Base de Datos
+
+### Asistencias---
+
+- `POST /api/asistencias` - Registrar asistencia (entrada/salida)
+
+- `GET /api/asistencias/hoy` - Asistencias del día actual## ⚙️ Configuración
+
+- `GET /api/asistencias/stats` - Estadísticas de asistencia
+
+- `GET /api/asistencias` - Listar con filtros### Variables de Entorno
+
+
+
+### Diagnóstico y ReparaciónCrea un archivo `.env` en la raíz del proyecto:
+
+- `GET /api/diagnostics/qrs` - Ejecutar diagnóstico completo
+
+- `POST /api/repair/qrs/regenerate` - Regenerar códigos QR```env
+
+- `POST /api/repair/auto` - Ejecutar auto-reparación manual# Base de Datos
+
 DATABASE_URL="file:./dev.db"
 
+## 🔧 Scripts Disponibles
+
 # Seguridad
-JWT_SECRET="tu_secreto_jwt_super_seguro_cambiame_en_produccion"
-HMAC_SECRET="tu_secreto_hmac_super_seguro_cambiame_en_produccion"
 
-# Servidor
-PORT=5000
+```powershellJWT_SECRET="tu_secreto_jwt_super_seguro_cambiame_en_produccion"
+
+# SistemaHMAC_SECRET="tu_secreto_hmac_super_seguro_cambiame_en_produccion"
+
+.\start-auto.ps1          # Iniciar (libera puertos automáticamente)
+
+.\stop-all.ps1            # Detener todo# Servidor
+
+.\cleanup.ps1             # Limpiar archivos temporalesPORT=5000
+
 NODE_ENV=development
-```
 
-> ⚠️ **IMPORTANTE**: Cambia los secretos en producción. Usa valores aleatorios seguros.
+# Utilidades```
 
-### Configuración de la Institución
+node check-data.js        # Verificar datos en la base de datos
 
-Al primer inicio, debes configurar los datos de tu institución:
+node list-data.js         # Listar datos de prueba> ⚠️ **IMPORTANTE**: Cambia los secretos en producción. Usa valores aleatorios seguros.
 
-```bash
-POST http://localhost:5000/api/institucion/init
-Content-Type: application/json
+node crear-admin.js       # Crear usuario administrador
 
-{
-  "nombre": "Tu Institución",
-  "horario_inicio": "07:00",
-  "margen_puntualidad_min": 5,
-  "logo_base64": "data:image/png;base64,...",
+node reset-password.js    # Resetear contraseña de usuario### Configuración de la Institución
+
+
+
+# Backend (desde /backend)Al primer inicio, debes configurar los datos de tu institución:
+
+npm run dev              # Desarrollo con nodemon (auto-restart)
+
+npm start                # Producción```bash
+
+npx prisma studio        # Abrir Prisma Studio (GUI para BD)POST http://localhost:5000/api/institucion/init
+
+npx prisma generate      # Generar cliente PrismaContent-Type: application/json
+
+
+
+# Frontend (desde /frontend-react){
+
+npm run dev              # Servidor de desarrollo Vite  "nombre": "Tu Institución",
+
+npm run build            # Build para producción  "horario_inicio": "07:00",
+
+npm run preview          # Vista previa del build  "margen_puntualidad_min": 5,
+
+```  "logo_base64": "data:image/png;base64,...",
+
   "admin_email": "admin@institucion.edu",
-  "admin_password": "Admin123!"
+
+## ⚙️ Configuración  "admin_password": "Admin123!"
+
 }
-```
 
----
+### Variables de Entorno (.env)```
 
-## 🎯 Uso
 
-### Inicio Rápido (Windows - PowerShell)
 
-```powershell
+```env---
+
+# Base de Datos
+
+DATABASE_URL="file:./dev.db"## 🎯 Uso
+
+
+
+# Seguridad### Inicio Rápido (Windows - PowerShell)
+
+JWT_SECRET="tu_secreto_super_seguro_cambiar_en_produccion_minimo_32_caracteres"
+
+HMAC_SECRET="otro_secreto_para_hmac_cambiar_tambien_minimo_32_caracteres"```powershell
+
 # Iniciar backend + frontend simultáneamente
-.\start-system.ps1
 
-# Detener todos los servicios
+# Administrador por defecto.\start-system.ps1
+
+ADMIN_EMAIL="admin@colegio.edu"
+
+ADMIN_PASSWORD="Admin123!"# Detener todos los servicios
+
 .\stop-system.ps1
-```
 
-### Inicio Manual
+# Servidor```
 
-**Terminal 1 - Backend:**
-```bash
-cd backend
+PORT="5000"
+
+NODE_ENV="development"### Inicio Manual
+
+
+
+# Tareas Programadas**Terminal 1 - Backend:**
+
+CRON_DIAGNOSTICS_INTERVAL="0 0 */6 * * *"  # Cada 6 horas```bash
+
+BACKUP_BEFORE_REPAIR="true"cd backend
+
 node server.js
-```
 
-**Terminal 2 - Frontend:**
+# Logging```
+
+LOG_LEVEL="info"
+
+```**Terminal 2 - Frontend:**
+
 ```bash
-cd frontend-react
+
+⚠️ **IMPORTANTE:** Cambia los secretos en producción usando valores aleatorios seguros de al menos 32 caracteres.cd frontend-react
+
 npm run dev
-```
 
-### Acceso al Sistema
+## 🔄 Sistema de Auto-Reparación```
 
-- **Frontend React**: http://localhost:5173
-- **API Backend**: http://localhost:5000
-- **Health Check**: http://localhost:5000/api/health
+
+
+El sistema ejecuta automáticamente cada 6 horas:### Acceso al Sistema
+
+
+
+1. **Diagnóstico de códigos QR**- **Frontend React**: http://localhost:5173
+
+   - Verifica existencia de archivos PNG- **API Backend**: http://localhost:5000
+
+   - Detecta archivos corruptos (<1KB)- **Health Check**: http://localhost:5000/api/health
+
+   - Valida tokens
 
 ### Credenciales Iniciales
 
-Por defecto (después de ejecutar seed):
-- **Email**: `admin@test.edu`
-- **Password**: `admin`
+2. **Regeneración Automática**
 
-> ⚠️ **IMPORTANTE**: Cambia estas credenciales inmediatamente en producción.
+   - Regenera QR faltantes desde la base de datosPor defecto (después de ejecutar seed):
 
----
+   - Recrea archivos corruptos- **Email**: `admin@test.edu`
 
-## 📁 Estructura del Proyecto
+   - Registra todas las acciones en auditoría- **Password**: `admin`
 
-```
+
+
+3. **Backup Automático**> ⚠️ **IMPORTANTE**: Cambia estas credenciales inmediatamente en producción.
+
+   - Crea copia de seguridad después de cada reparación
+
+   - Incluye base de datos y archivos uploads/---
+
+
+
+4. **Notificaciones en Logs**## 📁 Estructura del Proyecto
+
+   - Registra cada acción ejecutada
+
+   - Permite monitoreo del estado del sistema```
+
 sistema-registro-institucional/
-├── backend/
+
+## 📝 Cambios Recientes├── backend/
+
 │   ├── prisma/
-│   │   ├── schema.prisma      # Esquema de base de datos
+
+### v2.0 - Refactorización Docentes → Personal│   │   ├── schema.prisma      # Esquema de base de datos
+
 │   │   ├── seed.js            # Datos de prueba
-│   │   └── dev.db             # Base de datos SQLite
-│   ├── routes/                # Rutas de la API
-│   │   ├── auth.js            # Autenticación
-│   │   ├── alumnos.js         # CRUD alumnos
-│   │   ├── docentes.js        # CRUD personal
-│   │   ├── asistencias.js     # Registro asistencias
-│   │   ├── qr.js              # Generación QR
-│   │   └── repair.js          # Auto-reparación
-│   ├── services/              # Lógica de negocio
+
+- ✅ Modelo de datos actualizado: `Docentes` → `Personal`│   │   └── dev.db             # Base de datos SQLite
+
+- ✅ Campo `grado` → `categoria` con 7 opciones predefinidas│   ├── routes/                # Rutas de la API
+
+- ✅ Dropdown en formulario con categorías: Director, Directora, Docente, Secretaria, Secretario, Operativo, Auxiliar│   │   ├── auth.js            # Autenticación
+
+- ✅ Componente React renombrado: `DocentesPanel` → `PersonalPanel`│   │   ├── alumnos.js         # CRUD alumnos
+
+- ✅ Terminología actualizada en toda la interfaz de usuario│   │   ├── docentes.js        # CRUD personal
+
+- ✅ Migraciones de base de datos aplicadas correctamente│   │   ├── asistencias.js     # Registro asistencias
+
+- ✅ Scripts de limpieza automatizados│   │   ├── qr.js              # Generación QR
+
+- ✅ Eliminados 37+ archivos innecesarios (componentes duplicados, documentación antigua, scripts temporales)│   │   └── repair.js          # Auto-reparación
+
+- ✅ Consolidación de scripts de inicio/detención│   ├── services/              # Lógica de negocio
+
 │   │   ├── tokenService.js
-│   │   ├── qrService.js
+
+### Archivos Eliminados en Limpieza│   │   ├── qrService.js
+
 │   │   ├── diagnosticsService.js
-│   │   ├── repairService.js
-│   │   └── backupService.js
-│   ├── middlewares/
-│   │   └── auth.js            # Middleware JWT
-│   ├── jobs/
-│   │   └── scheduler.js       # Tareas automatizadas
+
+- Componentes duplicados: `DocentesPanel.jsx`, `AlumnosPanel_OLD.jsx`, `AsistenciasPanel_OLD_ZXING.jsx`│   │   ├── repairService.js
+
+- Frontend antiguo: carpeta `frontend/` completa│   │   └── backupService.js
+
+- Scripts temporales: `generar-qrs-*.js`, `regenerar-qrs-*.js`│   ├── middlewares/
+
+- Documentación redundante: 15 archivos .md consolidados│   │   └── auth.js            # Middleware JWT
+
+- Archivos de prueba: `test*.js`, `check-*.js` innecesarios│   ├── jobs/
+
+- Scripts duplicados: 7 scripts .ps1 de inicio/detención│   │   └── scheduler.js       # Tareas automatizadas
+
 │   └── server.js              # Servidor principal
-├── frontend-react/
+
+## 🛡️ Seguridad├── frontend-react/
+
 │   ├── src/
-│   │   ├── components/        # Componentes React
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── AlumnosPanel.jsx
-│   │   │   ├── DocentesPanel.jsx
-│   │   │   ├── AsistenciasPanel.jsx
-│   │   │   ├── ConfiguracionPanel.jsx
-│   │   │   ├── DiagnosticsPanel.jsx
+
+- **Tokens HMAC**: Firmados con SHA256 + base64url│   │   ├── components/        # Componentes React
+
+- **Contraseñas**: Encriptadas con bcrypt (10 rounds)│   │   │   ├── Dashboard.jsx
+
+- **JWT**: Tokens con expiración configurable│   │   │   ├── AlumnosPanel.jsx
+
+- **Validación**: Middleware de validación en todas las rutas│   │   │   ├── DocentesPanel.jsx
+
+- **Rate Limiting**: Protección contra ataques de fuerza bruta│   │   │   ├── AsistenciasPanel.jsx
+
+- **CORS**: Configurado para orígenes permitidos│   │   │   ├── ConfiguracionPanel.jsx
+
+- **Auditoría**: Registro completo de todas las operaciones│   │   │   ├── DiagnosticsPanel.jsx
+
 │   │   │   └── RepairPanel.jsx
-│   │   ├── pages/
+
+## 📄 Licencia│   │   ├── pages/
+
 │   │   │   └── LoginPage.jsx
-│   │   ├── api/
+
+MIT License│   │   ├── api/
+
 │   │   │   ├── client.js      # Cliente Axios
-│   │   │   └── endpoints.js   # Configuración endpoints
+
+Copyright (c) 2025 Kevin Gabriel Pérez García│   │   │   └── endpoints.js   # Configuración endpoints
+
 │   │   ├── App.jsx
-│   │   └── main.jsx
+
+Se concede permiso, de forma gratuita, a cualquier persona que obtenga una copia de este software y archivos de documentación asociados (el "Software"), para utilizar el Software sin restricciones.│   │   └── main.jsx
+
 │   ├── vite.config.js
-│   └── package.json
+
+Ver el archivo [LICENSE](LICENSE) para más detalles.│   └── package.json
+
 ├── uploads/
-│   ├── qrs/                   # Códigos QR generados
+
+## 🤝 Contribuir│   ├── qrs/                   # Códigos QR generados
+
 │   ├── logos/                 # Logo institucional
-│   └── fotos/                 # Fotos de usuarios
+
+Las contribuciones son bienvenidas. Por favor:│   └── fotos/                 # Fotos de usuarios
+
 ├── backups/                   # Respaldos automáticos
-├── .env                       # Variables de entorno
-├── .gitignore
-├── LICENSE                    # Licencia MIT
-├── package.json
-├── start-system.ps1           # Script inicio Windows
+
+1. Fork el proyecto├── .env                       # Variables de entorno
+
+2. Crea una rama para tu feature (`git checkout -b feature/NuevaCaracteristica`)├── .gitignore
+
+3. Commit tus cambios (`git commit -m 'Add: Nueva característica'`)├── LICENSE                    # Licencia MIT
+
+4. Push a la rama (`git push origin feature/NuevaCaracteristica`)├── package.json
+
+5. Abre un Pull Request├── start-system.ps1           # Script inicio Windows
+
 ├── stop-system.ps1            # Script detención Windows
-└── README.md
+
+### Guías de Contribución└── README.md
+
 ```
 
----
+- Sigue el estilo de código existente
 
-## 📡 API Documentation
+- Agrega tests para nuevas funcionalidades---
 
-### Autenticación
+- Actualiza la documentación
 
-#### `POST /api/auth/login`
+- Asegúrate de que no haya errores con `npm run lint`## 📡 API Documentation
+
+
+
+## 📞 Contacto### Autenticación
+
+
+
+**Kevin Gabriel Pérez García**#### `POST /api/auth/login`
+
 Iniciar sesión y obtener token JWT.
 
-**Request:**
+- GitHub: [@Hikki777](https://github.com/Hikki777)
+
+- Repositorio: [asistencia-institucional](https://github.com/Hikki777/asistencia-institucional)**Request:**
+
 ```json
-{
+
+## 🙏 Agradecimientos{
+
   "email": "admin@test.edu",
-  "password": "admin"
-}
-```
+
+- Comunidad de React  "password": "admin"
+
+- Prisma por su excelente ORM}
+
+- Tailwind CSS por el framework```
+
+- Todas las librerías open source utilizadas
 
 **Response:**
-```json
+
+---```json
+
 {
-  "success": true,
+
+**Desarrollado con ❤️ por Kevin Gabriel Pérez García**  "success": true,
+
   "token": "eyJhbGciOiJIUzI1NiIs...",
   "user": {
     "id": 1,

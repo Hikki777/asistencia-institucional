@@ -24,6 +24,7 @@ const alumnosRoutes = require('./routes/alumnos');
 const asistenciasRoutes = require('./routes/asistencias');
 const docentesRoutes = require('./routes/docentes');
 const reportesRoutes = require('./routes/reportes');
+const institucionRoutes = require('./routes/institucion');
 
 // Verificar variables de entorno críticas
 const checkEnv = () => {
@@ -218,91 +219,6 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
   }
 });
 
-// Obtener datos de institución
-app.get('/api/institucion', async (req, res) => {
-  try {
-    const institucion = await prisma.institucion.findUnique({
-      where: { id: 1 },
-      select: {
-        id: true,
-        nombre: true,
-        logo_path: true,
-        horario_inicio: true,
-        margen_puntualidad_min: true,
-        inicializado: true,
-        creado_en: true
-      }
-    });
-
-    if (!institucion) {
-      logger.warn('⚠️ Intento de acceder a institución no inicializada');
-      return res.status(404).json({ error: 'Institución no inicializada' });
-    }
-
-    res.json(institucion);
-  } catch (error) {
-    logger.error({ err: error }, '❌ Error al obtener institución');
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// PUT /api/institucion - Actualizar datos institucionales
-app.put('/api/institucion', validarActualizarInstitucion, async (req, res) => {
-  try {
-    const { nombre, horario_inicio, margen_puntualidad_min, logo_base64 } = req.body;
-
-    const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
-    if (!institucion) {
-      return res.status(404).json({ error: 'Institución no inicializada' });
-    }
-
-    const updateData = {
-      nombre: nombre || institucion.nombre,
-      horario_inicio: horario_inicio !== undefined ? horario_inicio : institucion.horario_inicio,
-      margen_puntualidad_min: margen_puntualidad_min !== undefined ? parseInt(margen_puntualidad_min) : institucion.margen_puntualidad_min
-    };
-
-    // Si hay nuevo logo, guardarlo y regenerar QRs
-    if (logo_base64) {
-      const logoResult = await qrService.guardarLogo(logo_base64, 'logo.png');
-      if (logoResult) {
-        updateData.logo_base64 = logo_base64;
-        updateData.logo_path = logoResult.relativePath;
-
-        // Regenerar todos los QRs con el nuevo logo
-        logger.info('🔄 Regenerando QRs con nuevo logo...');
-        const qrs = await prisma.codigoQr.findMany({
-          include: { alumno: true, personal: true }
-        });
-
-        for (const qr of qrs) {
-          const persona = qr.alumno || qr.personal;
-          if (persona) {
-            const { absolutePath, relativePath } = qrService.obtenerRutasQr(qr.persona_tipo, persona.carnet);
-            await qrService.generarQrConLogo(qr.token, logo_base64, absolutePath);
-            await prisma.codigoQr.update({
-              where: { id: qr.id },
-              data: { png_path: relativePath, regenerado_en: new Date() }
-            });
-          }
-        }
-        logger.info({ count: qrs.length }, `✅ QRs regenerados con nuevo logo`);
-      }
-    }
-
-    const institucionActualizada = await prisma.institucion.update({
-      where: { id: 1 },
-      data: updateData
-    });
-
-    logger.info({ campos: Object.keys(updateData) }, '✅ Institución actualizada');
-    res.json(institucionActualizada);
-  } catch (error) {
-    logger.error({ err: error }, '❌ Error al actualizar institución');
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // ============ RUTAS ESPECÍFICAS MONTADAS ============
 
 app.use('/api/qr', qrRoutes);
@@ -312,6 +228,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/asistencias', asistenciasRoutes);
 app.use('/api/docentes', docentesRoutes);
 app.use('/api/reportes', reportesRoutes);
+app.use('/api/institucion', institucionRoutes);
 
 // ============ RUTA DE DIAGNÓSTICO ============
 

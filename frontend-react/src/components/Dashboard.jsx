@@ -3,6 +3,8 @@ import { Activity, Users, QrCode, AlertTriangle, TrendingUp, Calendar } from 'lu
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { healthAPI, diagnosticsAPI, alumnosAPI } from '../api/endpoints';
 import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
+import { CardSkeleton } from './LoadingSpinner';
 
 const API_URL = 'http://localhost:5000/api';
 const client = axios.create({
@@ -55,6 +57,7 @@ export default function Dashboard() {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching asistencias stats:', error);
+      toast.error('Error al cargar estadísticas de asistencias');
       setLoading(false);
     }
   };
@@ -79,6 +82,7 @@ export default function Dashboard() {
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
+      toast.error('Error al cargar estadísticas del sistema');
       setStats((prev) => ({ ...prev, status: 'error' }));
     }
   };
@@ -141,21 +145,27 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <StatCard
-          icon={Activity}
-          label="Estado"
-          value={stats.status === 'online' ? '✓' : '✗'}
-          color={stats.status === 'online' ? 'green' : 'red'}
-        />
-        <StatCard icon={Users} label="Alumnos" value={stats.alumnos} color="blue" />
-        <StatCard icon={Users} label="Docentes" value={stats.docentes} color="green" />
-        <StatCard icon={QrCode} label="QR Generados" value={stats.qrs} color="blue" />
-        <StatCard
-          icon={AlertTriangle}
-          label="Problemas"
-          value={stats.issues}
-          color={stats.issues > 0 ? 'red' : 'green'}
-        />
+        {loading ? (
+          <CardSkeleton count={5} />
+        ) : (
+          <>
+            <StatCard
+              icon={Activity}
+              label="Estado"
+              value={stats.status === 'online' ? '✓' : '✗'}
+              color={stats.status === 'online' ? 'green' : 'red'}
+            />
+            <StatCard icon={Users} label="Alumnos" value={stats.alumnos} color="blue" />
+            <StatCard icon={Users} label="Docentes" value={stats.docentes} color="green" />
+            <StatCard icon={QrCode} label="QR Generados" value={stats.qrs} color="blue" />
+            <StatCard
+              icon={AlertTriangle}
+              label="Problemas"
+              value={stats.issues}
+              color={stats.issues > 0 ? 'red' : 'green'}
+            />
+          </>
+        )}
       </div>
 
       {/* Gráficos de Asistencias */}
@@ -221,6 +231,30 @@ export default function Dashboard() {
           <li>✅ Panel de asistencias con estadísticas en tiempo real</li>
         </ul>
       </div>
+
+      {/* Toast notifications */}
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   );
 }

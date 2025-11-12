@@ -31,6 +31,7 @@ export default function AlumnosPanel() {
     setLoading(true);
     try {
       const response = await alumnosAPI.list();
+      console.log('📊 Respuesta de alumnos:', response.data);
       setAlumnos(response.data.alumnos || []);
     } catch (error) {
       console.error('Error:', error);
@@ -182,7 +183,7 @@ export default function AlumnosPanel() {
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Search size={16} />
               Buscar
             </label>
@@ -195,7 +196,7 @@ export default function AlumnosPanel() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <BookOpen size={16} />
               Grado
             </label>
@@ -211,7 +212,7 @@ export default function AlumnosPanel() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Sun size={16} />
               Jornada
             </label>

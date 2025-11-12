@@ -2,8 +2,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, UserCheck, UserX, Search, Calendar, TrendingUp, QrCode, Camera, CameraOff } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { Html5Qrcode } from 'html5-qrcode';
+import { TableSkeleton } from './LoadingSpinner';
 
 const API_URL = 'http://localhost:5000/api';
 const client = axios.create({
@@ -85,6 +87,7 @@ export default function AsistenciasPanel() {
       setStats(response.data.stats || {});
     } catch (error) {
       console.error('Error fetching asistencias:', error);
+      toast.error('Error al cargar asistencias: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -96,6 +99,7 @@ export default function AsistenciasPanel() {
       setAlumnos(response.data.alumnos || []);
     } catch (error) {
       console.error('Error fetching alumnos:', error);
+      toast.error('Error al cargar alumnos');
     }
   };
 
@@ -105,6 +109,7 @@ export default function AsistenciasPanel() {
       setDocentes(response.data.docentes || []);
     } catch (error) {
       console.error('Error fetching docentes:', error);
+      toast.error('Error al cargar docentes');
     }
   };
 
@@ -146,31 +151,15 @@ export default function AsistenciasPanel() {
     });
     
     if (!personaId) {
-      alert(`Selecciona un ${tipoPersona}`);
+      toast.error(`Selecciona un ${tipoPersona}`);
       return;
     }
 
+    // Backup para rollback
+    const previousAsistencias = [...asistenciasHoy];
+
     try {
-      const requestData = {
-        tipo_evento: tipoEvento,
-        origen: 'Manual'
-      };
-
-      // Solo enviar el campo que corresponde (no enviar null ni strings vacíos)
-      if (tipoPersona === 'alumno' && selectedAlumno) {
-        requestData.alumno_id = parseInt(selectedAlumno);
-      } else if (tipoPersona === 'docente' && selectedDocente) {
-        requestData.docente_id = parseInt(selectedDocente);
-      }
-
-      console.log('📤 Enviando:', requestData);
-
-      const response = await client.post('/asistencias', requestData);
-      
-      // Reproducir sonido de beep tipo escáner
-      playBeepSound();
-
-      // Buscar datos completos de la persona para el modal
+      // Buscar datos completos de la persona ANTES de la llamada API
       console.log('🔍 Buscando datos para modal de registro manual...');
       let personaData = null;
       
@@ -198,7 +187,26 @@ export default function AsistenciasPanel() {
         };
       }
 
-      // Mostrar modal con los datos
+      // Crear asistencia optimista
+      const optimisticAsistencia = {
+        id: Date.now(), // ID temporal
+        tipo_evento: tipoEvento,
+        origen: 'Manual',
+        created_at: new Date().toISOString(),
+        alumno_id: tipoPersona === 'alumno' ? parseInt(selectedAlumno) : null,
+        docente_id: tipoPersona === 'docente' ? parseInt(selectedDocente) : null,
+        alumno: tipoPersona === 'alumno' ? personaData : null,
+        docente: tipoPersona === 'docente' ? personaData : null
+      };
+
+      // Actualizar UI inmediatamente
+      setAsistenciasHoy(prev => [optimisticAsistencia, ...prev]);
+
+      // Limpiar formulario y mostrar modal inmediatamente
+      setSelectedAlumno('');
+      setSelectedDocente('');
+      setSearchTerm('');
+
       setModalData({
         ...personaData,
         tipoEvento: tipoEvento === 'entrada' ? 'ENTRADA' : 'SALIDA',
@@ -211,14 +219,38 @@ export default function AsistenciasPanel() {
         setShowModal(false);
       }, 3000);
 
-      // Limpiar formulario
-      setSelectedAlumno('');
-      setSelectedDocente('');
-      setSearchTerm('');
-      fetchAsistenciasHoy();
+      // Reproducir sonido de confirmación inmediatamente
+      playBeepSound();
+
+      // Llamada API asíncrona
+      const requestData = {
+        tipo_evento: tipoEvento,
+        origen: 'Manual'
+      };
+
+      // Solo enviar el campo que corresponde (no enviar null ni strings vacíos)
+      if (tipoPersona === 'alumno' && optimisticAsistencia.alumno_id) {
+        requestData.alumno_id = optimisticAsistencia.alumno_id;
+      } else if (tipoPersona === 'docente' && optimisticAsistencia.docente_id) {
+        requestData.docente_id = optimisticAsistencia.docente_id;
+      }
+
+      console.log('📤 Enviando:', requestData);
+
+      const response = await client.post('/asistencias', requestData);
+
+      // Reemplazar ID temporal con ID real
+      setAsistenciasHoy(prev => prev.map(a => 
+        a.id === optimisticAsistencia.id ? { ...a, id: response.data.id } : a
+      ));
+
+      toast.success('Asistencia registrada exitosamente');
+
     } catch (error) {
+      // Rollback en caso de error
+      setAsistenciasHoy(previousAsistencias);
       console.error('❌ Error completo:', error.response?.data || error.message);
-      alert('Error: ' + (error.response?.data?.error || error.message));
+      toast.error('Error: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -697,7 +729,7 @@ export default function AsistenciasPanel() {
 
       {/* Estadísticas del Día */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <StatCard
             icon={<TrendingUp />}
             title="Total Registros"
@@ -722,120 +754,157 @@ export default function AsistenciasPanel() {
             value={stats.puntuales || 0}
             color="bg-purple-500"
           />
+          <StatCard
+            icon={<Clock />}
+            title="Tarde"
+            value={stats.tardes || 0}
+            color="bg-red-500"
+          />
         </div>
       )}
 
-      {/* Formulario de Registro Manual */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-lg shadow-lg p-6"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-800">
-            Registrar Asistencia
-          </h3>
-          <button
-            type="button"
-            onClick={() => {
-              console.log('🔘 Botón clickeado. scannerActive:', scannerActive);
-              if (scannerActive) {
-                stopScanner();
-              } else {
-                startScanner();
-              }
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
-              scannerActive 
-                ? 'bg-red-500 hover:bg-red-600 text-white' 
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-          >
-            {scannerActive ? <CameraOff size={20} /> : <Camera size={20} />}
-            {scannerActive ? 'Detener QR' : 'Escanear QR'}
-          </button>
-        </div>
-
-        {/* Scanner QR */}
-        {scannerActive && (
-          <div className="mb-6 bg-gray-900 rounded-lg p-6">
-            <div className="relative max-w-md mx-auto">
-              {/* Contenedor para html5-qrcode */}
-              <div id="qr-reader" className="w-full rounded-lg overflow-hidden" style={{ maxWidth: '400px', maxHeight: '400px' }}></div>
-            </div>
-            
-            {scanMessage && (
-              <div className={`mt-4 text-center text-lg font-bold py-3 px-4 rounded-lg ${
-                scanMessage.includes('✅') ? 'bg-green-100 text-green-800' :
-                scanMessage.includes('❌') ? 'bg-red-100 text-red-800' :
-                'bg-blue-100 text-blue-800'
-              }`}>
-                {scanMessage}
-              </div>
-            )}
+      {/* Sección de Captura de Asistencias - Dividido en 2 columnas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Columna Izquierda: Scanner QR */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-white rounded-lg shadow-lg p-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <QrCode className="text-blue-600" size={24} />
+              Escanear QR
+            </h3>
+            <button
+              type="button"
+              onClick={() => {
+                console.log('🔘 Botón clickeado. scannerActive:', scannerActive);
+                if (scannerActive) {
+                  stopScanner();
+                } else {
+                  startScanner();
+                }
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                scannerActive 
+                  ? 'bg-red-500 hover:bg-red-600 text-white' 
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+              }`}
+            >
+              {scannerActive ? <CameraOff size={20} /> : <Camera size={20} />}
+              {scannerActive ? 'Detener' : 'Activar'}
+            </button>
           </div>
-        )}
 
-        {/* Selector de tipo de evento y Formulario Manual */}
-        {!scannerActive && (
-          <>
-            <div className="mt-3 mb-6 flex items-center justify-center gap-4">
-              <label className="text-sm font-medium text-gray-700">Tipo de evento:</label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTipoEvento('entrada')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    tipoEvento === 'entrada'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  Entrada
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTipoEvento('salida')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    tipoEvento === 'salida'
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  Salida
-                </button>
-              </div>
+          {/* Selector de tipo de evento para QR */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de evento:</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setTipoEvento('entrada')}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  tipoEvento === 'entrada'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Entrada
+              </button>
+              <button
+                type="button"
+                onClick={() => setTipoEvento('salida')}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  tipoEvento === 'salida'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Salida
+              </button>
             </div>
+          </div>
+
+          {/* Scanner QR */}
+          {scannerActive ? (
+            <div className="bg-gray-900 rounded-lg p-6">
+              <div className="relative max-w-md mx-auto">
+                {/* Contenedor para html5-qrcode */}
+                <div id="qr-reader" className="w-full rounded-lg overflow-hidden" style={{ maxWidth: '400px', maxHeight: '400px' }}></div>
+              </div>
+              
+              {scanMessage && (
+                <div className={`mt-4 text-center text-lg font-bold py-3 px-4 rounded-lg ${
+                  scanMessage.includes('✅') ? 'bg-green-100 text-green-800' :
+                  scanMessage.includes('❌') ? 'bg-red-100 text-red-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {scanMessage}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+              <QrCode size={80} className="mb-4" />
+              <p className="text-lg font-medium">Escáner de código QR desactivado</p>
+              <p className="text-sm mt-2">Presiona "Activar" para comenzar</p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Columna Derecha: Registro Manual */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-white rounded-lg shadow-lg p-6"
+        >
+          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <UserCheck className="text-green-600" size={24} />
+            Registro Manual
+          </h3>
+
+          {/* Selector de tipo de evento */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de evento:</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setTipoEvento('entrada')}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  tipoEvento === 'entrada'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Entrada
+              </button>
+              <button
+                type="button"
+                onClick={() => setTipoEvento('salida')}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  tipoEvento === 'salida'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Salida
+              </button>
+            </div>
+          </div>
 
           <form onSubmit={handleRegistrarAsistencia} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Tipo de Evento */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Evento
-                </label>
-                <select
-                  value={tipoEvento}
-                  onChange={(e) => setTipoEvento(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="entrada">Entrada</option>
-                  <option value="salida">Salida</option>
-                </select>
-              </div>
-
-              {/* Tipo detectado automáticamente */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo Detectado
-                </label>
-                <div className={`w-full border rounded-lg px-3 py-2 font-semibold text-center ${
-                  tipoPersona === 'alumno' 
-                    ? 'bg-blue-50 text-blue-700 border-blue-300' 
-                    : 'bg-green-50 text-green-700 border-green-300'
-                }`}>
-                  {tipoPersona === 'alumno' ? '🎓 Alumno' : '👨‍🏫 Docente'}
-                </div>
+            {/* Tipo detectado automáticamente */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo Detectado
+              </label>
+              <div className={`w-full border rounded-lg px-3 py-2 font-semibold text-center ${
+                tipoPersona === 'alumno' 
+                  ? 'bg-blue-50 text-blue-700 border-blue-300' 
+                  : 'bg-green-50 text-green-700 border-green-300'
+              }`}>
+                {tipoPersona === 'alumno' ? '🎓 Alumno' : '👨‍🏫 Docente'}
               </div>
             </div>
 
@@ -948,23 +1017,23 @@ export default function AsistenciasPanel() {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors"
             >
               Registrar {tipoEvento === 'entrada' ? 'Entrada' : 'Salida'}
             </button>
           </form>
-          </>
-        )}
-      </motion.div>
+        </motion.div>
+      </div>
 
-      {/* Tabla de Asistencias del Día */}
+      {/* Asistencias del Día - Historial Unificado */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-lg shadow-lg p-6"
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-800">
+          <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <Clock className="text-blue-600" size={24} />
             Asistencias de Hoy
           </h3>
           <button
@@ -976,7 +1045,7 @@ export default function AsistenciasPanel() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8 text-gray-500">Cargando...</div>
+          <TableSkeleton rows={5} columns={7} />
         ) : asistenciasHoy.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             No hay asistencias registradas hoy
@@ -984,21 +1053,19 @@ export default function AsistenciasPanel() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-100 border-b">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-2">Hora</th>
-                  <th className="text-left px-4 py-2">Carnet</th>
-                  <th className="text-left px-4 py-2">Nombre</th>
-                  <th className="text-left px-4 py-2">Tipo</th>
-                  <th className="text-left px-4 py-2">Grado</th>
-                  <th className="text-center px-4 py-2">Evento</th>
-                  <th className="text-center px-4 py-2">Estado</th>
-                  <th className="text-center px-4 py-2">Origen</th>
+                  <th className="text-left px-3 py-2">Hora</th>
+                  <th className="text-left px-3 py-2">Persona</th>
+                  <th className="text-center px-3 py-2">Tipo</th>
+                  <th className="text-center px-3 py-2">Evento</th>
+                  <th className="text-center px-3 py-2">Origen</th>
+                  <th className="text-center px-3 py-2">Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {asistenciasHoy.map((asistencia) => {
-                  const persona = asistencia.alumno || asistencia.personal;
+                  const persona = asistencia.alumno || asistencia.docente;
                   const tipoPersona = asistencia.alumno ? 'Alumno' : 'Docente';
                   
                   return (
@@ -1006,49 +1073,52 @@ export default function AsistenciasPanel() {
                       key={asistencia.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="border-b hover:bg-gray-50"
+                      className="border-b hover:bg-gray-50 transition"
                     >
-                      <td className="px-4 py-2 font-medium">
+                      <td className="px-3 py-2 font-medium text-gray-700">
                         {formatTime(asistencia.timestamp)}
                       </td>
-                      <td className="px-4 py-2">{persona?.carnet}</td>
-                      <td className="px-4 py-2">
-                        {persona?.nombres} {persona?.apellidos}
+                      <td className="px-3 py-2">
+                        <div className="font-medium">{persona?.nombres} {persona?.apellidos}</div>
+                        <div className="text-xs text-gray-500">{persona?.carnet}</div>
                       </td>
-                      <td className="px-4 py-2">
-                        <span className={`text-xs font-semibold ${
-                          tipoPersona === 'Alumno' ? 'text-blue-600' : 'text-green-600'
+                      <td className="px-3 py-2 text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          tipoPersona === 'Alumno' 
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-purple-100 text-purple-800'
                         }`}>
                           {tipoPersona}
                         </span>
                       </td>
-                      <td className="px-4 py-2">{persona?.grado}</td>
-                      <td className="px-4 py-2 text-center">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            asistencia.tipo_evento === 'entrada'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-orange-100 text-orange-800'
-                          }`}
-                        >
-                          {asistencia.tipo_evento}
+                      <td className="px-3 py-2 text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          asistencia.tipo_evento === 'entrada'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {asistencia.tipo_evento === 'entrada' ? 'ENTRADA' : 'SALIDA'}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-center">
+                      <td className="px-3 py-2 text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          asistencia.origen === 'QR'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {asistencia.origen === 'QR' ? '📱 QR' : '✍️ Manual'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-center">
                         {asistencia.estado_puntualidad && (
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                              asistencia.estado_puntualidad === 'puntual'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {asistencia.estado_puntualidad}
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            asistencia.estado_puntualidad === 'puntual'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {asistencia.estado_puntualidad === 'puntual' ? '✓ Puntual' : '⚠ Tarde'}
                           </span>
                         )}
-                      </td>
-                      <td className="px-4 py-2 text-center text-gray-600 text-xs">
-                        {asistencia.origen}
                       </td>
                     </motion.tr>
                   );
@@ -1158,6 +1228,30 @@ export default function AsistenciasPanel() {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Toast notifications */}
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   );
 }

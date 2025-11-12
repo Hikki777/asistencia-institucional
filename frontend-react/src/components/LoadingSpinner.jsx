@@ -53,7 +53,7 @@ export function TableSkeleton({ rows = 5, columns = 6 }) {
  */
 export function CardSkeleton({ count = 4 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <>
       {Array.from({ length: count }).map((_, idx) => (
         <motion.div
           key={idx}
@@ -71,7 +71,7 @@ export function CardSkeleton({ count = 4 }) {
           </div>
         </motion.div>
       ))}
-    </div>
+    </>
   );
 }
 

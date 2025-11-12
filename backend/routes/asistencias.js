@@ -57,10 +57,10 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
         return res.status(404).json({ error: 'Alumno no encontrado' });
       }
     } else if (hasDocenteId) {
-      persona = await prisma.personal.findUnique({
+      persona = await prisma.docente.findUnique({
         where: { id: parseInt(docente_id) }
       });
-      persona_tipo = 'personal';
+      persona_tipo = 'docente';
       if (!persona) {
         return res.status(404).json({ error: 'Docente no encontrado' });
       }
@@ -93,7 +93,7 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
       data: {
         persona_tipo,
         alumno_id: hasAlumnoId ? parseInt(alumno_id) : null,
-        personal_id: hasDocenteId ? parseInt(docente_id) : null,
+        docente_id: hasDocenteId ? parseInt(docente_id) : null,
         tipo_evento,
         timestamp: fechaAsistencia,
         origen: origen || 'Manual',
@@ -108,7 +108,7 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
             carnet: true,
             nombres: true,
             apellidos: true,
-            grado: true,
+            categoria: true,
             jornada: true
           }
         } : false,
@@ -118,7 +118,7 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
             carnet: true,
             nombres: true,
             apellidos: true,
-            grado: true,
+            categoria: true,
             jornada: true
           }
         } : false
@@ -185,7 +185,7 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
             carnet: true,
             nombres: true,
             apellidos: true,
-            grado: true,
+            categoria: true,
             jornada: true
           }
         },
@@ -195,7 +195,7 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
             carnet: true,
             nombres: true,
             apellidos: true,
-            grado: true,
+            categoria: true,
             jornada: true
           }
         }
@@ -250,7 +250,7 @@ router.get('/hoy', async (req, res) => {
             carnet: true,
             nombres: true,
             apellidos: true,
-            grado: true,
+            categoria: true,
             jornada: true
           }
         },
@@ -260,7 +260,7 @@ router.get('/hoy', async (req, res) => {
             carnet: true,
             nombres: true,
             apellidos: true,
-            grado: true,
+            categoria: true,
             jornada: true
           }
         }
@@ -357,3 +357,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
+

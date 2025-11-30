@@ -13,7 +13,13 @@ const prisma = new PrismaClient({
     },
   },
   errorFormat: 'pretty',
-  log: ['error', 'warn']
+  log: ['error', 'warn'],
+  // Deshabilitar prepared statements para compatibilidad con Supabase pgBouncer
+  __internal: {
+    engine: {
+      connection_limit: 1
+    }
+  }
 });
 
 module.exports = prisma;

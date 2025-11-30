@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Settings, Save, Upload, Building2, Clock, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const client = axios.create({
   baseURL: API_URL,
   headers: {
@@ -47,9 +47,12 @@ export default function ConfiguracionPanel() {
         margen_puntualidad_min: data.margen_puntualidad_min || 5
       });
       
-      // Mostrar logo si existe
       if (data.logo_path) {
-        setLogoPreview(`http://localhost:5000/uploads/${data.logo_path}?t=${Date.now()}`);
+        // Check if it's a Cloudinary URL or local path
+        const logoUrl = data.logo_path.startsWith('http') 
+          ? data.logo_path 
+          : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/${data.logo_path}?t=${Date.now()}`;
+        setLogoPreview(logoUrl);
       }
     } catch (error) {
       console.error('Error fetching institucion:', error);

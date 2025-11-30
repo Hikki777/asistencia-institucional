@@ -22,7 +22,12 @@ export default function ConfiguracionInstitucional() {
     try {
       const res = await client.get('/institucion');
       setInstitucion(res.data);
-      setLogoPreview(res.data.logo_path ? `http://localhost:5000/uploads/${res.data.logo_path}` : '');
+      const logoUrl = res.data.logo_path 
+        ? (res.data.logo_path.startsWith('http') 
+            ? res.data.logo_path 
+            : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/${res.data.logo_path}`)
+        : '';
+      setLogoPreview(logoUrl);
     } catch (err) {
       toast.error('Error al cargar datos institucionales');
     } finally {

@@ -11,7 +11,11 @@ export default function SetupWizard({ onComplete }) {
   const [formData, setFormData] = useState({
     nombre: '',
     horario_inicio: '07:00',
+    horario_salida: '13:00',
     margen_puntualidad_min: 5,
+    direccion: '',
+    email: '',
+    telefono: '',
     logo_path: null, // File object
     logo_base64: '', // String base64
     admin_email: '',
@@ -55,7 +59,11 @@ export default function SetupWizard({ onComplete }) {
       await client.post('/institucion/init', {
         nombre: formData.nombre,
         horario_inicio: formData.horario_inicio,
+        horario_salida: formData.horario_salida,
         margen_puntualidad_min: parseInt(formData.margen_puntualidad_min),
+        direccion: formData.direccion,
+        email: formData.email,
+        telefono: formData.telefono,
         logo_base64: formData.logo_base64,
         admin_email: formData.admin_email,
         admin_password: formData.admin_password
@@ -136,9 +144,9 @@ export default function SetupWizard({ onComplete }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Horario Entrada</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Entrada</label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
@@ -146,7 +154,21 @@ export default function SetupWizard({ onComplete }) {
                         name="horario_inicio"
                         value={formData.horario_inicio}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Salida</label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-3 text-gray-400" size={18} />
+                      <input
+                        type="time"
+                        name="horario_salida"
+                        value={formData.horario_salida}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         required
                       />
                     </div>
@@ -161,6 +183,43 @@ export default function SetupWizard({ onComplete }) {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       min="0"
                       required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                  <input
+                    type="text"
+                    name="direccion"
+                    value={formData.direccion}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ej: 4ta Calle 10-20 Zona 1"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Institucional</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="contacto@colegio.edu"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <input
+                      type="tel"
+                      name="telefono"
+                      value={formData.telefono}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="2222-3333"
                     />
                   </div>
                 </div>

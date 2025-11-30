@@ -147,7 +147,7 @@ const { validarInicializarInstitucion, validarActualizarInstitucion } = require(
 // Inicializar institución (primera ejecución)
 app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res) => {
   try {
-    const { nombre, horario_inicio, margen_puntualidad_min, logo_base64, admin_email, admin_password } = req.body;
+    const { nombre, horario_inicio, horario_salida, margen_puntualidad_min, logo_base64, admin_email, admin_password, direccion, email, telefono } = req.body;
 
     if (!nombre || !logo_base64 || !admin_email || !admin_password) {
       return res.status(400).json({
@@ -176,7 +176,11 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
         logo_base64,
         logo_path: logoResult.relativePath,
         horario_inicio: horario_inicio || '07:00',
+        horario_salida: horario_salida || '13:00',
         margen_puntualidad_min: margen_puntualidad_min || 5,
+        direccion,
+        email,
+        telefono,
         inicializado: true
       },
       update: {
@@ -184,7 +188,11 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
         logo_base64,
         logo_path: logoResult.relativePath,
         horario_inicio: horario_inicio || '07:00',
+        horario_salida: horario_salida || '13:00',
         margen_puntualidad_min: margen_puntualidad_min || 5,
+        direccion,
+        email,
+        telefono,
         inicializado: true
       }
     });

@@ -17,7 +17,11 @@ model Institucion {
   logo_base64            String? // Almacenar logo en base64 para regeneraciones
   logo_path              String? // Ruta relativa al logo generado
   horario_inicio         String? // HH:mm formato 24h
+  horario_salida         String? // HH:mm formato 24h
   margen_puntualidad_min Int      @default(5) // minutos de tolerancia
+  direccion              String?
+  email                  String?
+  telefono               String?
   inicializado           Boolean  @default(false)
   creado_en              DateTime @default(now())
   actualizado_en         DateTime @updatedAt

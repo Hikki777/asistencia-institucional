@@ -284,6 +284,12 @@ async function iniciar() {
   try {
     // Conectar BD
     logger.info('🔌 Probando conexión a base de datos...');
+    
+    // DEBUG: Verificar formato de URL (sin revelar credenciales)
+    const dbUrl = process.env.DATABASE_URL || '';
+    const maskedUrl = dbUrl.length > 15 ? `${dbUrl.substring(0, 15)}...` : 'TOO_SHORT';
+    logger.info({ urlPrefix: maskedUrl, length: dbUrl.length }, '🔍 Debug DATABASE_URL');
+
     await prisma.$queryRaw`SELECT 1`;
     logger.info('✅ Base de datos conectada correctamente');
 

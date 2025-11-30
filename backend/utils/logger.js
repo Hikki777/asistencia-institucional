@@ -103,9 +103,9 @@ const pinoConfig = {
   
   // Formateadores para ajustar salida
   formatters: {
-    level(label) {
-      return { level: label };
-    },
+    // level(label) {
+    //   return { level: label };
+    // },
     log(object) {
       if (!NO_EMOJI) return object;
       const out = stripEmojisDeep(object);

@@ -5,6 +5,12 @@ const path = require('path');
 const fs = require('fs-extra');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+// CORRECCIÓN AUTOMÁTICA: Si el usuario pegó "DATABASE_URL=..." en el valor
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('DATABASE_URL=')) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace('DATABASE_URL=', '');
+  console.log('⚠️ Se corrigió automáticamente la variable DATABASE_URL malformada');
+}
+
 // Importar logger PRIMERO
 const { logger, logSystemStart, setupGlobalErrorHandlers } = require('./utils/logger');
 const { requestLogger, attachRequestId } = require('./middlewares/requestLogger');

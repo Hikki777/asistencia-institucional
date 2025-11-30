@@ -128,6 +128,7 @@ router.post('/auto', async (req, res) => {
     logger.error({ err: error }, '❌ Error en auto-reparación');
     res.status(500).json({ error: error.message });
   }
+});
 
 
 /**

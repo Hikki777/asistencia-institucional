@@ -251,6 +251,7 @@ router.delete('/:id', invalidateCacheMiddleware('/api/alumnos'), async (req, res
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al inactivar alumno');
     res.status(500).json({ error: error.message });
   }
+});
 
 
 /**

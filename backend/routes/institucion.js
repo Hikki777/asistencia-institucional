@@ -17,6 +17,7 @@ router.get('/', async (req, res) => {
           id: 1,
           nombre: 'Mi Institución Educativa',
           horario_inicio: '07:00',
+          horario_salida: '13:00',
           margen_puntualidad_min: 5,
           inicializado: false
         }

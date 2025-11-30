@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import client from '../api/client';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { School, User, Lock, Clock, CheckCircle } from 'lucide-react';
+import { School, User, Lock, Clock, CheckCircle, MapPin, Mail, Phone, LogOut, Upload } from 'lucide-react';
+
+
 
 export default function SetupWizard({ onComplete }) {
   const navigate = useNavigate();
@@ -137,10 +139,56 @@ export default function SetupWizard({ onComplete }) {
                       name="nombre"
                       value={formData.nombre}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Ej: Colegio San José"
                       required
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
+                    <input
+                      type="text"
+                      name="direccion"
+                      value={formData.direccion}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="Ej: 4ta Calle 10-20 Zona 1"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Institucional</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="contacto@colegio.edu"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 text-gray-400" size={18} />
+                      <input
+                        type="tel"
+                        name="telefono"
+                        value={formData.telefono}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="2222-3333"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -154,7 +202,7 @@ export default function SetupWizard({ onComplete }) {
                         name="horario_inicio"
                         value={formData.horario_inicio}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         required
                       />
                     </div>
@@ -162,84 +210,58 @@ export default function SetupWizard({ onComplete }) {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Salida</label>
                     <div className="relative">
-                      <Clock className="absolute left-3 top-3 text-gray-400" size={18} />
+                      <LogOut className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
                         type="time"
                         name="horario_salida"
                         value={formData.horario_salida}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         required
                       />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Margen (min)</label>
-                    <input
-                      type="number"
-                      name="margen_puntualidad_min"
-                      value={formData.margen_puntualidad_min}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      min="0"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-                  <input
-                    type="text"
-                    name="direccion"
-                    value={formData.direccion}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ej: 4ta Calle 10-20 Zona 1"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Institucional</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="contacto@colegio.edu"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                    <input
-                      type="tel"
-                      name="telefono"
-                      value={formData.telefono}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="2222-3333"
-                    />
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-3 text-gray-400" size={18} />
+                      <input
+                        type="number"
+                        name="margen_puntualidad_min"
+                        value={formData.margen_puntualidad_min}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        min="0"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Logo Institucional</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition cursor-pointer relative">
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer relative group">
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleLogoChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                       required={!formData.logo_base64}
                     />
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Preview" className="h-24 mx-auto object-contain" />
+                      <div className="relative">
+                        <img src={logoPreview} alt="Preview" className="h-24 mx-auto object-contain drop-shadow-md" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg">
+                           <p className="text-transparent group-hover:text-white font-medium text-sm">Cambiar Logo</p>
+                        </div>
+                      </div>
                     ) : (
-                      <div className="text-gray-500">
-                        <p>Haz clic para subir el logo</p>
-                        <p className="text-xs mt-1">(PNG, JPG)</p>
+                      <div className="flex flex-col items-center text-gray-500 group-hover:text-blue-600 transition-colors">
+                        <div className="bg-gray-100 p-3 rounded-full mb-3 group-hover:bg-blue-100 transition-colors">
+                            <Upload size={24} />
+                        </div>
+                        <p className="font-medium">Haz clic para subir el logo</p>
+                        <p className="text-xs mt-1 text-gray-400">Soporta PNG, JPG</p>
                       </div>
                     )}
                   </div>
@@ -249,7 +271,7 @@ export default function SetupWizard({ onComplete }) {
                   type="button"
                   onClick={() => setStep(2)}
                   disabled={!formData.nombre || !formData.logo_base64}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   Siguiente
                 </button>

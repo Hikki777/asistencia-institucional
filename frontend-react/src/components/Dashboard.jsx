@@ -100,7 +100,9 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               {institucion.logo_path && (
                 <img 
-                  src={`http://localhost:5000/uploads/${institucion.logo_path}?t=${Date.now()}`}
+                  src={institucion.logo_path.startsWith('http') 
+                    ? institucion.logo_path 
+                    : `${import.meta.env.VITE_API_URL}/uploads/${institucion.logo_path}?t=${Date.now()}`}
                   alt="Logo institucional"
                   className="w-16 h-16 object-contain bg-white rounded-lg p-2"
                   onError={(e) => { e.target.style.display = 'none'; console.error('Error cargando logo'); }}

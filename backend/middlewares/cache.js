@@ -20,12 +20,14 @@ class CacheManager {
    * Generar clave de caché desde request
    */
   generateKey(req) {
-    const { path, query } = req;
+    const { baseUrl = '', path = '', query = {} } = req;
+    // Usar baseUrl + path para tener la ruta completa montada (e.g., /api/asistencias/hoy)
+    const fullPath = `${baseUrl}${path}` || req.originalUrl?.split('?')[0] || path;
     const queryString = Object.keys(query)
       .sort()
       .map(k => `${k}=${query[k]}`)
       .join('&');
-    return `${path}?${queryString}`;
+    return queryString ? `${fullPath}?${queryString}` : fullPath;
   }
 
   /**

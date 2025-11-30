@@ -3,13 +3,15 @@ const fs = require('fs-extra');
 const path = require('path');
 const prisma = require('../prismaClient');
 const { logger } = require('../utils/logger');
+const { BACKUPS_DIR } = require('../utils/paths');
+const { uploadFile } = require('./firebaseService');
 
 /**
  * Servicio de backup comprimido
  * Crea ZIP con BD + /uploads
  */
 
-const BACKUPS_DIR = path.join(__dirname, '../..', 'backups');
+// const BACKUPS_DIR = path.join(__dirname, '../..', 'backups'); // REMOVED
 
 let backupsInitialized = false;
 
@@ -203,11 +205,36 @@ async function limpiarBackupsViejos(daysOld = 30) {
   }
 }
 
+/**
+ * Subir backup a la nube (Firebase)
+ * @param {string} backupName
+ * @returns {Promise<string|null>} URL firmada o null
+ */
+async function subirBackupNube(backupName) {
+  try {
+    const backupPath = path.join(BACKUPS_DIR, backupName);
+    
+    // Validar existencia
+    if (!await fs.pathExists(backupPath)) {
+      throw new Error('Archivo de backup no encontrado');
+    }
+
+    logger.info({ backupName }, '☁️ Iniciando subida a nube...');
+    const url = await uploadFile(backupPath, `backups/${backupName}`);
+    
+    return url;
+  } catch (error) {
+    logger.error({ err: error, backupName }, '❌ Error subiendo backup a nube');
+    throw error;
+  }
+}
+
 module.exports = {
   inicializarBackups,
   crearBackup,
   listarBackups,
   descargarBackup,
   limpiarBackupsViejos,
+  subirBackupNube,
   BACKUPS_DIR
 };

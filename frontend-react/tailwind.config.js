@@ -10,6 +10,17 @@ export default {
         primary: '#1e40af',
         secondary: '#0369a1',
       },
+      fontFamily: {
+        mono: [
+          'Hack Nerd Font Mono',
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Consolas',
+          'Liberation Mono',
+          'monospace'
+        ]
+      }
     },
   },
   plugins: [],

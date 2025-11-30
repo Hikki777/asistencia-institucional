@@ -33,6 +33,7 @@ model Alumno {
   apellidos      String
   sexo           String? // "M" o "F"
   grado          String // "1ro", "2do", etc.
+  especialidad   String? // "Bachillerato en Computación", "Bachillerato en Salud", etc.
   jornada        String? // "Matutina", "Vespertina"
   estado         String   @default("activo") // "activo" o "inactivo"
   foto_path      String? // Ruta relativa a foto
@@ -42,6 +43,7 @@ model Alumno {
   // Relaciones
   codigos_qr  CodigoQr[]   @relation("alumno_qr")
   asistencias Asistencia[] @relation("alumno_asistencia")
+  excusas     Excusa[]     @relation("alumno_excusa")
 
   @@index([estado])
   @@map("alumnos")
@@ -54,7 +56,7 @@ model Personal {
   nombres        String
   apellidos      String
   sexo           String?
-  categoria      String? // "Director", "Directora", "Docente", "Secretaria", "Secretario", "Operativo", "Auxiliar"
+  cargo          String? // "Director", "Directora", "Docente", "Secretaria", "Secretario", "Operativo", "Auxiliar"
   jornada        String?
   estado         String   @default("activo")
   foto_path      String?
@@ -63,6 +65,7 @@ model Personal {
 
   codigos_qr  CodigoQr[]   @relation("personal_qr")
   asistencias Asistencia[] @relation("personal_asistencia")
+  excusas     Excusa[]     @relation("personal_excusa")
 
   @@index([estado])
   @@map("personal")
@@ -146,6 +149,20 @@ model Auditoria {
 }
 
 // Estados de reparación y diagnóstico
+// Excusas de ausencias
+model Excusa {
+  id           Int      @id @default(autoincrement())
+  alumno_id    Int?
+  personal_id  Int?
+  motivo       String
+  fecha        DateTime @default(now())
+
+  alumno   Alumno?   @relation("alumno_excusa", fields: [alumno_id], references: [id], onDelete: Cascade)
+  personal Personal? @relation("personal_excusa", fields: [personal_id], references: [id], onDelete: Cascade)
+
+  @@index([fecha])
+  @@map("excusas")
+}
 model DiagnosticResult {
   id           Int       @id @default(autoincrement())
   tipo         String // "missing_qr", "missing_logo", "corrupted_file"

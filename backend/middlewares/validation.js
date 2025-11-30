@@ -22,7 +22,7 @@ exports.validarCrearAlumno = [
     .trim()
     .notEmpty().withMessage('El carnet es requerido')
     .isLength({ min: 3, max: 20 }).withMessage('El carnet debe tener entre 3 y 20 caracteres')
-    .matches(/^[A-Z0-9]+$/i).withMessage('El carnet solo puede contener letras y números'),
+    .matches(/^[A-Z0-9\-]+$/i).withMessage('El carnet solo puede contener letras, números y guiones'),
   
   body('nombres')
     .trim()
@@ -45,6 +45,11 @@ exports.validarCrearAlumno = [
     .notEmpty().withMessage('El grado es requerido')
     .isLength({ max: 50 }).withMessage('El grado no puede exceder 50 caracteres'),
   
+  body('especialidad')
+    .optional()
+    .trim()
+    .isLength({ max: 100 }).withMessage('La especialidad no puede exceder 100 caracteres'),
+  
   body('jornada')
     .optional()
     .trim()
@@ -64,7 +69,7 @@ exports.validarActualizarAlumno = [
     .optional()
     .trim()
     .isLength({ min: 3, max: 20 }).withMessage('El carnet debe tener entre 3 y 20 caracteres')
-    .matches(/^[A-Z0-9]+$/i).withMessage('El carnet solo puede contener letras y números'),
+    .matches(/^[A-Z0-9\-]+$/i).withMessage('El carnet solo puede contener letras, números y guiones'),
   
   body('nombres')
     .optional()
@@ -87,6 +92,11 @@ exports.validarActualizarAlumno = [
     .trim()
     .isLength({ max: 50 }).withMessage('El grado no puede exceder 50 caracteres'),
   
+  body('especialidad')
+    .optional()
+    .trim()
+    .isLength({ max: 100 }).withMessage('La especialidad no puede exceder 100 caracteres'),
+  
   body('jornada')
     .optional()
     .trim()
@@ -107,7 +117,7 @@ exports.validarCrearDocente = [
     .trim()
     .notEmpty().withMessage('El carnet es requerido')
     .isLength({ min: 3, max: 20 }).withMessage('El carnet debe tener entre 3 y 20 caracteres')
-    .matches(/^[A-Z0-9]+$/i).withMessage('El carnet solo puede contener letras y números'),
+    .matches(/^[A-Z0-9\-]+$/i).withMessage('El carnet solo puede contener letras, números y guiones'),
   
   body('nombres')
     .trim()
@@ -125,11 +135,11 @@ exports.validarCrearDocente = [
     .optional()
     .isIn(['M', 'F']).withMessage('El sexo debe ser M o F'),
   
-  body('categoria')
+  body('cargo')
     .optional()
     .trim()
     .isIn(['Director', 'Directora', 'Docente', 'Secretaria', 'Secretario', 'Operativo', 'Auxiliar'])
-    .withMessage('Categoría inválida. Debe ser: Director, Directora, Docente, Secretaria, Secretario, Operativo o Auxiliar'),
+    .withMessage('Cargo inválido. Debe ser: Director, Directora, Docente, Secretaria, Secretario, Operativo o Auxiliar'),
   
   body('jornada')
     .optional()
@@ -150,7 +160,7 @@ exports.validarActualizarDocente = [
     .optional()
     .trim()
     .isLength({ min: 3, max: 20 }).withMessage('El carnet debe tener entre 3 y 20 caracteres')
-    .matches(/^[A-Z0-9]+$/i).withMessage('El carnet solo puede contener letras y números'),
+    .matches(/^[A-Z0-9\-]+$/i).withMessage('El carnet solo puede contener letras, números y guiones'),
   
   body('nombres')
     .optional()
@@ -168,11 +178,11 @@ exports.validarActualizarDocente = [
     .optional()
     .isIn(['M', 'F']).withMessage('El sexo debe ser M o F'),
   
-  body('categoria')
+  body('cargo')
     .optional()
     .trim()
     .isIn(['Director', 'Directora', 'Docente', 'Secretaria', 'Secretario', 'Operativo', 'Auxiliar'])
-    .withMessage('Categoría inválida'),
+    .withMessage('Cargo inválido'),
   
   body('jornada')
     .optional()

@@ -1,6 +1,7 @@
 const express = require('express');
 const diagnosticsService = require('../services/diagnosticsService');
 const repairService = require('../services/repairService');
+const backupService = require('../services/backupService');
 const prisma = require('../prismaClient');
 const { verifyJWT } = require('../middlewares/auth');
 const { logger } = require('../utils/logger');
@@ -125,6 +126,26 @@ router.post('/auto', async (req, res) => {
     });
   } catch (error) {
     logger.error({ err: error }, '❌ Error en auto-reparación');
+    res.status(500).json({ error: error.message });
+  }
+
+
+/**
+ * POST /api/repair/backup/cloud
+ * Subir backup local a la nube
+ */
+router.post('/backup/cloud', async (req, res) => {
+  try {
+    const { backupName } = req.body;
+    if (!backupName) {
+      return res.status(400).json({ error: 'Falta backupName' });
+    }
+
+    const url = await backupService.subirBackupNube(backupName);
+    
+    res.json({ success: true, url });
+  } catch (error) {
+    logger.error({ err: error, backupName: req.body.backupName }, '❌ Error subiendo backup');
     res.status(500).json({ error: error.message });
   }
 });

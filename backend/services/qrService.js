@@ -3,12 +3,13 @@ const sharp = require('sharp');
 const fs = require('fs-extra');
 const path = require('path');
 const { logger } = require('../utils/logger');
+const { UPLOADS_DIR } = require('../utils/paths');
 
 /**
  * Servicio para generar QR con logo institucional
  */
 
-const UPLOADS_DIR = path.join(__dirname, '../..', 'uploads');
+// const UPLOADS_DIR = path.join(__dirname, '../..', 'uploads'); // REMOVED
 const QRS_DIR = path.join(UPLOADS_DIR, 'qrs');
 const LOGOS_DIR = path.join(UPLOADS_DIR, 'logos');
 

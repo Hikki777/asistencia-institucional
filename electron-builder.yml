@@ -1,0 +1,28 @@
+appId: "com.asistencias.app"
+productName: "Sistema de Registro Institucional"
+directories:
+  output: "dist-electron"
+  buildResources: "public"
+files:
+  - "electron/**/*"
+  - "backend/**/*"
+  - "frontend-react/dist/**/*"
+  - "package.json"
+  - "node_modules/**/*"
+  - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+  - "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+  - "!**/node_modules/*.d.ts"
+  - "!**/node_modules/.bin"
+extraResources:
+  - from: "backend/prisma/dev.db"
+    to: "backend/prisma/dev.db"
+  - from: "uploads"
+    to: "uploads"
+win:
+  target: "nsis"
+  icon: "public/logo.png"
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true

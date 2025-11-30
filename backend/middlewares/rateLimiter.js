@@ -6,15 +6,14 @@ const rateLimit = require('express-rate-limit');
  */
 exports.loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: process.env.NODE_ENV === 'production' ? 5 : 100, // 5 en producción, 100 en desarrollo
+  max: process.env.NODE_ENV === 'production' ? 5 : 1000, // 5 en producción, 1000 en desarrollo
   message: {
     error: 'Demasiados intentos de inicio de sesión',
     detalle: 'Por favor intenta de nuevo en 15 minutos'
   },
   standardHeaders: true, // Retornar info de rate limit en headers `RateLimit-*`
   legacyHeaders: false, // Deshabilitar headers `X-RateLimit-*`
-  // Solo contar requests fallidos (opcional, requiere configuración adicional)
-  skipSuccessfulRequests: false
+  skipSuccessfulRequests: true // No contar requests exitosos
 });
 
 /**
@@ -61,8 +60,10 @@ exports.apiLimiter = rateLimit({
   legacyHeaders: false,
   // Excluir rutas específicas del rate limiting general
   skip: (req) => {
-    // No limitar health check
-    return req.path === '/api/health';
+    // No limitar health check (considerar mount path)
+    const original = req.originalUrl || '';
+    const isHealth = original === '/api/health' || req.path === '/health';
+    return isHealth;
   }
 });
 

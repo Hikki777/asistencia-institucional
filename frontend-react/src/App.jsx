@@ -1,23 +1,49 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { Menu, X, LogOut, Home, Settings, BarChart3, Wrench, User, Clock, Users, FileText } from 'lucide-react';
+import { Menu, X, LogOut, Home, Settings, BarChart3, Wrench, User, Clock, Users, FileText, Activity } from 'lucide-react';
 import { authAPI } from './api/endpoints';
 import ErrorBoundary from './components/ErrorBoundary';
 import Dashboard from './components/Dashboard';
 import AlumnosPanel from './components/AlumnosPanel';
 import PersonalPanel from './components/PersonalPanel';
 import AsistenciasPanel from './components/AsistenciasPanel';
-import ConfiguracionPanel from './components/ConfiguracionPanel';
+import ConfiguracionInstitucional from './components/ConfiguracionInstitucional';
 import DiagnosticsPanel from './components/DiagnosticsPanel';
 import RepairPanel from './components/RepairPanel';
 import ReportesPanel from './components/ReportesPanel';
+import MetricsPanel from './components/MetricsPanel';
+import MetricsPanel from './components/MetricsPanel';
+import SetupWizard from './components/SetupWizard';
 import LoginPage from './pages/LoginPage';
+import client from './api/client';
 import './App.css';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [user, setUser] = useState(null);
+
+  const [isInitialized, setIsInitialized] = useState(null); // null=loading, false=setup needed, true=ready
+
+  useEffect(() => {
+    checkInitialization();
+  }, []);
+
+  const checkInitialization = async () => {
+    try {
+      const res = await client.get('/institucion');
+      // Si existe y tiene flag inicializado, todo ok
+      if (res.data && res.data.inicializado) {
+        setIsInitialized(true);
+      } else {
+        setIsInitialized(false);
+      }
+    } catch (error) {
+      // Si da error (ej 404 o 500), asumimos que falta setup o hay problema
+      // Pero si es 404 es seguro que falta setup (o tabla vacía)
+      setIsInitialized(false);
+    }
+  };
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -47,6 +73,10 @@ function App() {
   };
 
   // El router maneja /login sin token, el resto requiere token
+
+  if (isInitialized === null) {
+    return <div className="flex items-center justify-center h-screen bg-gray-100">Cargando sistema...</div>;
+  }
 
   return (
     <ErrorBoundary fallbackMessage="Ha ocurrido un error en la aplicación. Por favor, recarga la página.">
@@ -79,7 +109,8 @@ function App() {
             <NavLink to="/docentes" icon={Users} label="Personal" />
             <NavLink to="/asistencias" icon={Clock} label="Asistencias" />
             <NavLink to="/reportes" icon={FileText} label="Reportes" />
-            <NavLink to="/configuracion" icon={Settings} label="Configuración" />
+            <NavLink to="/metricas" icon={Activity} label="Métricas" />
+            <NavLink to="/configuracion" icon={Settings} label="Configuración Institucional" />
           </nav>
 
           <div className="absolute bottom-4 left-4 right-4">
@@ -117,13 +148,21 @@ function App() {
           {/* Page Content */}
           <main className="p-6 max-w-7xl mx-auto">
             <Routes>
-              <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <LoginPage />} />
-              <Route path="/" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
+              <Route path="/setup" element={!isInitialized ? <SetupWizard onComplete={() => setIsInitialized(true)} /> : <Navigate to="/login" />} />
+              <Route path="/login" element={
+                !isInitialized ? <Navigate to="/setup" /> :
+                isLoggedIn ? <Navigate to="/" /> : <LoginPage />
+              } />
+              <Route path="/" element={
+                !isInitialized ? <Navigate to="/setup" /> :
+                isLoggedIn ? <Dashboard /> : <Navigate to="/login" />
+              } />
               <Route path="/alumnos" element={isLoggedIn ? <AlumnosPanel /> : <Navigate to="/login" />} />
               <Route path="/docentes" element={isLoggedIn ? <PersonalPanel /> : <Navigate to="/login" />} />
               <Route path="/asistencias" element={isLoggedIn ? <AsistenciasPanel /> : <Navigate to="/login" />} />
               <Route path="/reportes" element={isLoggedIn ? <ReportesPanel /> : <Navigate to="/login" />} />
-              <Route path="/configuracion" element={isLoggedIn ? <ConfiguracionPanel /> : <Navigate to="/login" />} />
+              <Route path="/metricas" element={isLoggedIn ? <MetricsPanel /> : <Navigate to="/login" />} />
+                <Route path="/configuracion" element={isLoggedIn ? <ConfiguracionInstitucional /> : <Navigate to="/login" />} />
               <Route path="/diagnostics" element={isLoggedIn ? <DiagnosticsPanel /> : <Navigate to="/login" />} />
               <Route path="/repair" element={isLoggedIn ? <RepairPanel /> : <Navigate to="/login" />} />
             </Routes>

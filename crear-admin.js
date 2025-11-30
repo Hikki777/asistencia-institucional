@@ -1,40 +1,66 @@
+#!/usr/bin/env node
+/**
+ * Script para crear o actualizar usuario administrador
+ * Sistema de Registro Institucional
+ */
+
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
+const readline = require('readline');
+
 const prisma = new PrismaClient();
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+function question(query) {
+  return new Promise(resolve => rl.question(query, resolve));
+}
 
 async function crearAdmin() {
   try {
-    // Verificar si ya existe un usuario admin
+    console.log('\n╔══════════════════════════════════════════════════════════════╗');
+    console.log('║  👤 Crear/Actualizar Usuario Administrador                  ║');
+    console.log('╚══════════════════════════════════════════════════════════════╝\n');
+    
+    // Pedir email (con default)
+    const email = await question('📧 Email (admin@test.edu): ') || 'admin@test.edu';
+    
+    // Pedir contraseña (con default)
+    const password = await question('🔐 Contraseña (admin123): ') || 'admin123';
+    
+    // Verificar si ya existe
     const existente = await prisma.usuario.findUnique({
-      where: { email: 'admin@test.edu' }
+      where: { email }
     });
 
+    const hash = await bcrypt.hash(password, 10);
+
     if (existente) {
-      console.log('⚠️  Usuario admin@test.edu ya existe');
-      console.log('🔄 Actualizando contraseña...');
+      console.log(`\n⚠️  Usuario ${email} ya existe`);
+      const actualizar = await question('¿Actualizar contraseña? (S/n): ') || 'S';
       
-      // Actualizar contraseña a "admin123"
-      const hash = await bcrypt.hash('admin123', 10);
-      
-      await prisma.usuario.update({
-        where: { email: 'admin@test.edu' },
-        data: {
-          hash_pass: hash,
-          activo: true
-        }
-      });
-      
-      console.log('✅ Contraseña actualizada exitosamente');
-      console.log('\n📧 Email: admin@test.edu');
-      console.log('🔐 Nueva contraseña: admin123');
+      if (actualizar.toUpperCase() === 'S') {
+        await prisma.usuario.update({
+          where: { email },
+          data: {
+            hash_pass: hash,
+            activo: true
+          }
+        });
+        
+        console.log('\n✅ Contraseña actualizada exitosamente');
+      } else {
+        console.log('\n❌ Operación cancelada');
+      }
     } else {
-      console.log('📝 Creando nuevo usuario admin...');
-      
-      const hash = await bcrypt.hash('admin123', 10);
+      console.log(`\n📝 Creando usuario ${email}...`);
       
       const usuario = await prisma.usuario.create({
         data: {
-          email: 'admin@test.edu',
+          email,
           hash_pass: hash,
           rol: 'admin',
           activo: true
@@ -42,17 +68,23 @@ async function crearAdmin() {
       });
       
       console.log('✅ Usuario creado exitosamente');
-      console.log('\n📧 Email: admin@test.edu');
-      console.log('🔐 Contraseña: admin123');
-      console.log('👤 Rol: admin');
-      console.log('🆔 ID:', usuario.id);
+      console.log(`🆔 ID: ${usuario.id}`);
     }
 
-    console.log('\n🎯 Ahora puedes iniciar sesión en http://localhost:5173');
+    console.log('\n╔══════════════════════════════════════════════════════════════╗');
+    console.log('║  🎯 Credenciales de Acceso                                   ║');
+    console.log('╠══════════════════════════════════════════════════════════════╣');
+    console.log(`║  📧 Email:      ${email.padEnd(43)}║`);
+    console.log(`║  🔐 Contraseña: ${password.padEnd(43)}║`);
+    console.log(`║  👤 Rol:        admin${' '.repeat(38)}║`);
+    console.log('╠══════════════════════════════════════════════════════════════╣');
+    console.log('║  🌐 Inicia sesión en: http://localhost:5173                  ║');
+    console.log('╚══════════════════════════════════════════════════════════════╝\n');
     
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('\n❌ Error:', error.message);
   } finally {
+    rl.close();
     await prisma.$disconnect();
   }
 }

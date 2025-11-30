@@ -15,6 +15,39 @@ const path = require('path');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const isTest = process.env.NODE_ENV === 'test';
+const noEmojiEnv = process.env.NO_EMOJI;
+const NO_EMOJI = !!(noEmojiEnv && (noEmojiEnv === '1' || noEmojiEnv === 'true'));
+
+// Remueve la mayoría de emojis y símbolos pictográficos, dejando acentos y letras normales
+const stripEmojis = (s) => {
+  if (!s || !NO_EMOJI) return s;
+  try {
+    return s
+      .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')   // Emoji range principal
+      .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')   // Suplemento
+      .replace(/[\u2600-\u26FF]/g, '')          // Misceláneos
+      .replace(/[\u2700-\u27BF]/g, '')          // Dingbats
+      .replace(/\uFE0F/g, '')                    // Variation Selector-16
+      .trim();
+  } catch {
+    return s;
+  }
+};
+
+const stripEmojisDeep = (obj) => {
+  if (!NO_EMOJI) return obj;
+  if (obj == null) return obj;
+  if (typeof obj === 'string') return stripEmojis(obj);
+  if (Array.isArray(obj)) return obj.map(stripEmojisDeep);
+  if (typeof obj === 'object') {
+    const out = {};
+    for (const k of Object.keys(obj)) {
+      out[k] = stripEmojisDeep(obj[k]);
+    }
+    return out;
+  }
+  return obj;
+};
 
 // Configuración de transporte para desarrollo (pretty print)
 const developmentTransport = {
@@ -66,6 +99,18 @@ const pinoConfig = {
   base: {
     env: process.env.NODE_ENV || 'development',
     app: 'asistencia-institucional'
+  },
+  
+  // Formateadores para ajustar salida
+  formatters: {
+    level(label) {
+      return { level: label };
+    },
+    log(object) {
+      if (!NO_EMOJI) return object;
+      const out = stripEmojisDeep(object);
+      return out;
+    }
   },
   
   // Serializers personalizados

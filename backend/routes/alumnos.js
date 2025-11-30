@@ -8,6 +8,10 @@ const {
 } = require('../middlewares/validation');
 const { logger } = require('../utils/logger');
 const { cacheMiddleware, invalidateCacheMiddleware } = require('../middlewares/cache');
+const multer = require('multer');
+const { uploadBuffer } = require('../services/cloudinaryService');
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
@@ -22,10 +26,12 @@ router.get('/', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;
-    const estado = req.query.estado || 'activo';
+    const estado = req.query.estado; // Sin valor por defecto, traer todos
+
+    const whereClause = estado ? { estado } : {}; // Si hay estado, filtrar, sino traer todos
 
     const alumnos = await prisma.alumno.findMany({
-      where: { estado },
+      where: whereClause,
       take: limit + 1, // +1 para saber si hay más páginas
       ...(cursor && { cursor: { id: cursor }, skip: 1 }),
       orderBy: { id: 'asc' },
@@ -36,9 +42,16 @@ router.get('/', async (req, res) => {
         apellidos: true,
         sexo: true,
         grado: true,
+        especialidad: true,
         jornada: true,
         estado: true,
-        creado_en: true
+        creado_en: true,
+        codigos_qr: {
+          select: {
+            id: true,
+            token: true
+          }
+        }
       }
     });
 
@@ -46,7 +59,7 @@ router.get('/', async (req, res) => {
     const items = hasMore ? alumnos.slice(0, limit) : alumnos;
     const nextCursor = hasMore ? items[items.length - 1].id : null;
 
-    const total = await prisma.alumno.count({ where: { estado } });
+    const total = await prisma.alumno.count({ where: whereClause });
 
     res.json({
       total,
@@ -117,8 +130,23 @@ router.post('/', invalidateCacheMiddleware('/api/alumnos'), validarCrearAlumno, 
         apellidos,
         sexo: sexo || null,
         grado,
+        especialidad: req.body.especialidad || null,
         jornada: jornada || 'Matutina',
         estado: 'activo'
+      },
+      select: {
+        id: true,
+        carnet: true,
+        nombres: true,
+        apellidos: true,
+        sexo: true,
+        grado: true,
+        especialidad: true,
+        jornada: true,
+        estado: true,
+        foto_path: true,
+        creado_en: true,
+        actualizado_en: true
       }
     });
 
@@ -146,7 +174,7 @@ router.post('/', invalidateCacheMiddleware('/api/alumnos'), validarCrearAlumno, 
  */
 router.put('/:id', invalidateCacheMiddleware('/api/alumnos'), validarActualizarAlumno, async (req, res) => {
   try {
-    const { nombres, apellidos, sexo, grado, jornada, estado } = req.body;
+    const { nombres, apellidos, sexo, grado, especialidad, jornada, estado } = req.body;
     const id = parseInt(req.params.id);
 
     const alumno = await prisma.alumno.update({
@@ -156,8 +184,23 @@ router.put('/:id', invalidateCacheMiddleware('/api/alumnos'), validarActualizarA
         ...(apellidos && { apellidos }),
         ...(sexo && { sexo }),
         ...(grado && { grado }),
+        ...(especialidad !== undefined && { especialidad }),
         ...(jornada && { jornada }),
         ...(estado && { estado })
+      },
+      select: {
+        id: true,
+        carnet: true,
+        nombres: true,
+        apellidos: true,
+        sexo: true,
+        grado: true,
+        especialidad: true,
+        jornada: true,
+        estado: true,
+        foto_path: true,
+        creado_en: true,
+        actualizado_en: true
       }
     });
 
@@ -206,6 +249,41 @@ router.delete('/:id', invalidateCacheMiddleware('/api/alumnos'), async (req, res
     res.json({ success: true, message: 'Alumno inactivado' });
   } catch (error) {
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al inactivar alumno');
+    res.status(500).json({ error: error.message });
+  }
+
+
+/**
+ * POST /api/alumnos/:id/foto
+ * Subir foto de perfil a Cloudinary
+ */
+router.post('/:id/foto', upload.single('foto'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ningún archivo' });
+    }
+
+    const alumno = await prisma.alumno.findUnique({ where: { id } });
+    if (!alumno) {
+      return res.status(404).json({ error: 'Alumno no encontrado' });
+    }
+
+    // Subir a Cloudinary
+    // Usamos el carnet como public_id para mantener consistencia
+    const publicId = `alumno_${alumno.carnet}`;
+    const result = await uploadBuffer(req.file.buffer, 'alumnos', publicId);
+
+    // Actualizar BD con la URL segura
+    const updated = await prisma.alumno.update({
+      where: { id },
+      data: { foto_path: result.secure_url }
+    });
+
+    logger.info({ alumnoId: id, url: result.secure_url }, '✅ Foto de alumno actualizada');
+    res.json({ success: true, url: result.secure_url });
+  } catch (error) {
+    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error subiendo foto');
     res.status(500).json({ error: error.message });
   }
 });

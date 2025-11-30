@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, BookOpen, Sun } from 'lucide-react';
+import { GraduationCap, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, BookOpen, Sun, CheckCircle, XCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { alumnosAPI, qrAPI } from '../api/endpoints';
 import { TableSkeleton } from './LoadingSpinner';
@@ -14,11 +14,13 @@ export default function AlumnosPanel() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrado, setFilterGrado] = useState('');
   const [filterJornada, setFilterJornada] = useState('');
+  const [filterEstado, setFilterEstado] = useState('');
   const [formData, setFormData] = useState({
     carnet: '',
     nombres: '',
     apellidos: '',
     grado: '',
+    especialidad: '',
     jornada: '',
     sexo: ''
   });
@@ -32,6 +34,8 @@ export default function AlumnosPanel() {
     try {
       const response = await alumnosAPI.list();
       console.log('📊 Respuesta de alumnos:', response.data);
+      console.log('📊 Primer alumno completo:', response.data.alumnos?.[0]);
+      console.log('📊 Especialidad primer alumno:', response.data.alumnos?.[0]?.especialidad);
       setAlumnos(response.data.alumnos || []);
     } catch (error) {
       console.error('Error:', error);
@@ -45,45 +49,28 @@ export default function AlumnosPanel() {
     e.preventDefault();
     const toastId = toast.loading(editingAlumno ? 'Actualizando alumno...' : 'Creando alumno...');
     
-    // Optimistic update: actualizar UI inmediatamente
-    const tempId = Date.now(); // ID temporal para nuevo alumno
-    const optimisticAlumno = {
-      ...formData,
-      id: editingAlumno ? editingAlumno.id : tempId,
-      creado_en: new Date().toISOString()
-    };
-
-    // Backup para rollback en caso de error
-    const previousAlumnos = [...alumnos];
-
-    if (editingAlumno) {
-      // Actualizar: reemplazar alumno existente
-      setAlumnos(prev => prev.map(a => a.id === editingAlumno.id ? optimisticAlumno : a));
-    } else {
-      // Crear: agregar nuevo alumno al inicio
-      setAlumnos(prev => [optimisticAlumno, ...prev]);
-    }
-
-    // Cerrar modal inmediatamente para mejor UX
-    setShowModal(false);
-    setEditingAlumno(null);
-    setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', jornada: '', sexo: '' });
-
+    console.log('📝 Datos a enviar:', formData);
+    console.log('📝 Especialidad a enviar:', formData.especialidad);
+    
     try {
       if (editingAlumno) {
-        await alumnosAPI.update(editingAlumno.id, formData);
+        const response = await alumnosAPI.update(editingAlumno.id, formData);
+        console.log('✅ Respuesta actualización:', response.data);
+        console.log('✅ Especialidad en respuesta:', response.data.especialidad);
         toast.success('Alumno actualizado exitosamente', { id: toastId });
       } else {
         const response = await alumnosAPI.create(formData);
-        // Reemplazar ID temporal con ID real del servidor
-        setAlumnos(prev => prev.map(a => a.id === tempId ? { ...response.data.alumno, ...formData } : a));
+        console.log('✅ Respuesta creación:', response.data);
+        console.log('✅ Especialidad en respuesta:', response.data.especialidad);
         toast.success('Alumno creado exitosamente', { id: toastId });
       }
-      // Refrescar para asegurar consistencia
+      
+      setShowModal(false);
+      setEditingAlumno(null);
+      setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', especialidad: '', jornada: '', sexo: '' });
       fetchAlumnos();
     } catch (error) {
-      // Rollback: revertir a estado anterior
-      setAlumnos(previousAlumnos);
+      console.error('❌ Error:', error);
       toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
     }
   };
@@ -94,11 +81,25 @@ export default function AlumnosPanel() {
       carnet: alumno.carnet,
       nombres: alumno.nombres,
       apellidos: alumno.apellidos,
-      grado: alumno.grado,
+      grado: alumno.grado || '',
+      especialidad: alumno.especialidad || '',
       jornada: alumno.jornada || '',
       sexo: alumno.sexo || ''
     });
     setShowModal(true);
+  };
+
+  const handleToggleEstado = async (id, estadoActual, nombre) => {
+    const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
+    const toastId = toast.loading(`Cambiando estado a ${nuevoEstado}...`);
+    
+    try {
+      await alumnosAPI.update(id, { estado: nuevoEstado });
+      toast.success(`${nombre} ahora está ${nuevoEstado}`, { id: toastId });
+      fetchAlumnos();
+    } catch (error) {
+      toast.error('Error: ' + (error.response?.data||error.message), { id: toastId });
+    }
   };
 
   const handleDelete = async (id, nombre) => {
@@ -123,14 +124,19 @@ export default function AlumnosPanel() {
     const toastId = toast.loading('Generando código QR...');
     
     try {
-      const blob = await qrAPI.download(id);
+      const response = await qrAPI.download(id);
+      const blob = new Blob([response.data], { type: 'image/png' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `qr-${carnet}.png`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
       toast.success('Código QR descargado', { id: toastId });
     } catch (error) {
+      console.error('Error downloading QR:', error);
       toast.error('Error al descargar QR: ' + error.message, { id: toastId });
     }
   };
@@ -143,7 +149,8 @@ export default function AlumnosPanel() {
       a.carnet.toLowerCase().includes(searchTerm.toLowerCase());
     const matchGrado = !filterGrado || a.grado === filterGrado;
     const matchJornada = !filterJornada || a.jornada === filterJornada;
-    return matchSearch && matchGrado && matchJornada;
+    const matchEstado = !filterEstado || a.estado === filterEstado;
+    return matchSearch && matchGrado && matchJornada && matchEstado;
   });
 
   const gradosUnicos = [...new Set(alumnos.map(a => a.grado))].sort();
@@ -164,7 +171,7 @@ export default function AlumnosPanel() {
         <button
           onClick={() => {
             setEditingAlumno(null);
-            setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', jornada: '', sexo: '' });
+            setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', especialidad: '', jornada: '', sexo: '' });
             setShowModal(true);
           }}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center justify-center gap-2 transition shadow-lg hover:shadow-xl"
@@ -227,6 +234,21 @@ export default function AlumnosPanel() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <Filter size={16} />
+              Estado
+            </label>
+            <select
+              value={filterEstado}
+              onChange={(e) => setFilterEstado(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Todos</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
           <div className="flex items-end">
             <div className="text-sm text-gray-600 font-medium">
               {filteredAlumnos.length} de {alumnos.length} alumno(s)
@@ -258,9 +280,10 @@ export default function AlumnosPanel() {
                     <th className="px-6 py-4 text-left text-sm font-semibold">Carnet</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold">Nombre Completo</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold">Grado</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold">Especialidad</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold">Jornada</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold">Estado</th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold">Acciones</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -286,7 +309,12 @@ export default function AlumnosPanel() {
                         {alumno.grado}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {alumno.jornada || '-'}
+                        {alumno.especialidad || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className="font-medium text-gray-900">
+                          {alumno.jornada || '-'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
@@ -297,8 +325,8 @@ export default function AlumnosPanel() {
                           {alumno.estado}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-4">
+                        <div className="flex justify-center gap-2">
                           {alumno.codigos_qr?.[0] && (
                             <button
                               onClick={() => handleDownloadQR(alumno.codigos_qr[0].id, alumno.carnet)}
@@ -308,6 +336,17 @@ export default function AlumnosPanel() {
                               <Download size={18} />
                             </button>
                           )}
+                          <button
+                            onClick={() => handleToggleEstado(alumno.id, alumno.estado, `${alumno.nombres} ${alumno.apellidos}`)}
+                            className={`p-2 rounded-lg transition ${
+                              alumno.estado === 'activo'
+                                ? 'text-orange-600 hover:bg-orange-50'
+                                : 'text-green-600 hover:bg-green-50'
+                            }`}
+                            title={alumno.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                          >
+                            {alumno.estado === 'activo' ? <XCircle size={18} /> : <CheckCircle size={18} />}
+                          </button>
                           <button
                             onClick={() => handleEdit(alumno)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
@@ -344,6 +383,11 @@ export default function AlumnosPanel() {
                     <div>
                       <div className="font-bold text-gray-900">{alumno.nombres} {alumno.apellidos}</div>
                       <div className="text-sm text-blue-600 font-mono font-semibold">{alumno.carnet}</div>
+                      {alumno.especialidad && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          {alumno.especialidad}
+                        </div>
+                      )}
                     </div>
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       alumno.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -357,13 +401,24 @@ export default function AlumnosPanel() {
                       {alumno.grado}
                     </span>
                     {alumno.jornada && (
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-gray-900 font-medium">
                         <Sun size={14} />
                         {alumno.jornada}
                       </span>
                     )}
                   </div>
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleEstado(alumno.id, alumno.estado, `${alumno.nombres} ${alumno.apellidos}`)}
+                      className={`p-2 rounded-lg transition ${
+                        alumno.estado === 'activo'
+                          ? 'text-orange-600 hover:bg-orange-50'
+                          : 'text-green-600 hover:bg-green-50'
+                      }`}
+                      title={alumno.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                    >
+                      {alumno.estado === 'activo' ? <XCircle size={18} /> : <CheckCircle size={18} />}
+                    </button>
                     {alumno.codigos_qr?.[0] && (
                       <button
                         onClick={() => handleDownloadQR(alumno.codigos_qr[0].id, alumno.carnet)}
@@ -397,12 +452,12 @@ export default function AlumnosPanel() {
       {/* Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-xl p-6 sm:p-8 max-w-md w-full shadow-2xl"
+              className="bg-white rounded-xl p-6 sm:p-8 max-w-md w-full shadow-2xl my-8"
             >
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-800">
@@ -471,6 +526,16 @@ export default function AlumnosPanel() {
                       <option value="F">F</option>
                     </select>
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
+                  <input
+                    type="text"
+                    value={formData.especialidad}
+                    onChange={(e) => setFormData({ ...formData, especialidad: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Bachillerato en Computación"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Jornada</label>

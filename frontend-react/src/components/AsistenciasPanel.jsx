@@ -3,28 +3,19 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion';
 import { Clock, UserCheck, UserX, Search, Calendar, TrendingUp, QrCode, Camera, CameraOff } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-import axios from 'axios';
+import client from '../api/client';
 import { Html5Qrcode } from 'html5-qrcode';
 import { TableSkeleton } from './LoadingSpinner';
 
-const API_URL = 'http://localhost:5000/api';
-const client = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
-
-// Interceptor para agregar token
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Usamos el cliente API compartido (con baseURL '/api' e interceptor JWT)
 
 export default function AsistenciasPanel() {
+      const [showAusentesModal, setShowAusentesModal] = useState(false);
+      const [excusaInput, setExcusaInput] = useState('');
+      const [personaExcusa, setPersonaExcusa] = useState(null);
+      const [excusas, setExcusas] = useState([]);
+    const [tomaIniciada, setTomaIniciada] = useState(false);
+    const [horaInternet, setHoraInternet] = useState('');
   const [asistenciasHoy, setAsistenciasHoy] = useState([]);
   const [stats, setStats] = useState(null);
   const [alumnos, setAlumnos] = useState([]);
@@ -67,9 +58,33 @@ export default function AsistenciasPanel() {
   }, [docentes, searchTerm]);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Evitar llamadas sin token; el interceptor también redirige en 401
+      toast.error('Sesión no iniciada. Inicia sesión para continuar.');
+      window.location.href = '/login';
+      return;
+    }
+
     fetchAsistenciasHoy();
     fetchAlumnos();
     fetchDocentes();
+    // Obtener excusas del día
+    import('../api/excusas').then(({ excusasAPI }) => {
+      excusasAPI.list({ fecha: new Date().toISOString().slice(0, 10) })
+        .then(res => setExcusas(res.data.excusas || []))
+        .catch(() => setExcusas([]));
+    });
+
+    // Obtener hora de internet
+    fetch('https://worldtimeapi.org/api/timezone/America/El_Salvador')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.datetime) {
+          const fecha = new Date(data.datetime);
+          setHoraInternet(fecha.toLocaleString('es-ES'));
+        }
+      });
     
     return () => {
       stopScanner();
@@ -106,7 +121,7 @@ export default function AsistenciasPanel() {
   const fetchDocentes = async () => {
     try {
       const response = await client.get('/docentes');
-      setDocentes(response.data.docentes || []);
+      setDocentes(response.data.personal || response.data.docentes || []);
     } catch (error) {
       console.error('Error fetching docentes:', error);
       toast.error('Error al cargar docentes');
@@ -166,6 +181,16 @@ export default function AsistenciasPanel() {
       if (tipoPersona === 'alumno') {
         const alumno = alumnos.find(a => a.id === parseInt(selectedAlumno));
         console.log('👨‍🎓 Alumno encontrado:', alumno);
+        
+        // Validar que el alumno esté activo
+        if (!alumno) {
+          toast.error('Alumno no encontrado');
+          return;
+        }
+        if (alumno.estado === 'inactivo' || alumno.estado === 'baja') {
+          toast.error(`⚠️ El alumno ${alumno.nombres} ${alumno.apellidos} está INACTIVO. No se puede registrar asistencia.`);
+          return;
+        }
         personaData = {
           tipo: 'Alumno',
           nombre: alumno?.nombre || alumno?.nombres || 'Desconocido',
@@ -177,6 +202,17 @@ export default function AsistenciasPanel() {
       } else {
         const docente = docentes.find(d => d.id === parseInt(selectedDocente));
         console.log('👨‍🏫 Docente encontrado:', docente);
+        
+        // Validar que el docente esté activo
+        if (!docente) {
+          toast.error('Docente no encontrado');
+          return;
+        }
+        if (docente.estado === 'inactivo' || docente.estado === 'baja') {
+          toast.error(`⚠️ El docente ${docente.nombres} ${docente.apellidos} está INACTIVO. No se puede registrar asistencia.`);
+          return;
+        }
+        
         personaData = {
           tipo: 'Personal',
           nombre: docente?.nombre || docente?.nombres || 'Desconocido',
@@ -232,7 +268,7 @@ export default function AsistenciasPanel() {
       if (tipoPersona === 'alumno' && optimisticAsistencia.alumno_id) {
         requestData.alumno_id = optimisticAsistencia.alumno_id;
       } else if (tipoPersona === 'docente' && optimisticAsistencia.docente_id) {
-        requestData.docente_id = optimisticAsistencia.docente_id;
+        requestData.personal_id = optimisticAsistencia.docente_id;
       }
 
       console.log('📤 Enviando:', requestData);
@@ -625,8 +661,8 @@ export default function AsistenciasPanel() {
         requestData.alumno_id = parseInt(parsedData.id);
         console.log('👨‍🎓 Registrando alumno ID:', parsedData.id);
       } else if (parsedData.tipo === 'docente' || parsedData.tipo === 'personal') {
-        // Backend espera docente_id (aunque internamente use Personal)
-        requestData.docente_id = parseInt(parsedData.id);
+        // Backend espera personal_id
+        requestData.personal_id = parseInt(parsedData.id);
         console.log('👨‍🏫 Registrando personal ID:', parsedData.id);
       } else {
         console.error('❌ Tipo desconocido:', parsedData.tipo);
@@ -651,6 +687,18 @@ export default function AsistenciasPanel() {
       if (parsedData.tipo === 'alumno') {
         const alumno = alumnos.find(a => a.id === parseInt(parsedData.id));
         console.log('👨‍🎓 Alumno encontrado:', alumno);
+        
+        // Validar que el alumno esté activo
+        if (!alumno) {
+          toast.error('Alumno no encontrado');
+          setScanMessage('❌ Alumno no encontrado');
+          return;
+        }
+        if (alumno.estado === 'inactivo' || alumno.estado === 'baja') {
+          toast.error(`⚠️ El alumno ${alumno.nombres} ${alumno.apellidos} está INACTIVO`);
+          setScanMessage(`❌ Usuario INACTIVO: ${alumno.nombres}`);
+          return;
+        }
         personaData = {
           tipo: 'Alumno',
           nombre: alumno?.nombre || alumno?.nombres || 'Desconocido',
@@ -662,6 +710,19 @@ export default function AsistenciasPanel() {
       } else {
         const docente = docentes.find(d => d.id === parseInt(parsedData.id));
         console.log('👨‍🏫 Docente encontrado:', docente);
+        
+        // Validar que el docente esté activo
+        if (!docente) {
+          toast.error('Docente no encontrado');
+          setScanMessage('❌ Docente no encontrado');
+          return;
+        }
+        if (docente.estado === 'inactivo' || docente.estado === 'baja') {
+          toast.error(`⚠️ El docente ${docente.nombres} ${docente.apellidos} está INACTIVO`);
+          setScanMessage(`❌ Usuario INACTIVO: ${docente.nombres}`);
+          return;
+        }
+        
         personaData = {
           tipo: 'Personal',
           nombre: docente?.nombre || docente?.nombres || 'Desconocido',
@@ -706,17 +767,17 @@ export default function AsistenciasPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Título */}
+      {/* Título del panel */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex items-center gap-3 mb-2"
       >
         <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
           <Clock className="text-blue-600" size={36} />
           Panel de Asistencias
         </h2>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 ml-4">
           <Calendar size={16} className="inline mr-1" />
           {new Date().toLocaleDateString('es-ES', { 
             weekday: 'long', 
@@ -729,7 +790,7 @@ export default function AsistenciasPanel() {
 
       {/* Estadísticas del Día */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <StatCard
             icon={<TrendingUp />}
             title="Total Registros"
@@ -760,11 +821,82 @@ export default function AsistenciasPanel() {
             value={stats.tardes || 0}
             color="bg-red-500"
           />
+          <StatCard
+            icon={<UserX />}
+            title="Ausentes"
+            value={(() => {
+              // Calcular ausentes correctamente
+              const asistidos = new Set([
+                ...asistenciasHoy.map(a => a.alumno_id),
+                ...asistenciasHoy.map(a => a.docente_id),
+                ...asistenciasHoy.map(a => a.personal_id)
+              ]);
+              const totalPersonas = [...alumnos, ...docentes].filter(p => p.id).length;
+              const ausentes = [...alumnos, ...docentes].filter(p => !asistidos.has(p.id)).length;
+              return ausentes;
+            })()}
+            color="bg-gray-500 text-white"
+          />
         </div>
       )}
 
+      {/* Botón de iniciar/finalizar centrado a la izquierda, debajo del dashboard y encima de escanear QR */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          {!tomaIniciada ? (
+            <button
+              className="min-w-[220px] text-lg bg-green-600 hover:bg-green-700 font-bold py-3 px-6 rounded-xl shadow transition text-white"
+              onClick={() => {
+                setTomaIniciada(true);
+                setScannerActive(false);
+                setScanMessage('');
+              }}
+            >
+              Iniciar toma de asistencias
+            </button>
+          ) : (
+            <button
+              className="min-w-[220px] text-lg bg-orange-600 hover:bg-orange-700 font-bold py-3 px-6 rounded-xl shadow transition text-white"
+              onClick={() => {
+                setTomaIniciada(false);
+                setScannerActive(false);
+                setScanMessage('');
+              }}
+            >
+              Finalizar toma de asistencias
+            </button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setTipoEvento('entrada')}
+            className={`min-w-[120px] text-lg font-bold px-4 py-2 rounded-xl shadow transition-colors ${
+              tipoEvento === 'entrada'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            } ${!tomaIniciada ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!tomaIniciada}
+          >
+            Entrada
+          </button>
+          <button
+            type="button"
+            onClick={() => setTipoEvento('salida')}
+            className={`min-w-[120px] text-lg font-bold px-4 py-2 rounded-xl shadow transition-colors ${
+              tipoEvento === 'salida'
+                ? 'bg-orange-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            } ${!tomaIniciada ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!tomaIniciada}
+          >
+            Salida
+          </button>
+        </div>
+      </div>
+
       {/* Sección de Captura de Asistencias - Dividido en 2 columnas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${!tomaIniciada ? 'pointer-events-none opacity-50' : ''}`}> 
         {/* Columna Izquierda: Scanner QR */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -776,64 +908,30 @@ export default function AsistenciasPanel() {
               <QrCode className="text-blue-600" size={24} />
               Escanear QR
             </h3>
+            {/* Botón para activar/desactivar el escáner QR */}
             <button
-              type="button"
+              className={`ml-2 px-4 py-2 rounded-lg font-semibold transition-colors ${scannerActive ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
               onClick={() => {
-                console.log('🔘 Botón clickeado. scannerActive:', scannerActive);
-                if (scannerActive) {
-                  stopScanner();
-                } else {
+                if (!scannerActive) {
                   startScanner();
+                } else {
+                  stopScanner();
+                  setScanMessage('Escáner de código QR desactivado');
                 }
+                setScannerActive(!scannerActive);
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                scannerActive 
-                  ? 'bg-red-500 hover:bg-red-600 text-white' 
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'
-              }`}
+              disabled={!tomaIniciada}
             >
-              {scannerActive ? <CameraOff size={20} /> : <Camera size={20} />}
-              {scannerActive ? 'Detener' : 'Activar'}
+              {scannerActive ? 'Desactivar' : 'Activar'}
             </button>
           </div>
-
-          {/* Selector de tipo de evento para QR */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de evento:</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setTipoEvento('entrada')}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                  tipoEvento === 'entrada'
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Entrada
-              </button>
-              <button
-                type="button"
-                onClick={() => setTipoEvento('salida')}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                  tipoEvento === 'salida'
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Salida
-              </button>
-            </div>
-          </div>
-
           {/* Scanner QR */}
-          {scannerActive ? (
+          {scannerActive && tomaIniciada ? (
             <div className="bg-gray-900 rounded-lg p-6">
               <div className="relative max-w-md mx-auto">
                 {/* Contenedor para html5-qrcode */}
                 <div id="qr-reader" className="w-full rounded-lg overflow-hidden" style={{ maxWidth: '400px', maxHeight: '400px' }}></div>
               </div>
-              
               {scanMessage && (
                 <div className={`mt-4 text-center text-lg font-bold py-3 px-4 rounded-lg ${
                   scanMessage.includes('✅') ? 'bg-green-100 text-green-800' :
@@ -863,35 +961,6 @@ export default function AsistenciasPanel() {
             <UserCheck className="text-green-600" size={24} />
             Registro Manual
           </h3>
-
-          {/* Selector de tipo de evento */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de evento:</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setTipoEvento('entrada')}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                  tipoEvento === 'entrada'
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Entrada
-              </button>
-              <button
-                type="button"
-                onClick={() => setTipoEvento('salida')}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                  tipoEvento === 'salida'
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Salida
-              </button>
-            </div>
-          </div>
 
           <form onSubmit={handleRegistrarAsistencia} className="space-y-4">
             {/* Tipo detectado automáticamente */}
@@ -1017,7 +1086,8 @@ export default function AsistenciasPanel() {
 
             <button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors"
+              className={`w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors ${!tomaIniciada ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!tomaIniciada}
             >
               Registrar {tipoEvento === 'entrada' ? 'Entrada' : 'Salida'}
             </button>
@@ -1056,8 +1126,9 @@ export default function AsistenciasPanel() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left px-3 py-2">Hora</th>
-                  <th className="text-left px-3 py-2">Persona</th>
-                  <th className="text-center px-3 py-2">Tipo</th>
+                  <th className="text-left px-3 py-2">Carnet</th>
+                  <th className="text-left px-3 py-2">Nombre Completo</th>
+                  <th className="text-center px-3 py-2">Tipo / Grado</th>
                   <th className="text-center px-3 py-2">Evento</th>
                   <th className="text-center px-3 py-2">Origen</th>
                   <th className="text-center px-3 py-2">Estado</th>
@@ -1065,8 +1136,12 @@ export default function AsistenciasPanel() {
               </thead>
               <tbody>
                 {asistenciasHoy.map((asistencia) => {
-                  const persona = asistencia.alumno || asistencia.docente;
-                  const tipoPersona = asistencia.alumno ? 'Alumno' : 'Docente';
+                  const persona = asistencia.alumno || asistencia.docente || asistencia.personal;
+                  const esAlumno = !!asistencia.alumno;
+                  // Para personal, mostrar el cargo directamente (Directora, Docente, etc.)
+                  const tipoYGrado = esAlumno 
+                    ? { tipo: 'Alumno', detalle: persona?.grado }
+                    : { tipo: persona?.cargo || 'Personal', detalle: null };
                   
                   return (
                     <motion.tr
@@ -1076,20 +1151,29 @@ export default function AsistenciasPanel() {
                       className="border-b hover:bg-gray-50 transition"
                     >
                       <td className="px-3 py-2 font-medium text-gray-700">
-                        {formatTime(asistencia.timestamp)}
+                        {formatTime(asistencia.timestamp || asistencia.created_at)}
+                      </td>
+                      <td className="px-3 py-2 text-gray-600 font-medium">
+                        {persona?.carnet}
+                      </td>
+                      <td className="px-3 py-2 font-medium text-gray-800">
+                        {persona?.nombres} {persona?.apellidos}
                       </td>
                       <td className="px-3 py-2">
-                        <div className="font-medium">{persona?.nombres} {persona?.apellidos}</div>
-                        <div className="text-xs text-gray-500">{persona?.carnet}</div>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          tipoPersona === 'Alumno' 
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {tipoPersona}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            esAlumno
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {tipoYGrado.tipo}
+                          </span>
+                          {tipoYGrado.detalle && (
+                            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                              {tipoYGrado.detalle}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-2 text-center">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${
@@ -1229,7 +1313,143 @@ export default function AsistenciasPanel() {
         </motion.div>
       )}
 
-      {/* Toast notifications */}
+      {/* Modal de ausentes y excusas */}
+      {showAusentesModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={() => setShowAusentesModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-orange-700 mb-4 text-center">Ausentes del día</h2>
+            <p className="text-gray-600 text-center mb-4">Personas que no registraron asistencia hoy. Puedes añadir excusa si corresponde.</p>
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Carnet</th>
+                    <th className="px-3 py-2 text-left">Nombre</th>
+                    <th className="px-3 py-2 text-center">Tipo</th>
+                    <th className="px-3 py-2 text-center">Excusa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...alumnos, ...docentes].filter(p => {
+                    const id = p.id;
+                    const esAlumno = !!p.grado;
+                    return !asistenciasHoy.some(a => (esAlumno ? a.alumno_id === id : a.docente_id === id || a.personal_id === id));
+                  }).map(p => {
+                    const esAlumno = !!p.grado;
+                    const tieneExcusa = excusas.some(e => (esAlumno ? e.alumno_id === p.id : e.personal_id === p.id));
+                    return (
+                      <tr key={p.id} className="border-b">
+                        <td className="px-3 py-2">{p.carnet}</td>
+                        <td className="px-3 py-2">{p.nombres} {p.apellidos}</td>
+                        <td className="px-3 py-2 text-center">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${esAlumno ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>{esAlumno ? 'Alumno' : p.cargo || 'Personal'}</span>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          {tieneExcusa ? (
+                            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Con excusa</span>
+                          ) : (
+                            <button
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-xs font-semibold"
+                              onClick={() => { setPersonaExcusa(p); setExcusaInput(''); }}
+                            >
+                              Añadir excusa
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <button
+              className="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-colors"
+              onClick={() => setShowAusentesModal(false)}
+            >
+              Cerrar
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Modal para añadir excusa */}
+      {personaExcusa && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={() => setPersonaExcusa(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold text-blue-700 mb-4 text-center">Añadir excusa</h2>
+            <p className="text-gray-600 text-center mb-2">{personaExcusa.nombres} {personaExcusa.apellidos} ({personaExcusa.carnet})</p>
+            <textarea
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4"
+              rows={3}
+              placeholder="Motivo de la excusa..."
+              value={excusaInput}
+              onChange={e => setExcusaInput(e.target.value)}
+            />
+            <button
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors"
+              onClick={() => {
+                if (!excusaInput.trim()) return;
+                // Llamada a la API para guardar la excusa
+                const tipo = personaExcusa.grado ? 'alumno' : 'personal';
+                const id = personaExcusa.id;
+                client.post('/excusas', {
+                  motivo: excusaInput,
+                  tipo,
+                  alumno_id: tipo === 'alumno' ? id : undefined,
+                  personal_id: tipo === 'personal' ? id : undefined
+                })
+                  .then(() => {
+                    toast.success('Excusa añadida');
+                    // Actualizar UI: marcar excusa en la persona
+                    setAsistenciasHoy(prev => prev.map(a => {
+                      if ((tipo === 'alumno' && a.alumno_id === id) || (tipo === 'personal' && (a.docente_id === id || a.personal_id === id))) {
+                        return { ...a, excusa: excusaInput };
+                      }
+                      return a;
+                    }));
+                    setPersonaExcusa(null);
+                  })
+                  .catch(err => {
+                    toast.error('Error al guardar excusa: ' + (err.response?.data?.error || err.message));
+                  });
+              }}
+              disabled={!excusaInput.trim()}
+            >
+              Guardar excusa
+            </button>
+            <button
+              className="mt-2 w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg transition-colors"
+              onClick={() => setPersonaExcusa(null)}
+            >
+              Cancelar
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
       <Toaster 
         position="top-right"
         toastOptions={{

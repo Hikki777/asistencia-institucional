@@ -3,11 +3,12 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs-extra');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // Importar logger PRIMERO
 const { logger, logSystemStart, setupGlobalErrorHandlers } = require('./utils/logger');
 const { requestLogger, attachRequestId } = require('./middlewares/requestLogger');
+const { UPLOADS_DIR, FRONTEND_DIR } = require('./utils/paths');
 
 const prisma = require('./prismaClient');
 const qrService = require('./services/qrService');
@@ -25,6 +26,7 @@ const asistenciasRoutes = require('./routes/asistencias');
 const docentesRoutes = require('./routes/docentes');
 const reportesRoutes = require('./routes/reportes');
 const institucionRoutes = require('./routes/institucion');
+const metricsRoutes = require('./routes/metrics');
 
 // Verificar variables de entorno críticas
 const checkEnv = () => {
@@ -92,10 +94,10 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Servir archivos estáticos (QR, logos, fotos)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Servir frontend HTML
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(FRONTEND_DIR));
 
 // Servir qr-mobile.html para celular (SIN LOGO)
 app.get('/qr-mobile.html', (req, res) => {
@@ -221,6 +223,7 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
 
 // ============ RUTAS ESPECÍFICAS MONTADAS ============
 
+const excusasRoutes = require('./routes/excusas');
 app.use('/api/qr', qrRoutes);
 app.use('/api/repair', repairRoutes);
 app.use('/api/alumnos', alumnosRoutes);
@@ -229,6 +232,8 @@ app.use('/api/asistencias', asistenciasRoutes);
 app.use('/api/docentes', docentesRoutes);
 app.use('/api/reportes', reportesRoutes);
 app.use('/api/institucion', institucionRoutes);
+app.use('/api/metrics', metricsRoutes);
+app.use('/api/excusas', excusasRoutes);
 
 // ============ RUTA DE DIAGNÓSTICO ============
 
@@ -292,6 +297,10 @@ async function iniciar() {
     logger.info('✅ Directorios QR creados');
 
     // Iniciar scheduler
+    // Inicializar directorios y servicios
+    await qrService.inicializarDirectorios();
+    await backupService.inicializarBackups();
+
     logger.info('⏰ Iniciando scheduler de tareas...');
     scheduler.iniciar();
     logger.info('✅ Scheduler activo');

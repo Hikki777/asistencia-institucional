@@ -16,18 +16,18 @@ router.use(verifyJWT);
  */
 router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res) => {
   try {
-    const { alumno_id, docente_id, tipo_evento, origen, dispositivo, observaciones, timestamp } = req.body;
+    const { alumno_id, personal_id, tipo_evento, origen, dispositivo, observaciones, timestamp } = req.body;
 
-    logger.info({ alumno_id, docente_id, tipo_evento, origen }, '📥 Backend recibió registro de asistencia');
+    logger.info({ alumno_id, personal_id, tipo_evento, origen }, '📥 Backend recibió registro de asistencia');
 
     // Validar que al menos uno de los IDs esté presente y tenga valor
     const hasAlumnoId = alumno_id !== undefined && alumno_id !== null && alumno_id !== '';
-    const hasDocenteId = docente_id !== undefined && docente_id !== null && docente_id !== '';
+    const hasPersonalId = personal_id !== undefined && personal_id !== null && personal_id !== '';
 
-    if (!hasAlumnoId && !hasDocenteId) {
-      logger.error({ alumno_id, docente_id }, '❌ ERROR: No hay alumno_id ni docente_id válidos');
+    if (!hasAlumnoId && !hasPersonalId) {
+      logger.error({ alumno_id, personal_id }, '❌ ERROR: No hay alumno_id ni personal_id válidos');
       return res.status(400).json({
-        error: 'NUEVO ERROR: Debe proporcionar alumno_id o docente_id'
+        error: 'NUEVO ERROR: Debe proporcionar alumno_id o personal_id'
       });
     }
 
@@ -56,13 +56,13 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
       if (!persona) {
         return res.status(404).json({ error: 'Alumno no encontrado' });
       }
-    } else if (hasDocenteId) {
-      persona = await prisma.docente.findUnique({
-        where: { id: parseInt(docente_id) }
+    } else if (hasPersonalId) {
+      persona = await prisma.personal.findUnique({
+        where: { id: parseInt(personal_id) }
       });
-      persona_tipo = 'docente';
+      persona_tipo = 'personal';
       if (!persona) {
-        return res.status(404).json({ error: 'Docente no encontrado' });
+        return res.status(404).json({ error: 'Personal no encontrado' });
       }
     }
 
@@ -93,7 +93,7 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
       data: {
         persona_tipo,
         alumno_id: hasAlumnoId ? parseInt(alumno_id) : null,
-        docente_id: hasDocenteId ? parseInt(docente_id) : null,
+        personal_id: hasPersonalId ? parseInt(personal_id) : null,
         tipo_evento,
         timestamp: fechaAsistencia,
         origen: origen || 'Manual',
@@ -108,17 +108,17 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
             carnet: true,
             nombres: true,
             apellidos: true,
-            categoria: true,
+            grado: true,
             jornada: true
           }
         } : false,
-        personal: hasDocenteId ? {
+        personal: hasPersonalId ? {
           select: {
             id: true,
             carnet: true,
             nombres: true,
             apellidos: true,
-            categoria: true,
+            cargo: true,
             jornada: true
           }
         } : false
@@ -143,7 +143,7 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
     const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;
     const fecha = req.query.fecha; // YYYY-MM-DD
     const alumno_id = req.query.alumno_id;
-    const docente_id = req.query.docente_id;
+    const personal_id = req.query.personal_id;
     const tipo_evento = req.query.tipo_evento; // "entrada" o "salida"
 
     const where = {};
@@ -165,8 +165,8 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
       where.alumno_id = parseInt(alumno_id);
     }
     
-    if (docente_id) {
-      where.docente_id = parseInt(docente_id);
+    if (personal_id) {
+      where.personal_id = parseInt(personal_id);
     }
 
     if (tipo_evento) {
@@ -195,7 +195,7 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
             carnet: true,
             nombres: true,
             apellidos: true,
-            categoria: true,
+            cargo: true,
             jornada: true
           }
         }
@@ -260,7 +260,7 @@ router.get('/hoy', async (req, res) => {
             carnet: true,
             nombres: true,
             apellidos: true,
-            categoria: true,
+            cargo: true,
             jornada: true
           }
         }
@@ -282,8 +282,16 @@ router.get('/hoy', async (req, res) => {
       asistencias
     });
   } catch (error) {
-    logger.error({ err: error }, '❌ Error obteniendo asistencias de hoy');
-    res.status(500).json({ error: error.message });
+    logger.error({
+      err: error,
+      route: '/api/asistencias/hoy',
+      details: {
+        message: error?.message,
+        stack: error?.stack?.split('\n').slice(0, 3).join(' | ')
+      },
+      user: req.user || null
+    }, '❌ Error obteniendo asistencias de hoy');
+    res.status(500).json({ error: error?.message || 'Error interno al obtener asistencias de hoy' });
   }
 });
 

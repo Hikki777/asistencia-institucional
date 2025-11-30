@@ -1,0 +1,194 @@
+#!/usr/bin/env node
+/**
+ * Utilidades de Base de Datos - Sistema de Registro Institucional
+ * Herramienta CLI consolidada para gestión de datos
+ */
+
+const prisma = require('./backend/prismaClient');
+
+const commands = {
+  'list': async () => {
+    console.log('\n📊 === DATOS DEL SISTEMA ===\n');
+    
+    const alumnos = await prisma.alumno.count();
+    const personal = await prisma.personal.count();
+    const asistencias = await prisma.asistencia.count();
+    const qrs = await prisma.codigoQr.count();
+    const usuarios = await prisma.usuario.count();
+    
+    console.log(`👨‍🎓 Alumnos:      ${alumnos}`);
+    console.log(`👨‍🏫 Personal:     ${personal}`);
+    console.log(`📋 Asistencias:  ${asistencias}`);
+    console.log(`🔲 Códigos QR:   ${qrs}`);
+    console.log(`👤 Usuarios:     ${usuarios}`);
+    
+    const institucion = await prisma.institucion.findFirst();
+    if (institucion) {
+      console.log(`\n🏫 Institución: ${institucion.nombre}`);
+      console.log(`   Inicializada: ${institucion.inicializado ? '✅' : '❌'}`);
+    }
+  },
+  
+  'alumnos': async () => {
+    const alumnos = await prisma.alumno.findMany({
+      take: 20,
+      orderBy: { carnet: 'asc' }
+    });
+    
+    console.log('\n👨‍🎓 === ALUMNOS (primeros 20) ===\n');
+    alumnos.forEach(a => {
+      console.log(`   ${a.carnet}: ${a.nombres} ${a.apellidos} - ${a.grado} (${a.jornada})`);
+    });
+    console.log(`\n   Total: ${await prisma.alumno.count()}`);
+  },
+  
+  'personal': async () => {
+    const personal = await prisma.personal.findMany({
+      orderBy: { carnet: 'asc' }
+    });
+    
+    console.log('\n👨‍🏫 === PERSONAL ===\n');
+    personal.forEach(p => {
+      console.log(`   ${p.carnet}: ${p.nombres} ${p.apellidos} - ${p.cargo} (${p.jornada})`);
+    });
+    console.log(`\n   Total: ${personal.length}`);
+  },
+  
+  'asistencias-hoy': async () => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
+    
+    const asistencias = await prisma.asistencia.findMany({
+      where: {
+        timestamp: { gte: hoy, lt: manana }
+      },
+      include: {
+        alumno: { select: { carnet: true, nombres: true, apellidos: true } },
+        personal: { select: { carnet: true, nombres: true, apellidos: true } }
+      },
+      orderBy: { timestamp: 'desc' }
+    });
+    
+    console.log(`\n📋 === ASISTENCIAS HOY (${asistencias.length}) ===\n`);
+    
+    const entradas = asistencias.filter(a => a.tipo_evento === 'entrada').length;
+    const salidas = asistencias.filter(a => a.tipo_evento === 'salida').length;
+    
+    console.log(`   Entradas: ${entradas}`);
+    console.log(`   Salidas:  ${salidas}\n`);
+    
+    asistencias.slice(0, 10).forEach(a => {
+      const persona = a.alumno || a.personal;
+      const tipo = a.tipo_evento === 'entrada' ? '➡️ ' : '⬅️ ';
+      console.log(`   ${tipo} ${persona.carnet}: ${persona.nombres} ${persona.apellidos} - ${a.timestamp.toLocaleTimeString('es-ES')}`);
+    });
+    
+    if (asistencias.length > 10) {
+      console.log(`   ... y ${asistencias.length - 10} más`);
+    }
+  },
+  
+  'qrs': async () => {
+    const qrs = await prisma.codigoQr.findMany({
+      include: {
+        alumno: { select: { carnet: true, nombres: true, apellidos: true } },
+        personal: { select: { carnet: true, nombres: true, apellidos: true } }
+      }
+    });
+    
+    console.log('\n🔲 === CÓDIGOS QR ===\n');
+    
+    const vigentes = qrs.filter(q => q.vigente).length;
+    const expirados = qrs.filter(q => !q.vigente).length;
+    
+    console.log(`   Vigentes:   ${vigentes}`);
+    console.log(`   Expirados:  ${expirados}`);
+    console.log(`   Total:      ${qrs.length}\n`);
+  },
+  
+  'health': async () => {
+    console.log('\n🏥 === SALUD DEL SISTEMA ===\n');
+    
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('   Base de datos: ✅ OK');
+      
+      const alumnos = await prisma.alumno.count();
+      const personal = await prisma.personal.count();
+      const asistencias = await prisma.asistencia.count();
+      
+      console.log('   Tablas verificadas: ✅ OK');
+      console.log(`   Registros totales: ${alumnos + personal + asistencias}`);
+      
+      const qrsSinArchivo = await prisma.codigoQr.findMany({
+        where: {
+          vigente: true,
+          OR: [
+            { qr_path: null },
+            { qr_path: '' }
+          ]
+        }
+      });
+      
+      if (qrsSinArchivo.length > 0) {
+        console.log(`   ⚠️  QRs sin archivo: ${qrsSinArchivo.length}`);
+      } else {
+        console.log('   QRs: ✅ OK');
+      }
+      
+      console.log('\n✅ Sistema operativo');
+    } catch (error) {
+      console.log('   ❌ Error:', error.message);
+    }
+  },
+  
+  'help': () => {
+    console.log(`
+╔══════════════════════════════════════════════════════════════╗
+║  🛠️  Utilidades de Base de Datos                             ║
+╚══════════════════════════════════════════════════════════════╝
+
+Uso: node utils.js <comando>
+
+Comandos disponibles:
+
+  list              Resumen de datos del sistema
+  alumnos           Listar alumnos (primeros 20)
+  personal          Listar personal completo
+  asistencias-hoy   Asistencias del día actual
+  qrs               Estado de códigos QR
+  health            Verificar salud del sistema
+  help              Mostrar esta ayuda
+
+Ejemplos:
+  node utils.js list
+  node utils.js alumnos
+  node utils.js health
+    `);
+  }
+};
+
+async function main() {
+  const command = process.argv[2] || 'help';
+  
+  if (!commands[command]) {
+    console.error(`\n❌ Comando desconocido: ${command}`);
+    commands.help();
+    process.exit(1);
+  }
+  
+  try {
+    await commands[command]();
+    await prisma.$disconnect();
+    process.exit(0);
+  } catch (error) {
+    console.error('\n❌ Error:', error.message);
+    console.error(error.stack);
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+}
+
+main();

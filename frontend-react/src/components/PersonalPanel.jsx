@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, Briefcase, Sun } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, Briefcase, Sun, CheckCircle, XCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { TableSkeleton } from './LoadingSpinner';
@@ -28,6 +28,7 @@ export default function PersonalPanel() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterJornada, setFilterJornada] = useState('');
+  const [filterEstado, setFilterEstado] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPersonal, setEditingPersonal] = useState(null);
   const [formData, setFormData] = useState({
@@ -35,7 +36,7 @@ export default function PersonalPanel() {
     nombres: '',
     apellidos: '',
     sexo: '',
-    categoria: 'Docente',
+    cargo: 'Docente',
     jornada: ''
   });
 
@@ -62,11 +63,19 @@ export default function PersonalPanel() {
     const toastId = toast.loading(editingPersonal ? 'Actualizando miembro...' : 'Creando miembro...');
     
     try {
+      // Limpiar campos vacíos antes de enviar
+      const dataToSend = Object.entries(formData).reduce((acc, [key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+      
       if (editingPersonal) {
-        await client.put(`/personal/${editingPersonal.id}`, formData);
+        await client.put(`/docentes/${editingPersonal.id}`, dataToSend);
         toast.success('miembro actualizado correctamente', { id: toastId });
       } else {
-        await client.post('/docentes', formData);
+        await client.post('/docentes', dataToSend);
         toast.success('miembro creado correctamente', { id: toastId });
       }
       
@@ -77,7 +86,7 @@ export default function PersonalPanel() {
         nombres: '',
         apellidos: '',
         sexo: '',
-        categoria: 'Docente',
+        cargo: 'Docente',
         jornada: ''
       });
       fetchPersonal();
@@ -93,7 +102,7 @@ export default function PersonalPanel() {
       nombres: miembro.nombres,
       apellidos: miembro.apellidos,
       sexo: miembro.sexo || '',
-      categoria: miembro.categoria || 'Docente',
+      cargo: miembro.cargo || 'Docente',
       jornada: miembro.jornada || ''
     });
     setShowModal(true);
@@ -104,8 +113,21 @@ export default function PersonalPanel() {
     const toastId = toast.loading('Eliminando miembro...');
     
     try {
-      await client.delete(`/personal/${id}`);
+      await client.delete(`/docentes/${id}`);
       toast.success(`${nombre} eliminado correctamente`, { id: toastId });
+      fetchPersonal();
+    } catch (error) {
+      toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
+    }
+  };
+
+  const handleToggleEstado = async (id, estadoActual, nombre) => {
+    const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
+    const toastId = toast.loading(`Cambiando estado a ${nuevoEstado}...`);
+    
+    try {
+      await client.put(`/docentes/${id}`, { estado: nuevoEstado });
+      toast.success(`${nombre} ahora está ${nuevoEstado}`, { id: toastId });
       fetchPersonal();
     } catch (error) {
       toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
@@ -117,13 +139,18 @@ export default function PersonalPanel() {
     
     try {
       const response = await client.get(`/qr/${id}/png`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(response.data);
+      const blob = new Blob([response.data], { type: 'image/png' });
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `qr-miembro-${nombre || id}.png`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
       toast.success('Código QR descargado', { id: toastId });
     } catch (error) {
+      console.error('Error downloading QR:', error);
       toast.error('Error descargando QR: ' + error.message, { id: toastId });
     }
   };
@@ -136,8 +163,9 @@ export default function PersonalPanel() {
       miembro.carnet.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchJornada = !filterJornada || miembro.jornada === filterJornada;
+    const matchEstado = !filterEstado || miembro.estado === filterEstado;
     
-    return matchSearch && matchJornada;
+    return matchSearch && matchJornada && matchEstado;
   });
 
   const jornadasUnicas = [...new Set(personal.map(d => d.jornada).filter(Boolean))];
@@ -152,7 +180,7 @@ export default function PersonalPanel() {
       >
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
           <Users className="text-green-600" size={32} />
-          personal
+          Personal
         </h2>
         <button
           onClick={() => {
@@ -213,6 +241,21 @@ export default function PersonalPanel() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <Filter size={16} />
+              Estado
+            </label>
+            <select
+              value={filterEstado}
+              onChange={(e) => setFilterEstado(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="">Todos</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
           <div className="flex items-end">
             <div className="text-sm text-gray-600 font-medium">
               {filteredPersonal.length} de {personal.length} miembro(s)
@@ -241,11 +284,12 @@ export default function PersonalPanel() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-green-600 to-green-700 text-white">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Carnet</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold">Carnet</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold">Nombre Completo</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold">Cargo</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold">Jornada</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold">Estado</th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold">Acciones</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -268,7 +312,12 @@ export default function PersonalPanel() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {miembro.jornada || '-'}
+                        {miembro.cargo || 'Sin cargo'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className="font-medium text-gray-900">
+                          {miembro.jornada || '-'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
@@ -279,8 +328,8 @@ export default function PersonalPanel() {
                           {miembro.estado}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-4">
+                        <div className="flex justify-center gap-2">
                           {miembro.codigos_qr && miembro.codigos_qr.length > 0 && (
                             <button
                               onClick={() => handleDownloadQR(miembro.codigos_qr[0].id, miembro.carnet)}
@@ -291,8 +340,19 @@ export default function PersonalPanel() {
                             </button>
                           )}
                           <button
+                            onClick={() => handleToggleEstado(miembro.id, miembro.estado, `${miembro.nombres} ${miembro.apellidos}`)}
+                            className={`p-2 rounded-lg transition ${
+                              miembro.estado === 'activo'
+                                ? 'text-orange-600 hover:bg-orange-50'
+                                : 'text-green-600 hover:bg-green-50'
+                            }`}
+                            title={miembro.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                          >
+                            {miembro.estado === 'activo' ? <XCircle size={18} /> : <CheckCircle size={18} />}
+                          </button>
+                          <button
                             onClick={() => handleEdit(miembro)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                             title="Editar"
                           >
                             <Edit size={18} />
@@ -324,8 +384,15 @@ export default function PersonalPanel() {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <div className="font-bold text-gray-900">{miembro.nombres} {miembro.apellidos}</div>
+                      <div className="font-bold text-gray-900">
+                        {miembro.nombres} {miembro.apellidos}
+                      </div>
                       <div className="text-sm text-green-600 font-mono font-semibold">{miembro.carnet}</div>
+                      {miembro.cargo && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          {miembro.cargo}
+                        </div>
+                      )}
                     </div>
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       miembro.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -334,7 +401,7 @@ export default function PersonalPanel() {
                     </span>
                   </div>
                   {miembro.jornada && (
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
+                    <div className="flex items-center gap-1 text-sm text-gray-900 font-medium mb-3">
                       <Sun size={14} />
                       {miembro.jornada}
                     </div>
@@ -350,8 +417,19 @@ export default function PersonalPanel() {
                       </button>
                     )}
                     <button
+                      onClick={() => handleToggleEstado(miembro.id, miembro.estado, `${miembro.nombres} ${miembro.apellidos}`)}
+                      className={`flex-1 text-white text-sm py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition ${
+                        miembro.estado === 'activo'
+                          ? 'bg-orange-600 hover:bg-orange-700'
+                          : 'bg-green-600 hover:bg-green-700'
+                      }`}
+                    >
+                      {miembro.estado === 'activo' ? <XCircle size={16} /> : <CheckCircle size={16} />}
+                      {miembro.estado === 'activo' ? 'Inactivar' : 'Activar'}
+                    </button>
+                    <button
                       onClick={() => handleEdit(miembro)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition"
                     >
                       <Edit size={16} />
                       Editar
@@ -373,12 +451,12 @@ export default function PersonalPanel() {
       {/* Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-xl p-6 sm:p-8 max-w-md w-full shadow-2xl"
+              className="bg-white rounded-xl p-6 sm:p-8 max-w-md w-full shadow-2xl my-8"
             >
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-800">
@@ -425,17 +503,17 @@ export default function PersonalPanel() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cargo *</label>
                   <select
                     required
-                    value={formData.categoria}
-                    onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                    value={formData.cargo}
+                    onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="">-</option>
+                    <option value="Docente">Docente</option>
                     <option value="Director">Director</option>
                     <option value="Directora">Directora</option>
-                    <option value="Docente">Docente</option>
                     <option value="Secretaria">Secretaria</option>
                     <option value="Secretario">Secretario</option>
                     <option value="Operativo">Operativo</option>
@@ -462,7 +540,7 @@ export default function PersonalPanel() {
                   onChange={(e) => setFormData({ ...formData, jornada: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
-                  <option value="">Seleccionar</option>
+                  <option value="">-</option>
                   <option value="Matutina">Matutina</option>
                   <option value="Vespertina">Vespertina</option>
                   <option value="Nocturna">Nocturna</option>

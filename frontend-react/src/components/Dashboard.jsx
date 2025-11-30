@@ -1,28 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Users, QrCode, AlertTriangle, TrendingUp, Calendar } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { healthAPI, diagnosticsAPI, alumnosAPI } from '../api/endpoints';
-import axios from 'axios';
+import { healthAPI, diagnosticsAPI, alumnosAPI, asistenciasAPI, docentesAPI, institucionAPI } from '../api/endpoints';
 import toast, { Toaster } from 'react-hot-toast';
 import { CardSkeleton } from './LoadingSpinner';
-
-const API_URL = 'http://localhost:5000/api';
-const client = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' }
-});
-
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
     status: 'unknown',
     alumnos: 0,
-    docentes: 0,
+    personal: 0,
     qrs: 0,
     issues: 0,
   });
@@ -43,7 +30,7 @@ export default function Dashboard() {
 
   const fetchInstitucion = async () => {
     try {
-      const response = await client.get('/institucion');
+      const response = await institucionAPI.get();
       setInstitucion(response.data);
     } catch (error) {
       console.error('Error fetching institucion:', error);
@@ -52,7 +39,7 @@ export default function Dashboard() {
 
   const fetchAsistenciasStats = async () => {
     try {
-      const response = await client.get('/asistencias/stats?dias=7');
+      const response = await asistenciasAPI.stats(7);
       setAsistenciasStats(response.data);
       setLoading(false);
     } catch (error) {
@@ -64,20 +51,23 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const [health, diag, alumnos, docentes] = await Promise.all([
+      const [health, diag, alumnos, personalResp] = await Promise.all([
         healthAPI.check().catch(() => ({ data: { status: 'error' } })),
         diagnosticsAPI.execute().catch(() => ({ data: { total_qrs: 0, corrupt: 0, missing: 0, missing_logo: 0 } })),
         alumnosAPI.list().catch(() => ({ data: { total: 0, alumnos: [] } })),
-        client.get('/docentes').catch(() => ({ data: { docentes: [] } })),
+        docentesAPI.list().catch(() => ({ data: { personal: [] } })),
       ]);
+      const diagData = diag.data || {};
+      const corruptCount = Array.isArray(diagData.corrupt_qrs) ? diagData.corrupt_qrs.length : (diagData.corrupt || 0);
+      const missingCount = Array.isArray(diagData.missing_qrs) ? diagData.missing_qrs.length : (diagData.missing || 0);
+      const issues = corruptCount + missingCount + (diagData.missing_logo ? 1 : 0);
 
-      const issues = (diag.data?.corrupt || 0) + (diag.data?.missing || 0) + (diag.data?.missing_logo ? 1 : 0);
-
+      const newStatus = health.data?.status === 'ok' ? 'online' : 'offline';
       setStats({
-        status: health.data?.status === 'ok' ? 'online' : 'offline',
+        status: newStatus,
         alumnos: alumnos.data?.total || 0,
-        docentes: docentes.data?.docentes?.length || 0,
-        qrs: diag.data?.total_qrs || 0,
+        personal: (personalResp.data?.personal?.length) || (personalResp.data?.docentes?.length) || 0,
+        qrs: diagData.total_qrs || 0,
         issues: issues,
       });
     } catch (error) {
@@ -125,6 +115,7 @@ export default function Dashboard() {
             </div>
             <div className="text-right text-sm">
               <p className="text-blue-100">Horario de inicio: {institucion.horario_inicio}</p>
+              <p className="text-blue-100">Horario de salida: {institucion.horario_salida}</p>
               <p className="text-blue-100">Margen puntualidad: {institucion.margen_puntualidad_min} min</p>
             </div>
           </div>
@@ -156,7 +147,7 @@ export default function Dashboard() {
               color={stats.status === 'online' ? 'green' : 'red'}
             />
             <StatCard icon={Users} label="Alumnos" value={stats.alumnos} color="blue" />
-            <StatCard icon={Users} label="Docentes" value={stats.docentes} color="green" />
+            <StatCard icon={Users} label="Personal" value={stats.personal} color="green" />
             <StatCard icon={QrCode} label="QR Generados" value={stats.qrs} color="blue" />
             <StatCard
               icon={AlertTriangle}
@@ -220,17 +211,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      {/* Info Box */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-bold text-blue-900 mb-2">ℹ️ Información del Sistema</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>✅ Auto-reparación ejecutándose cada 6 horas</li>
-          <li>✅ Backups automáticos programados diariamente a las 2 AM</li>
-          <li>✅ Diagnosticos en tiempo real disponibles</li>
-          <li>✅ Panel de asistencias con estadísticas en tiempo real</li>
-        </ul>
-      </div>
 
       {/* Toast notifications */}
       <Toaster 

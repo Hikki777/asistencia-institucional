@@ -48,10 +48,12 @@ router.get('/', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;
-    const estado = req.query.estado || 'activo';
+    const estado = req.query.estado; // Sin valor por defecto, traer todos
+
+    const whereClause = estado ? { estado } : {}; // Si hay estado, filtrar, sino traer todos
 
     const docentes = await prisma.personal.findMany({
-      where: { estado },
+      where: whereClause,
       take: limit + 1,
       ...(cursor && { cursor: { id: cursor }, skip: 1 }),
       orderBy: { id: 'asc' },
@@ -67,7 +69,7 @@ router.get('/', async (req, res) => {
     const items = hasMore ? docentes.slice(0, limit) : docentes;
     const nextCursor = hasMore ? items[items.length - 1].id : null;
 
-    const total = await prisma.personal.count({ where: { estado } });
+    const total = await prisma.personal.count({ where: whereClause });
 
     res.json({
       total,
@@ -125,7 +127,7 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), (req, res, next) =>
   }
 }, validarCrearDocente, async (req, res) => {
   try {
-    const { carnet, nombres, apellidos, sexo, categoria, jornada } = req.body;
+    const { carnet, nombres, apellidos, sexo, cargo, jornada } = req.body;
 
     // Validar campos requeridos
     if (!carnet || !nombres || !apellidos) {
@@ -149,7 +151,7 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), (req, res, next) =>
         nombres,
         apellidos,
         sexo: sexo || null,
-        categoria: categoria || 'Docente',
+        cargo: cargo || 'Docente',
         jornada: jornada || null,
         foto_path
       }
@@ -174,7 +176,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
 }, validarActualizarDocente, async (req, res) => {
   try {
     const { id } = req.params;
-    const { carnet, nombres, apellidos, sexo, categoria, jornada, estado } = req.body;
+    const { carnet, nombres, apellidos, sexo, cargo, jornada, estado } = req.body;
 
     const docente = await prisma.personal.findUnique({
       where: { id: parseInt(id) }
@@ -201,7 +203,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
         nombres: nombres || docente.nombres,
         apellidos: apellidos || docente.apellidos,
         sexo: sexo !== undefined ? sexo : docente.sexo,
-        categoria: categoria || docente.categoria,
+        cargo: cargo || docente.cargo,
         jornada: jornada !== undefined ? jornada : docente.jornada,
         estado: estado || docente.estado,
         foto_path

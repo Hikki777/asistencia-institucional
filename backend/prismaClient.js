@@ -1,11 +1,15 @@
 const { PrismaClient } = require('@prisma/client');
 
-const { DB_PATH } = require('./utils/paths');
+// Sanitizar URL si viene con prefijo accidental
+let url = process.env.DATABASE_URL;
+if (url && url.startsWith('DATABASE_URL=')) {
+  url = url.replace('DATABASE_URL=', '');
+}
 
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: `file:${DB_PATH}`,
+      url: url,
     },
   },
   errorFormat: 'pretty',

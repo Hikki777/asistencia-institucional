@@ -12,7 +12,7 @@ import DiagnosticsPanel from './components/DiagnosticsPanel';
 import RepairPanel from './components/RepairPanel';
 import ReportesPanel from './components/ReportesPanel';
 import MetricsPanel from './components/MetricsPanel';
-import MetricsPanel from './components/MetricsPanel';
+
 import SetupWizard from './components/SetupWizard';
 import LoginPage from './pages/LoginPage';
 import client from './api/client';

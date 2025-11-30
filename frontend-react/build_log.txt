@@ -1,0 +1,31 @@
+
+> frontend-react@0.0.0 build
+> vite build
+
+[36mvite v7.2.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mÔ£ô[39m 3 modules transformed.
+Ô£ù Build failed in 1.50s
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+C:/Users/Kevin/Documents/Proyectos/Sistema de Registro Institucional/frontend-react/src/App.jsx:15:7: ERROR: The symbol "MetricsPanel" has already been declared
+file: C:/Users/Kevin/Documents/Proyectos/Sistema de Registro Institucional/frontend-react/src/App.jsx:15:7
+
+The symbol "MetricsPanel" has already been declared
+13 |  import ReportesPanel from './components/ReportesPanel';
+14 |  import MetricsPanel from './components/MetricsPanel';
+15 |  import MetricsPanel from './components/MetricsPanel';
+   |         ^
+16 |  import SetupWizard from './components/SetupWizard';
+17 |  import LoginPage from './pages/LoginPage';
+
+    at failureErrorWithLog (C:\Users\Kevin\Documents\Proyectos\Sistema de Registro Institucional\frontend-react\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\Kevin\Documents\Proyectos\Sistema de Registro Institucional\frontend-react\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\Kevin\Documents\Proyectos\Sistema de Registro Institucional\frontend-react\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\Kevin\Documents\Proyectos\Sistema de Registro Institucional\frontend-react\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\Kevin\Documents\Proyectos\Sistema de Registro Institucional\frontend-react\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

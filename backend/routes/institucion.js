@@ -39,12 +39,23 @@ router.put('/', async (req, res) => {
   try {
     const { nombre, logo_base64, logo_path, horario_inicio, margen_puntualidad_min } = req.body;
 
+    // Guardar logo si se proporciona
+    let logoUrl = null;
+    if (logo_base64) {
+      // Usamos qrService (que ahora usa Cloudinary) para guardar el logo
+      logoUrl = await require('../services/qrService').guardarLogo(logo_base64, 'logo.png');
+      
+      if (!logoUrl) {
+         throw new Error('Error al guardar el logo en Cloudinary');
+      }
+    }
+
     const institucion = await prisma.institucion.upsert({
       where: { id: 1 },
       update: {
         ...(nombre && { nombre }),
         ...(logo_base64 !== undefined && { logo_base64 }),
-        ...(logo_path !== undefined && { logo_path }),
+        ...(logoUrl && { logo_path: logoUrl }), // Guardamos la URL
         ...(horario_inicio && { horario_inicio }),
         ...(margen_puntualidad_min !== undefined && { margen_puntualidad_min }),
         inicializado: true
@@ -53,7 +64,7 @@ router.put('/', async (req, res) => {
         id: 1,
         nombre: nombre || 'Mi Institución Educativa',
         logo_base64,
-        logo_path,
+        logo_path: logoUrl, // Guardamos la URL
         horario_inicio: horario_inicio || '07:00',
         margen_puntualidad_min: margen_puntualidad_min || 5,
         inicializado: true

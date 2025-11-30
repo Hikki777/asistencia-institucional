@@ -82,30 +82,31 @@ router.post('/generar', async (req, res) => {
       codigoQr = await prisma.codigoQr.create({ data: createData });
     }
 
-    // Generar rutas
-    const { relativePath, absolutePath } = qrService.obtenerRutasQr(
+    // Generar rutas (Mantenemos para compatibilidad de nombre, pero usamos Cloudinary)
+    const { filename } = qrService.obtenerRutasQr(
       persona_tipo,
       persona.carnet
     );
 
-    // Generar PNG con logo
-    const success = await qrService.generarQrConLogo(
+    // Generar PNG con logo y subir a Cloudinary
+    const qrUrl = await qrService.generarQrConLogo(
       codigoQr.token,
       institucion.logo_base64,
-      absolutePath
+      filename
     );
 
-    if (!success) {
+    if (!qrUrl) {
       return res.status(500).json({
         error: 'Error generando QR'
       });
     }
 
     // Actualizar BD
+    // Guardamos la URL completa en png_path (aunque el nombre del campo sea path)
     await prisma.codigoQr.update({
       where: { id: codigoQr.id },
       data: {
-        png_path: relativePath,
+        png_path: qrUrl,
         generado_en: new Date()
       }
     });
@@ -119,7 +120,8 @@ router.post('/generar', async (req, res) => {
         detalle: JSON.stringify({
           persona_tipo,
           persona_id,
-          carnet: persona.carnet
+          carnet: persona.carnet,
+          url: qrUrl
         })
       }
     });
@@ -131,7 +133,7 @@ router.post('/generar', async (req, res) => {
       codigo_qr: {
         id: codigoQr.id,
         token: codigoQr.token.substring(0, 30) + '...',
-        png_url: `/uploads/${relativePath}`,
+        png_url: qrUrl, // Devolvemos la URL directa de Cloudinary
         persona: {
           tipo: persona_tipo,
           nombre: `${persona.nombres} ${persona.apellidos}`,
@@ -165,7 +167,12 @@ router.get('/:id/png', async (req, res) => {
       return res.status(404).json({ error: 'QR no encontrado' });
     }
 
-    // Verificar si PNG existe
+    // Si es una URL de Cloudinary (empieza con http), redirigir
+    if (codigoQr.png_path && codigoQr.png_path.startsWith('http')) {
+      return res.redirect(codigoQr.png_path);
+    }
+
+    // Si es ruta local (legado), intentar servirla
     if (codigoQr.png_path) {
       const pngPath = path.join(__dirname, '../../uploads', codigoQr.png_path);
       if (await fs.pathExists(pngPath)) {
@@ -174,7 +181,7 @@ router.get('/:id/png', async (req, res) => {
     }
 
     // PNG falta: intentar regenerar
-    logger.warn({ qrId: id }, `⚠️ PNG faltante para QR ${id}, regenerando...`);
+    logger.warn({ qrId: id }, `⚠️ PNG faltante para QR ${id}, regenerando en Cloudinary...`);
 
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
     if (!institucion || !institucion.logo_base64) {
@@ -200,18 +207,18 @@ router.get('/:id/png', async (req, res) => {
     }
 
     // Regenerar
-    const { absolutePath, relativePath } = qrService.obtenerRutasQr(
+    const { filename } = qrService.obtenerRutasQr(
       codigoQr.persona_tipo,
       carnet
     );
 
-    const success = await qrService.generarQrConLogo(
+    const qrUrl = await qrService.generarQrConLogo(
       codigoQr.token,
       institucion.logo_base64,
-      absolutePath
+      filename
     );
 
-    if (!success) {
+    if (!qrUrl) {
       return res.status(500).json({
         error: 'Error regenerando QR'
       });
@@ -221,7 +228,7 @@ router.get('/:id/png', async (req, res) => {
     await prisma.codigoQr.update({
       where: { id: codigoQr.id },
       data: {
-        png_path: relativePath,
+        png_path: qrUrl,
         regenerado_en: new Date()
       }
     });
@@ -232,13 +239,13 @@ router.get('/:id/png', async (req, res) => {
         entidad: 'CodigoQr',
         entidad_id: codigoQr.id,
         accion: 'regenerar',
-        detalle: JSON.stringify({ trigger: 'on_demand' })
+        detalle: JSON.stringify({ trigger: 'on_demand', url: qrUrl })
       }
     });
 
-    logger.info({ qrId: codigoQr.id, persona_tipo: codigoQr.persona_tipo, carnet }, '✅ QR regenerado y servido');
+    logger.info({ qrId: codigoQr.id, persona_tipo: codigoQr.persona_tipo, carnet }, '✅ QR regenerado y servido (Cloudinary)');
 
-    res.sendFile(path.join(__dirname, '../../uploads', relativePath));
+    res.redirect(qrUrl);
   } catch (error) {
     logger.error({ err: error, qrId: req.params.id }, '❌ Error sirviendo/regenerando QR PNG');
     res.status(500).json({ error: error.message });

@@ -7,7 +7,7 @@ import Dashboard from './components/Dashboard';
 import AlumnosPanel from './components/AlumnosPanel';
 import PersonalPanel from './components/PersonalPanel';
 import AsistenciasPanel from './components/AsistenciasPanel';
-import ConfiguracionInstitucional from './components/ConfiguracionInstitucional';
+import ConfiguracionPanel from './components/ConfiguracionPanel';
 import DiagnosticsPanel from './components/DiagnosticsPanel';
 import RepairPanel from './components/RepairPanel';
 import ReportesPanel from './components/ReportesPanel';
@@ -162,7 +162,7 @@ function App() {
               <Route path="/asistencias" element={isLoggedIn ? <AsistenciasPanel /> : <Navigate to="/login" />} />
               <Route path="/reportes" element={isLoggedIn ? <ReportesPanel /> : <Navigate to="/login" />} />
               <Route path="/metricas" element={isLoggedIn ? <MetricsPanel /> : <Navigate to="/login" />} />
-                <Route path="/configuracion" element={isLoggedIn ? <ConfiguracionInstitucional /> : <Navigate to="/login" />} />
+                <Route path="/configuracion" element={isLoggedIn ? <ConfiguracionPanel /> : <Navigate to="/login" />} />
               <Route path="/diagnostics" element={isLoggedIn ? <DiagnosticsPanel /> : <Navigate to="/login" />} />
               <Route path="/repair" element={isLoggedIn ? <RepairPanel /> : <Navigate to="/login" />} />
             </Routes>

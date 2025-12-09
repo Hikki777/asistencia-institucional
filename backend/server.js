@@ -324,15 +324,7 @@ async function iniciar() {
     await backupService.inicializarBackups();
     logger.info('✅ Backups inicializados');
     
-    logger.info('📁 Inicializando directorios de QR...');
-    await qrService.inicializarDirectorios();
-    logger.info('✅ Directorios QR creados');
-
     // Iniciar scheduler
-    // Inicializar directorios y servicios
-    await qrService.inicializarDirectorios();
-    await backupService.inicializarBackups();
-
     logger.info('⏰ Iniciando scheduler de tareas...');
     scheduler.iniciar();
     logger.info('✅ Scheduler activo');

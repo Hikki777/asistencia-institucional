@@ -25,22 +25,30 @@ function App() {
 
   const [isInitialized, setIsInitialized] = useState(null); // null=loading, false=setup needed, true=ready
 
+  const [institucion, setInstitucion] = useState(null);
+
   useEffect(() => {
     checkInitialization();
   }, []);
 
   const checkInitialization = async () => {
     try {
+      // Usar endpoint publico/protegido segun sea el caso. 
+      // Institucion suele ser publica o requerir token. Si requiere token y no estamos logged in, fallara.
+      // Pero /institucion/init es para setup. Asumamos que /api/institucion GET es publico o el usuario tiene token.
+      // Si no tiene token, no cargará el logo, lo cual es aceptable hasta el login.
       const res = await client.get('/institucion');
-      // Si existe y tiene flag inicializado, todo ok
-      if (res.data && res.data.inicializado) {
-        setIsInitialized(true);
+      if (res.data) {
+         setInstitucion(res.data); // Guardamos la info de la institución (logo, nombre)
+         if (res.data.inicializado) {
+            setIsInitialized(true);
+         } else {
+            setIsInitialized(false);
+         }
       } else {
-        setIsInitialized(false);
+         setIsInitialized(false);
       }
     } catch (error) {
-      // Si da error (ej 404 o 500), asumimos que falta setup o hay problema
-      // Pero si es 404 es seguro que falta setup (o tabla vacía)
       setIsInitialized(false);
     }
   };
@@ -72,52 +80,60 @@ function App() {
     window.location.href = '/login';
   };
 
-  // El router maneja /login sin token, el resto requiere token
-
   if (isInitialized === null) {
     return <div className="flex items-center justify-center h-screen bg-gray-100">Cargando sistema...</div>;
   }
+
+  const logoUrl = institucion?.logo_path?.startsWith('http') 
+    ? institucion.logo_path 
+    : institucion?.logo_path 
+      ? `${import.meta.env.VITE_API_URL}/uploads/${institucion.logo_path}` 
+      : null;
 
   return (
     <ErrorBoundary fallbackMessage="Ha ocurrido un error en la aplicación. Por favor, recarga la página.">
       <Router>
         <div className="flex h-screen bg-gray-100">
-          {/* Sidebar - Solo mostrar si está autenticado */}
-          {/* Sidebar - Solo mostrar si está autenticado */}
           {isLoggedIn && (
           <aside
             className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-slate-900 to-slate-800 text-white transform transition-all duration-300 ease-in-out shadow-xl ${
               sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
             } md:w-20 md:hover:w-64 group overflow-hidden`}
           >
-          <div className="p-6 border-b border-slate-700 flex items-center justify-between h-20">
-            <div className="flex items-center gap-3">
-              <div className="min-w-[2.5rem] flex justify-center">
-                 <span className="text-2xl">⚡</span>
+          <div className="p-6 border-b border-slate-700 flex items-center h-20 overflow-hidden">
+            <div className="flex items-center gap-4 min-w-max">
+              <div className="w-8 flex justify-center flex-shrink-0">
+                 {logoUrl ? (
+                   <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+                 ) : (
+                   <Activity className="text-blue-400" size={32} />
+                 )}
               </div>
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">HikariOpen</h1>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                  {institucion?.nombre || 'HikariOpen'}
+                </h1>
               </div>
             </div>
           </div>
 
-          <div className="px-4 py-6 border-b border-slate-700/50">
+          <div className="px-4 py-6 border-b border-slate-700/50 overflow-hidden">
              {user && (
-               <div className="flex items-center gap-3">
-                 <div className="min-w-[2.5rem] flex justify-center">
+               <div className="flex items-center gap-3 min-w-max">
+                 <div className="w-10 flex justify-center flex-shrink-0">
                     <div className="w-10 h-10 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-emerald-400 shadow-inner">
                       <User size={20} />
                     </div>
                  </div>
-                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
-                    <p className="font-medium text-white text-sm truncate">{user.nombres ? `${user.nombres} ${user.apellidos || ''}` : user.email}</p>
+                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                    <p className="font-medium text-white text-sm truncate w-40">{user.nombres ? `${user.nombres} ${user.apellidos || ''}` : user.email}</p>
                     <p className="text-xs text-emerald-400 capitalize">{user.cargo || user.rol}</p>
                  </div>
                </div>
              )}
           </div>
 
-          <nav className="p-4 space-y-2">
+          <nav className="p-3 space-y-1">
             <NavLink to="/" icon={Home} label="Dashboard" />
             <NavLink to="/alumnos" icon={BarChart3} label="Alumnos" />
             <NavLink to="/docentes" icon={Users} label="Personal" />
@@ -127,29 +143,35 @@ function App() {
             <NavLink to="/configuracion" icon={Settings} label="Configuración" />
           </nav>
 
-          <div className="absolute bottom-4 left-4 right-4">
+          <div className="absolute bottom-4 left-4 right-4 overflow-hidden">
             <button
               onClick={handleLogout}
-              className="w-full bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white font-medium py-2 rounded-lg flex items-center justify-start px-3 gap-3 transition-all duration-300 overflow-hidden group/btn"
+              className="w-full bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white font-medium py-2 rounded-lg flex items-center px-3 gap-3 transition-all duration-300 group/btn min-w-max"
               title="Cerrar Sesión"
             >
-              <div className="min-w-[1.5rem] flex justify-center">
+              <div className="w-5 flex justify-center flex-shrink-0">
                  <LogOut size={20} />
               </div>
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Cerrar Sesión</span>
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap delay-100">Cerrar Sesión</span>
             </button>
           </div>
         </aside>
           )}
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto bg-slate-50 transition-all duration-300">
+        <div className={`flex-1 overflow-auto bg-slate-50 transition-all duration-300 ${isLoggedIn ? 'md:ml-20' : ''}`}>
           {/* Mobile Menu - Solo mostrar si está autenticado */}
           {isLoggedIn && (
           <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2">
-               <span className="text-xl">⚡</span>
-               <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">HikariOpen</h1>
+               {logoUrl ? (
+                   <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+               ) : (
+                   <Activity className="text-blue-400" size={24} />
+               )}
+               <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                  {institucion?.nombre || 'HikariOpen'}
+               </h1>
             </div>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-slate-300 hover:text-white">
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
@@ -165,11 +187,9 @@ function App() {
             />
           )}
 
-          {/* Page Content */}
           <main className="p-6 max-w-7xl mx-auto">
             <Routes>
               <Route path="/setup" element={!isInitialized ? <SetupWizard onComplete={() => setIsInitialized(true)} /> : <Navigate to="/login" />} />
-              {/* Ruta temporal para testing del SetupWizard */}
               <Route path="/setup-preview" element={<SetupWizard onComplete={() => setIsInitialized(true)} />} />
               <Route path="/login" element={
                 !isInitialized ? <Navigate to="/setup" /> :
@@ -201,10 +221,14 @@ function NavLink({ to, icon: Icon, label }) {
   return (
     <Link
       to={to}
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-700 transition font-medium"
+      className="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors font-medium text-slate-300 hover:text-white group/item min-w-max"
     >
-      <Icon size={20} />
-      {label}
+      <div className="w-8 flex justify-center flex-shrink-0">
+        <Icon size={20} />
+      </div>
+      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap delay-75">
+        {label}
+      </span>
     </Link>
   );
 }

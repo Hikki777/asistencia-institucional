@@ -1,4 +1,5 @@
 const path = require('path');
+// Railway deployment fix v2 (cache buster)
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -20,5 +21,8 @@ const FRONTEND_DIR = (isProduction && resourcesPath)
   ? path.join(resourcesPath, 'app.asar/frontend-react/dist') // Electron empaqueta source en app.asar
   : path.join(__dirname, '../../frontend-react/dist');
 
+module.exports = {
+  UPLOADS_DIR,
+  DB_PATH,
   FRONTEND_DIR
 };

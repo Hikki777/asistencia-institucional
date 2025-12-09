@@ -103,11 +103,7 @@ function App() {
           <div className="p-6 border-b border-slate-700 flex items-center h-20 overflow-hidden">
             <div className="flex items-center gap-4 min-w-max">
               <div className="w-8 flex justify-center flex-shrink-0">
-                 {logoUrl ? (
-                   <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
-                 ) : (
-                   <Activity className="text-blue-400" size={32} />
-                 )}
+                 <Activity className="text-blue-400" size={32} />
               </div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                 <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
@@ -164,11 +160,7 @@ function App() {
           {isLoggedIn && (
           <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2">
-               {logoUrl ? (
-                   <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
-               ) : (
-                   <Activity className="text-blue-400" size={24} />
-               )}
+               <Activity className="text-blue-400" size={24} />
                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
                   HikariOpen
                </h1>

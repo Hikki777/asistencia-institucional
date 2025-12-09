@@ -52,7 +52,9 @@ export default function ConfiguracionPanel() {
         margen_puntualidad_min: data.margen_puntualidad_min || 5,
         direccion: data.direccion || '',
         email: data.email || '',
-        telefono: data.telefono || ''
+        telefono: data.telefono || '',
+        pais: data.pais || '',
+        departamento: data.departamento || ''
       });
       
       if (data.logo_path) {
@@ -206,6 +208,32 @@ export default function ConfiguracionPanel() {
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                     placeholder="+503 1234-5678"
                   />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      País
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.pais}
+                      onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ej: Guatemala"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Departamento
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.departamento}
+                      onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ej: Guatemala"
+                    />
                 </div>
               </div>
             </div>

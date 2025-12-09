@@ -53,6 +53,9 @@ setupGlobalErrorHandlers();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Configuración para Railway/Proxies
+app.set('trust proxy', 1);
+
 // ============ MIDDLEWARE DE LOGGING ============
 
 // Request ID y logging (ANTES de otros middlewares)

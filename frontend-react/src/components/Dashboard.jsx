@@ -177,7 +177,7 @@ export default function Dashboard() {
               )}
 
               <div>
-                <h1 className="text-xl md:text-2xl font-bold pt-2 pb-4 leading-relaxed inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+                <h1 className="text-xl md:text-2xl font-bold text-blue-400">
                   {institucion.nombre}
                 </h1>
                 {(institucion.direccion || institucion.email || institucion.pais) && (

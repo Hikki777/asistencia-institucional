@@ -139,6 +139,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Fallback root route (para que Railway Health Check en '/' no falle)
+app.get('/', (req, res, next) => {
+  // Si existe el frontend, express.static lo servirá antes.
+  // Si no, respondemos esto para evitar 404 y que Railway no mate el servicio.
+  res.send('Backend de Sistema de Asistencia Institucional - Funcionando 🚀');
+});
+
 // ============ RUTAS DE INICIALIZACIÓN ============
 
 // Importar validaciones para institución

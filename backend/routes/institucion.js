@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
 const { logger } = require('../utils/logger');
+// Importar servicio QR al inicio para detectar errores de carga (Sharp/Cloudinary)
+const qrService = require('../services/qrService');
 
 // GET /api/institucion - Obtener datos de la institución
 router.get('/', async (req, res) => {
@@ -50,14 +52,18 @@ router.post('/init', async (req, res) => {
       telefono,
       logo_base64,
       admin_email,
-      admin_password
+      admin_password,
+      municipio // Asegurar que lo leemos
     } = req.body;
+
+    // Validación básica
+    const margen = parseInt(margen_puntualidad_min) || 5;
 
     // 1. Guardar logo si existe
     let logoUrl = null;
     if (logo_base64) {
       try {
-        logoUrl = await require('../services/qrService').guardarLogo(logo_base64, 'logo.png');
+        logoUrl = await qrService.guardarLogo(logo_base64, 'logo.png');
       } catch (e) {
         logger.warn('No se pudo guardar el logo, continuando sin él', e);
       }
@@ -70,7 +76,7 @@ router.post('/init', async (req, res) => {
         nombre,
         horario_inicio,
         horario_salida,
-        margen_puntualidad_min: parseInt(margen_puntualidad_min),
+        margen_puntualidad_min: margen,
         direccion,
         pais,
         departamento,
@@ -85,7 +91,7 @@ router.post('/init', async (req, res) => {
         nombre,
         horario_inicio,
         horario_salida,
-        margen_puntualidad_min: parseInt(margen_puntualidad_min),
+        margen_puntualidad_min: margen,
         direccion,
         pais,
         departamento,

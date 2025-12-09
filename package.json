@@ -16,7 +16,7 @@
     "electron:build": "npm run build:frontend && electron-builder",
     "clean": "powershell -Command \"Get-NetTCPConnection -LocalPort 5000,5173 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | Stop-Process -Force\"",
     "install:font:hack": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\install-hack-nerd-font.ps1 || bash ./scripts/install-hack-nerd-font-macos.sh || bash ./scripts/install-hack-nerd-font-linux.sh",
-    "postinstall": "node ./scripts/install-fonts.js && npx prisma generate",
+    "postinstall": "npx prisma generate",
     "pretest": "node setup-test-db.js",
     "test": "cross-env NODE_ENV=test jest --coverage --verbose",
     "test:watch": "cross-env NODE_ENV=test jest --watch",

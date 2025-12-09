@@ -136,7 +136,6 @@ export default function SetupWizard({ onComplete }) {
         horario_inicio: formData.horario_inicio,
         horario_salida: formData.horario_salida,
         margen_puntualidad_min: parseInt(formData.margen_puntualidad_min),
-        margen_puntualidad_min: parseInt(formData.margen_puntualidad_min),
         direccion: formData.direccion,
         pais: formData.pais,
         departamento: formData.departamento,

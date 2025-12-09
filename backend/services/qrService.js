@@ -170,8 +170,29 @@ function obtenerRutasQr(personaTipo, carnet) {
   return { relativePath, absolutePath, filename };
 }
 
+/**
+ * Guardar logo institucional (Base64 -> Cloudinary)
+ */
+async function guardarLogo(base64Data, filename = 'logo.png') {
+  try {
+    const buffer = await obtenerImagenBuffer(base64Data);
+    if (!buffer) throw new Error('No se pudo procesar el logo base64');
+
+    const publicId = path.parse(filename).name;
+    // Subir a carpeta 'logos'
+    const result = await cloudinaryService.uploadBuffer(buffer, 'logos', publicId);
+    
+    logger.info({ url: result.secure_url }, '✅ Logo subido a Cloudinary');
+    return result.secure_url;
+  } catch (error) {
+    logger.error({ err: error }, '❌ Error guardando logo');
+    return null;
+  }
+}
+
 module.exports = {
   generarQrConLogo,
   generarQrParaPersona,
-  obtenerRutasQr
+  obtenerRutasQr,
+  guardarLogo
 };

@@ -61,6 +61,41 @@ router.post('/init', async (req, res) => {
       } catch (e) {
         logger.warn('No se pudo guardar el logo, continuando sin él', e);
       }
+    }
+
+    // 2. Actualizar datos de la institución
+    const institucion = await prisma.institucion.upsert({
+      where: { id: 1 },
+      update: {
+        nombre,
+        horario_inicio,
+        horario_salida,
+        margen_puntualidad_min: parseInt(margen_puntualidad_min),
+        direccion,
+        pais,
+        departamento,
+        municipio,
+        email,
+        telefono,
+        logo_path: logoUrl, // Guardar URL de Cloudinary
+        inicializado: true
+      },
+      create: {
+        id: 1,
+        nombre,
+        horario_inicio,
+        horario_salida,
+        margen_puntualidad_min: parseInt(margen_puntualidad_min),
+        direccion,
+        pais,
+        departamento,
+        municipio,
+        email,
+        telefono,
+        logo_path: logoUrl,
+        inicializado: true
+      }
+    });
 
     await prisma.usuario.upsert({
       where: { email: admin_email },

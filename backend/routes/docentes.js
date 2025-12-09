@@ -145,6 +145,10 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), (req, res, next) =>
 
     const foto_path = req.file ? `uploads/fotos/${req.file.filename}` : null;
 
+const qrService = require('../services/qrService');
+
+// ...
+
     const docente = await prisma.personal.create({
       data: {
         carnet,
@@ -156,6 +160,14 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), (req, res, next) =>
         foto_path
       }
     });
+
+    // Generar QR automáticamente
+    try {
+        await qrService.generarQrParaPersona('personal', docente.id);
+        logger.info({ docenteId: docente.id }, '✅ QR generado automáticamente');
+    } catch (qrError) {
+        logger.error({ err: qrError, docenteId: docente.id }, '⚠️ Falló generación automática de QR');
+    }
 
     logger.info({ docenteId: docente.id, carnet, nombres, apellidos }, '✅ Docente creado');
     res.status(201).json({ docente });

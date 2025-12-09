@@ -123,6 +123,10 @@ router.post('/', invalidateCacheMiddleware('/api/alumnos'), validarCrearAlumno, 
       return res.status(409).json({ error: 'Carnet ya existe' });
     }
 
+const qrService = require('../services/qrService');
+
+// ...
+
     const alumno = await prisma.alumno.create({
       data: {
         carnet,
@@ -159,6 +163,14 @@ router.post('/', invalidateCacheMiddleware('/api/alumnos'), validarCrearAlumno, 
         detalle: JSON.stringify({ carnet, nombres })
       }
     });
+    
+    // Generar QR automáticamente
+    try {
+        await qrService.generarQrParaPersona('alumno', alumno.id);
+        logger.info({ alumnoId: alumno.id }, '✅ QR generado automáticamente');
+    } catch (qrError) {
+        logger.error({ err: qrError, alumnoId: alumno.id }, '⚠️ Falló generación automática de QR');
+    }
 
     logger.info({ alumnoId: alumno.id, carnet, nombres, apellidos }, '✅ Alumno creado');
     res.status(201).json(alumno);

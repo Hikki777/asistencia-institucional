@@ -1,43 +1,52 @@
 const QRCode = require('qrcode');
 const sharp = require('sharp');
 const path = require('path');
+const axios = require('axios');
+const fs = require('fs-extra');
 const { logger } = require('../utils/logger');
 const { UPLOADS_DIR } = require('../utils/paths');
 const cloudinaryService = require('./cloudinaryService');
-
-/**
- * Servicio para generar QR con logo institucional
- * Ahora integrado con Cloudinary para despliegue en la nube
- */
+const prisma = require('../prismaClient');
+const tokenService = require('./tokenService');
 
 const QRS_DIR = path.join(UPLOADS_DIR, 'qrs');
 const LOGOS_DIR = path.join(UPLOADS_DIR, 'logos');
 
-/**
- * Inicializar directorios necesarios (Mantenido para compatibilidad local/dev)
- */
-async function inicializarDirectorios() {
-  // En entorno cloud (Render) no necesitamos persistencia local, 
-  // pero esto no hace daño si falla.
+// Función auxiliar para obtener buffer de imagen (Base64, URL o Archivo)
+async function obtenerImagenBuffer(fuente) {
+  if (!fuente) return null;
+
   try {
-    const fs = require('fs-extra');
-    await fs.ensureDir(QRS_DIR);
-    await fs.ensureDir(LOGOS_DIR);
-    logger.debug({ QRS_DIR, LOGOS_DIR }, '📁 Directorios de QR inicializados (Local)');
+    // 1. Base64
+    if (fuente.startsWith('data:') || fuente.length > 2000) { // Asumimos base64 largo
+      const base64Data = fuente.includes('base64,') ? fuente.split('base64,')[1] : fuente;
+      return Buffer.from(base64Data, 'base64');
+    }
+    
+    // 2. URL (Cloudinary / Web)
+    if (fuente.startsWith('http')) {
+      const response = await axios.get(fuente, { responseType: 'arraybuffer' });
+      return Buffer.from(response.data);
+    }
+
+    // 3. Archivo Local
+    // Asumimos que es una ruta relativa a uploads si no es absoluta
+    const rutaLocal = path.isAbsolute(fuente) ? fuente : path.join(UPLOADS_DIR, fuente);
+    if (await fs.pathExists(rutaLocal)) {
+      return await fs.readFile(rutaLocal);
+    }
+    
+    return null;
   } catch (error) {
-    logger.warn({ err: error }, '⚠️ No se pudieron crear directorios locales (normal en Cloud)');
+    logger.error({ err: error, fuente }, 'Error obteniendo buffer de imagen');
+    return null;
   }
 }
 
 /**
  * Generar QR con logo centrado y subir a Cloudinary
- * @param {string} token - Token a codificar en QR
- * @param {string} logoBase64 - Logo en base64
- * @param {string} filename - Nombre del archivo (ej: alumno-123.png)
- * @param {number} size - Tamaño del QR
- * @returns {Promise<string|null>} URL segura de Cloudinary o null si falla
  */
-async function generarQrConLogo(token, logoBase64, filename, size = 600) {
+async function generarQrConLogo(token, logoFuente, filename, size = 600) {
   try {
     // Generar QR
     const qrBuffer = await QRCode.toBuffer(token, {
@@ -47,36 +56,33 @@ async function generarQrConLogo(token, logoBase64, filename, size = 600) {
       margin: 2
     });
 
-    // Procesar logo base64
-    const base64Data = logoBase64.includes('base64,')
-      ? logoBase64.split('base64,')[1]
-      : logoBase64;
+    const logoBuffer = await obtenerImagenBuffer(logoFuente);
+    
+    let finalBuffer = qrBuffer;
 
-    const logoBuffer = Buffer.from(base64Data, 'base64');
+    if (logoBuffer) {
+      // Redimensionar logo al ~20% del tamaño del QR
+      const logoSize = Math.round(size * 0.20);
+      const logoResized = await sharp(logoBuffer)
+        .resize(logoSize, logoSize, {
+          fit: 'contain',
+          background: { r: 255, g: 255, b: 255, alpha: 0 }
+        })
+        .toBuffer();
 
-    // Redimensionar logo al ~18% del tamaño del QR
-    const logoSize = Math.round(size * 0.18);
-    const logoResized = await sharp(logoBuffer)
-      .resize(logoSize, logoSize, {
-        fit: 'contain',
-        background: { r: 255, g: 255, b: 255 }
-      })
-      .png()
-      .toBuffer();
-
-    // Composición: QR + logo centrado
-    const finalBuffer = await sharp(qrBuffer)
-      .composite([
-        {
-          input: logoResized,
-          gravity: 'center'
-        }
-      ])
-      .png()
-      .toBuffer();
+      // Composición: QR + logo centrado
+      finalBuffer = await sharp(qrBuffer)
+        .composite([
+          {
+            input: logoResized,
+            gravity: 'center'
+          }
+        ])
+        .png()
+        .toBuffer();
+    }
 
     // Subir a Cloudinary
-    // Usamos el filename como public_id (sin extensión)
     const publicId = path.parse(filename).name;
     const result = await cloudinaryService.uploadBuffer(finalBuffer, 'qrs', publicId);
 
@@ -89,40 +95,74 @@ async function generarQrConLogo(token, logoBase64, filename, size = 600) {
 }
 
 /**
- * Generar QR puro (sin logo) y subir a Cloudinary
+ * Generar QR automáticamente para una persona (Alumno/Personal)
+ * Esta función es llamada desde los controladores al crear registros.
  */
-async function generarQrPuro(token, filename, size = 600) {
+async function generarQrParaPersona(tipo, id) {
   try {
-    const qrBuffer = await QRCode.toBuffer(token, {
-      errorCorrectionLevel: 'H',
-      type: 'png',
-      width: size,
-      margin: 2
+    // 1. Obtener Institución y Logo
+    const institucion = await prisma.institucion.findFirst();
+    const logoFuente = institucion?.logo_path || institucion?.logo_base64;
+
+    // 2. Obtener Persona
+    let persona;
+    if (tipo === 'alumno') {
+      persona = await prisma.alumno.findUnique({ where: { id } });
+    } else {
+      persona = await prisma.personal.findUnique({ where: { id } });
+    }
+
+    if (!persona) throw new Error(`${tipo} no encontrado`);
+
+    // 3. Verificar/Crear Registro CodigoQr
+    let codigoQr = await prisma.codigoQr.findFirst({
+        where: {
+            persona_tipo: tipo,
+            ...(tipo === 'alumno' ? { alumno_id: id } : { personal_id: id })
+        }
     });
 
-    const publicId = path.parse(filename).name;
-    const result = await cloudinaryService.uploadBuffer(qrBuffer, 'qrs', publicId);
+    if (!codigoQr) {
+        const token = tokenService.generarToken(tipo, id);
+        codigoQr = await prisma.codigoQr.create({
+            data: {
+                persona_tipo: tipo,
+                token,
+                vigente: true,
+                ...(tipo === 'alumno' ? { alumno_id: id } : { personal_id: id })
+            }
+        });
+    }
 
-    logger.debug({ url: result.secure_url }, '✅ QR puro generado y subido a Cloudinary');
-    return result.secure_url;
+    // 4. Generar Imagen QR
+    const filename = `${tipo}-${persona.carnet.replace(/\s+/g, '_')}.png`;
+    const qrUrl = await generarQrConLogo(codigoQr.token, logoFuente, filename);
+
+    if (qrUrl) {
+        await prisma.codigoQr.update({
+            where: { id: codigoQr.id },
+            data: { png_path: qrUrl, generado_en: new Date() }
+        });
+    }
+
+    // 5. Devolver URL
+    return qrUrl;
+
   } catch (error) {
-    logger.error({ err: error, filename }, '❌ Error generando QR puro con Cloudinary');
-    return null;
+    logger.error({ err: error, tipo, id }, '❌ Error en generarQrParaPersona');
+    return null; // No fallar la creación de persona si falla el QR
   }
 }
 
+// ... mantener funciones anteriores si es necesario ...
+
 /**
  * Generar ruta/nombre de archivo para QR
- * @param {string} personaTipo
- * @param {string} carnet
- * @returns {string} Nombre del archivo (ej: alumno-12345.png)
  */
 function obtenerNombreQr(personaTipo, carnet) {
   return `${personaTipo}-${carnet.replace(/\s+/g, '_')}.png`;
 }
 
-// Mantener compatibilidad con llamadas antiguas que esperan { relativePath, absolutePath }
-// AUNQUE ahora solo usaremos el filename para Cloudinary
 function obtenerRutasQr(personaTipo, carnet) {
   const filename = obtenerNombreQr(personaTipo, carnet);
   const relativePath = `qrs/${filename}`;
@@ -130,54 +170,8 @@ function obtenerRutasQr(personaTipo, carnet) {
   return { relativePath, absolutePath, filename };
 }
 
-/**
- * Guardar logo en Cloudinary
- * @param {string} logoBase64
- * @param {string} filename
- * @returns {Promise<string|null>} URL de Cloudinary
- */
-async function guardarLogo(logoBase64, filename = 'logo.png') {
-  try {
-    const base64Data = logoBase64.includes('base64,')
-      ? logoBase64.split('base64,')[1]
-      : logoBase64;
-
-    const logoBuffer = Buffer.from(base64Data, 'base64');
-    
-    const publicId = path.parse(filename).name;
-    const result = await cloudinaryService.uploadBuffer(logoBuffer, 'logos', publicId);
-
-    logger.debug({ url: result.secure_url }, '✅ Logo subido a Cloudinary');
-    return result.secure_url;
-  } catch (error) {
-    logger.error({ err: error, filename }, '❌ Error guardando logo en Cloudinary');
-    return null;
-  }
-}
-
-/**
- * Verificar QR (Simulado para Cloudinary - siempre true si tenemos URL)
- */
-async function verificarQr(url) {
-  return !!url;
-}
-
-/**
- * Listar QRs (No soportado igual en Cloudinary, retornar vacío por ahora)
- */
-async function listarQrs() {
-  return [];
-}
-
 module.exports = {
-  inicializarDirectorios,
   generarQrConLogo,
-  generarQrPuro,
-  obtenerRutasQr,
-  guardarLogo,
-  verificarQr,
-  listarQrs,
-  QRS_DIR,
-  LOGOS_DIR,
-  UPLOADS_DIR
+  generarQrParaPersona,
+  obtenerRutasQr
 };

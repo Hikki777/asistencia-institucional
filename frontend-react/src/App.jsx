@@ -83,24 +83,38 @@ function App() {
       <Router>
         <div className="flex h-screen bg-gray-100">
           {/* Sidebar - Solo mostrar si está autenticado */}
+          {/* Sidebar - Solo mostrar si está autenticado */}
           {isLoggedIn && (
           <aside
-            className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white transform transition duration-200 ease-in-out ${
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } md:translate-x-0 md:static`}
+            className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-slate-900 to-slate-800 text-white transform transition-all duration-300 ease-in-out shadow-xl ${
+              sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
+            } md:w-20 md:hover:w-64 group overflow-hidden`}
           >
-          <div className="p-6 border-b border-blue-700">
-            <h1 className="text-2xl font-bold">🎓 Gestión Institucional</h1>
-            <p className="text-sm text-blue-200">Registro de Asistencias</p>
-            {user && (
-              <div className="mt-3 pt-3 border-t border-blue-700 flex items-center gap-2 text-sm">
-                <User size={16} className="text-blue-300" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-blue-100 truncate">{user.email}</p>
-                  <p className="text-blue-300 text-xs capitalize">{user.rol}</p>
-                </div>
+          <div className="p-6 border-b border-slate-700 flex items-center justify-between h-20">
+            <div className="flex items-center gap-3">
+              <div className="min-w-[2.5rem] flex justify-center">
+                 <span className="text-2xl">⚡</span>
               </div>
-            )}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">HikariOpen</h1>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-4 py-6 border-b border-slate-700/50">
+             {user && (
+               <div className="flex items-center gap-3">
+                 <div className="min-w-[2.5rem] flex justify-center">
+                    <div className="w-10 h-10 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-emerald-400 shadow-inner">
+                      <User size={20} />
+                    </div>
+                 </div>
+                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                    <p className="font-medium text-white text-sm truncate">{user.nombres ? `${user.nombres} ${user.apellidos || ''}` : user.email}</p>
+                    <p className="text-xs text-emerald-400 capitalize">{user.cargo || user.rol}</p>
+                 </div>
+               </div>
+             )}
           </div>
 
           <nav className="p-4 space-y-2">
@@ -110,28 +124,34 @@ function App() {
             <NavLink to="/asistencias" icon={Clock} label="Asistencias" />
             <NavLink to="/reportes" icon={FileText} label="Reportes" />
             <NavLink to="/metricas" icon={Activity} label="Métricas" />
-            <NavLink to="/configuracion" icon={Settings} label="Configuración Institucional" />
+            <NavLink to="/configuracion" icon={Settings} label="Configuración" />
           </nav>
 
           <div className="absolute bottom-4 left-4 right-4">
             <button
               onClick={handleLogout}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition"
+              className="w-full bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white font-medium py-2 rounded-lg flex items-center justify-start px-3 gap-3 transition-all duration-300 overflow-hidden group/btn"
+              title="Cerrar Sesión"
             >
-              <LogOut size={18} />
-              Cerrar Sesión
+              <div className="min-w-[1.5rem] flex justify-center">
+                 <LogOut size={20} />
+              </div>
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">Cerrar Sesión</span>
             </button>
           </div>
         </aside>
           )}
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto bg-slate-50 transition-all duration-300">
           {/* Mobile Menu - Solo mostrar si está autenticado */}
           {isLoggedIn && (
-          <div className="md:hidden bg-blue-900 text-white p-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold">🎓 Registro Institucional</h1>
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2">
+          <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
+            <div className="flex items-center gap-2">
+               <span className="text-xl">⚡</span>
+               <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">HikariOpen</h1>
+            </div>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-slate-300 hover:text-white">
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
@@ -140,7 +160,7 @@ function App() {
           {/* Close sidebar when clicking outside on mobile */}
           {sidebarOpen && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
               onClick={() => setSidebarOpen(false)}
             />
           )}

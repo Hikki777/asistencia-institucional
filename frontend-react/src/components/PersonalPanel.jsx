@@ -63,20 +63,29 @@ export default function PersonalPanel() {
     const toastId = toast.loading(editingPersonal ? 'Actualizando miembro...' : 'Creando miembro...');
     
     try {
-      // Limpiar campos vacíos antes de enviar
-      const dataToSend = Object.entries(formData).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
+      const dataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== 'preview' && key !== 'foto' && value !== '' && value !== null && value !== undefined) {
+          dataToSend.append(key, value);
         }
-        return acc;
-      }, {});
+      });
+
+      if (formData.foto) {
+        dataToSend.append('foto', formData.foto);
+      }
       
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+
       if (editingPersonal) {
-        await client.put(`/docentes/${editingPersonal.id}`, dataToSend);
-        toast.success('miembro actualizado correctamente', { id: toastId });
+        await client.put(`/docentes/${editingPersonal.id}`, dataToSend, config);
+        toast.success('Miembro actualizado correctamente', { id: toastId });
       } else {
-        await client.post('/docentes', dataToSend);
-        toast.success('miembro creado correctamente', { id: toastId });
+        await client.post('/docentes', dataToSend, config);
+        toast.success('Miembro creado correctamente', { id: toastId });
       }
       
       setShowModal(false);
@@ -87,7 +96,9 @@ export default function PersonalPanel() {
         apellidos: '',
         sexo: '',
         cargo: 'Docente',
-        jornada: ''
+        jornada: '',
+        foto: null,
+        preview: null
       });
       fetchPersonal();
     } catch (error) {
@@ -470,38 +481,44 @@ export default function PersonalPanel() {
                 </button>
               </div>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Carnet *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.carnet}
-                  onChange={(e) => setFormData({ ...formData, carnet: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="D001"
-                />
+              <div className="flex flex-col items-center mb-4">
+                  <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden mb-2 border-2 border-dashed border-slate-400 relative">
+                    {formData.preview ? (
+                      <img src={formData.preview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={40} className="text-slate-400" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setFormData({
+                            ...formData,
+                            foto: file,
+                            preview: URL.createObjectURL(file)
+                          });
+                        }
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  <span className="text-sm text-slate-500">Toca para subir foto</span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombres *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.nombres}
-                  onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.apellidos}
-                  onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
+
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Carnet *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.carnet}
+                    onChange={(e) => setFormData({ ...formData, carnet: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="D001"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Cargo *</label>
                   <select
@@ -520,6 +537,32 @@ export default function PersonalPanel() {
                     <option value="Auxiliar">Auxiliar</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombres *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.nombres}
+                    onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.apellidos}
+                    onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
                   <select
@@ -532,20 +575,25 @@ export default function PersonalPanel() {
                     <option value="F">F</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Jornada</label>
+                  <select
+                    value={formData.jornada}
+                    onChange={(e) => setFormData({ ...formData, jornada: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="">-</option>
+                    <option value="Matutina">Matutina</option>
+                    <option value="Vespertina">Vespertina</option>
+                    <option value="Nocturna">Nocturna</option>
+                    <option value="Semipresencial">Semipresencial</option>
+                    <option value="Virtual">Virtual</option>
+                    <option value="Fin de Semana (Sábado)">Fin de Semana (Sábado)</option>
+                    <option value="Fin de Semana (Domingo)">Fin de Semana (Domingo)</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Jornada</label>
-                <select
-                  value={formData.jornada}
-                  onChange={(e) => setFormData({ ...formData, jornada: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value="">-</option>
-                  <option value="Matutina">Matutina</option>
-                  <option value="Vespertina">Vespertina</option>
-                  <option value="Nocturna">Nocturna</option>
-                </select>
-              </div>
+
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"

@@ -1,13 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { Activity, Users, QrCode, AlertTriangle, TrendingUp, Calendar } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { healthAPI, diagnosticsAPI, alumnosAPI, asistenciasAPI, docentesAPI, institucionAPI } from '../api/endpoints';
-import toast, { Toaster } from 'react-hot-toast';
-import { CardSkeleton } from './LoadingSpinner';
+import React, { useState, useEffect } from "react";
+import {
+  Activity,
+  Users,
+  QrCode,
+  AlertTriangle,
+  TrendingUp,
+  Calendar,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  healthAPI,
+  diagnosticsAPI,
+  alumnosAPI,
+  asistenciasAPI,
+  docentesAPI,
+  institucionAPI,
+} from "../api/endpoints";
+import toast, { Toaster } from "react-hot-toast";
+import { CardSkeleton } from "./LoadingSpinner";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
-    status: 'unknown',
+    status: "unknown",
     alumnos: 0,
     personal: 0,
     qrs: 0,
@@ -33,7 +58,7 @@ export default function Dashboard() {
       const response = await institucionAPI.get();
       setInstitucion(response.data);
     } catch (error) {
-      console.error('Error fetching institucion:', error);
+      console.error("Error fetching institucion:", error);
     }
   };
 
@@ -43,8 +68,8 @@ export default function Dashboard() {
       setAsistenciasStats(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching asistencias stats:', error);
-      toast.error('Error al cargar estadísticas de asistencias');
+      console.error("Error fetching asistencias stats:", error);
+      toast.error("Error al cargar estadísticas de asistencias");
       setLoading(false);
     }
   };
@@ -52,34 +77,48 @@ export default function Dashboard() {
   const fetchStats = async () => {
     try {
       const [health, diag, alumnos, personalResp] = await Promise.all([
-        healthAPI.check().catch(() => ({ data: { status: 'error' } })),
-        diagnosticsAPI.execute().catch(() => ({ data: { total_qrs: 0, corrupt: 0, missing: 0, missing_logo: 0 } })),
+        healthAPI.check().catch(() => ({ data: { status: "error" } })),
+        diagnosticsAPI
+          .execute()
+          .catch(() => ({
+            data: { total_qrs: 0, corrupt: 0, missing: 0, missing_logo: 0 },
+          })),
         alumnosAPI.list().catch(() => ({ data: { total: 0, alumnos: [] } })),
         docentesAPI.list().catch(() => ({ data: { personal: [] } })),
       ]);
       const diagData = diag.data || {};
-      const corruptCount = Array.isArray(diagData.corrupt_qrs) ? diagData.corrupt_qrs.length : (diagData.corrupt || 0);
-      const missingCount = Array.isArray(diagData.missing_qrs) ? diagData.missing_qrs.length : (diagData.missing || 0);
-      const issues = corruptCount + missingCount + (diagData.missing_logo ? 1 : 0);
+      const corruptCount = Array.isArray(diagData.corrupt_qrs)
+        ? diagData.corrupt_qrs.length
+        : diagData.corrupt || 0;
+      const missingCount = Array.isArray(diagData.missing_qrs)
+        ? diagData.missing_qrs.length
+        : diagData.missing || 0;
+      const issues =
+        corruptCount + missingCount + (diagData.missing_logo ? 1 : 0);
 
-      const newStatus = health.data?.status === 'ok' ? 'online' : 'offline';
+      const newStatus = health.data?.status === "ok" ? "online" : "offline";
       setStats({
         status: newStatus,
         alumnos: alumnos.data?.total || 0,
-        personal: (personalResp.data?.personal?.length) || (personalResp.data?.docentes?.length) || 0,
+        personal:
+          personalResp.data?.personal?.length ||
+          personalResp.data?.docentes?.length ||
+          0,
         qrs: diagData.total_qrs || 0,
         issues: issues,
       });
     } catch (error) {
-      console.error('Error fetching stats:', error);
-      toast.error('Error al cargar estadísticas del sistema');
-      setStats((prev) => ({ ...prev, status: 'error' }));
+      console.error("Error fetching stats:", error);
+      toast.error("Error al cargar estadísticas del sistema");
+      setStats((prev) => ({ ...prev, status: "error" }));
     }
   };
 
   /* eslint-disable no-unused-vars */
   const StatCard = ({ icon: Icon, label, value, color }) => (
-    <div className={`bg-white rounded-lg shadow p-6 border-l-4 border-${color}-500`}>
+    <div
+      className={`bg-white rounded-lg shadow p-6 border-l-4 border-${color}-500`}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-gray-600 text-sm font-semibold">{label}</p>
@@ -94,31 +133,85 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header con nombre e información institucional */}
+      {/* Header con nombre e información institucional */}
       {institucion && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {institucion.logo_path && (
-                <img 
-                  src={institucion.logo_path.startsWith('http') 
-                    ? institucion.logo_path 
-                    : `${import.meta.env.VITE_API_URL}/uploads/${institucion.logo_path}?t=${Date.now()}`}
-                  alt="Logo institucional"
-                  className="w-16 h-16 object-contain bg-white rounded-lg p-2"
-                  onError={(e) => { e.target.style.display = 'none'; console.error('Error cargando logo'); }}
-                />
+        <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl shadow-2xl p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+          <div className="flex flex-col md:flex-row items-center justify-between relative z-10 gap-6">
+            <div className="flex items-center gap-6">
+              {institucion.logo_path ? (
+                <div className="bg-white p-3 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                  <img
+                    src={
+                      institucion.logo_path.startsWith("http")
+                        ? institucion.logo_path
+                        : `${import.meta.env.VITE_API_URL}/uploads/${
+                            institucion.logo_path
+                          }?t=${Date.now()}`
+                    }
+                    alt="Logo institucional"
+                    className="w-24 h-24 object-contain"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      console.error("Error cargando logo");
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+                  <Activity className="text-blue-400 w-16 h-16" />
+                </div>
               )}
+
               <div>
-                <h1 className="text-3xl font-bold">{institucion.nombre}</h1>
-                <p className="text-blue-100 mt-1">
-                  HikariOpen
+                <h1 className="text-4xl font-bold tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+                  {institucion.nombre}
+                </h1>
+                <p className="text-slate-300 font-medium text-lg flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  HikariOpen System
                 </p>
+                {(institucion.direccion || institucion.email) && (
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-400">
+                    {institucion.direccion && (
+                      <span className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
+                        📍 {institucion.direccion}
+                      </span>
+                    )}
+                    {institucion.email && (
+                      <span className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
+                        ✉️ {institucion.email}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-            <div className="text-right text-sm">
-              <p className="text-blue-100">Horario de inicio: {institucion.horario_inicio}</p>
-              <p className="text-blue-100">Horario de salida: {institucion.horario_salida}</p>
-              <p className="text-blue-100">Margen puntualidad: {institucion.margen_puntualidad_min} min</p>
+
+            <div className="text-right space-y-2 bg-white/5 p-4 rounded-xl backdrop-blur-sm border border-white/10">
+              <div className="flex items-center justify-end gap-2 text-slate-300">
+                <span className="font-medium text-slate-400">
+                  Horario Entrada:
+                </span>
+                <span className="font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
+                  {institucion.horario_inicio || "--:--"}
+                </span>
+              </div>
+              <div className="flex items-center justify-end gap-2 text-slate-300">
+                <span className="font-medium text-slate-400">
+                  Horario Salida:
+                </span>
+                <span className="font-mono text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded">
+                  {institucion.horario_salida || "--:--"}
+                </span>
+              </div>
+              <div className="flex items-center justify-end gap-2 text-slate-300">
+                <span className="font-medium text-slate-400">Tolerancia:</span>
+                <span className="font-mono text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded">
+                  {institucion.margen_puntualidad_min} min
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -127,12 +220,19 @@ export default function Dashboard() {
       {/* Status Banner */}
       <div
         className={`rounded-lg p-4 flex items-center gap-3 ${
-          stats.status === 'online' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          stats.status === "online"
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800"
         }`}
       >
-        <div className={`w-3 h-3 rounded-full ${stats.status === 'online' ? 'bg-green-600' : 'bg-red-600'} animate-pulse`}></div>
+        <div
+          className={`w-3 h-3 rounded-full ${
+            stats.status === "online" ? "bg-green-600" : "bg-red-600"
+          } animate-pulse`}
+        ></div>
         <span className="font-semibold">
-          Sistema {stats.status === 'online' ? '🟢 En Línea' : '🔴 Sin Conexión'}
+          Sistema{" "}
+          {stats.status === "online" ? "🟢 En Línea" : "🔴 Sin Conexión"}
         </span>
       </div>
 
@@ -145,17 +245,32 @@ export default function Dashboard() {
             <StatCard
               icon={Activity}
               label="Estado"
-              value={stats.status === 'online' ? '✓' : '✗'}
-              color={stats.status === 'online' ? 'green' : 'red'}
+              value={stats.status === "online" ? "✓" : "✗"}
+              color={stats.status === "online" ? "green" : "red"}
             />
-            <StatCard icon={Users} label="Alumnos" value={stats.alumnos} color="blue" />
-            <StatCard icon={Users} label="Personal" value={stats.personal} color="green" />
-            <StatCard icon={QrCode} label="QR Generados" value={stats.qrs} color="blue" />
+            <StatCard
+              icon={Users}
+              label="Alumnos"
+              value={stats.alumnos}
+              color="blue"
+            />
+            <StatCard
+              icon={Users}
+              label="Personal"
+              value={stats.personal}
+              color="green"
+            />
+            <StatCard
+              icon={QrCode}
+              label="QR Generados"
+              value={stats.qrs}
+              color="blue"
+            />
             <StatCard
               icon={AlertTriangle}
               label="Problemas"
               value={stats.issues}
-              color={stats.issues > 0 ? 'red' : 'green'}
+              color={stats.issues > 0 ? "red" : "green"}
             />
           </>
         )}
@@ -168,23 +283,50 @@ export default function Dashboard() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="text-blue-600" size={24} />
-              <h3 className="text-xl font-bold text-gray-800">Tendencia de Asistencias</h3>
+              <h3 className="text-xl font-bold text-gray-800">
+                Tendencia de Asistencias
+              </h3>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={Object.entries(asistenciasStats.porDia).map(([fecha, data]) => ({
-                fecha: new Date(fecha).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
-                total: data.total,
-                puntuales: data.puntuales,
-                tardes: data.tardes
-              }))}>
+              <LineChart
+                data={Object.entries(asistenciasStats.porDia).map(
+                  ([fecha, data]) => ({
+                    fecha: new Date(fecha).toLocaleDateString("es-ES", {
+                      month: "short",
+                      day: "numeric",
+                    }),
+                    total: data.total,
+                    puntuales: data.puntuales,
+                    tardes: data.tardes,
+                  })
+                )}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="fecha" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} name="Total" />
-                <Line type="monotone" dataKey="puntuales" stroke="#10b981" strokeWidth={2} name="Puntuales" />
-                <Line type="monotone" dataKey="tardes" stroke="#ef4444" strokeWidth={2} name="Tardes" />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  name="Total"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="puntuales"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  name="Puntuales"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="tardes"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  name="Tardes"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -193,14 +335,23 @@ export default function Dashboard() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="text-green-600" size={24} />
-              <h3 className="text-xl font-bold text-gray-800">Entradas vs Salidas</h3>
+              <h3 className="text-xl font-bold text-gray-800">
+                Entradas vs Salidas
+              </h3>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={Object.entries(asistenciasStats.porDia).map(([fecha, data]) => ({
-                fecha: new Date(fecha).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
-                entradas: data.entradas,
-                salidas: data.salidas
-              }))}>
+              <BarChart
+                data={Object.entries(asistenciasStats.porDia).map(
+                  ([fecha, data]) => ({
+                    fecha: new Date(fecha).toLocaleDateString("es-ES", {
+                      month: "short",
+                      day: "numeric",
+                    }),
+                    entradas: data.entradas,
+                    salidas: data.salidas,
+                  })
+                )}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="fecha" />
                 <YAxis />
@@ -215,24 +366,24 @@ export default function Dashboard() {
       )}
 
       {/* Toast notifications */}
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#363636',
-            color: '#fff',
+            background: "#363636",
+            color: "#fff",
           },
           success: {
             iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
+              primary: "#10b981",
+              secondary: "#fff",
             },
           },
           error: {
             iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+              primary: "#ef4444",
+              secondary: "#fff",
             },
           },
         }}

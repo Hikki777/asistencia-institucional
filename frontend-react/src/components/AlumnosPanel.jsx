@@ -3,8 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, BookOpen, Sun, CheckCircle, XCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-import { alumnosAPI, qrAPI } from '../api/endpoints';
+import { alumnosAPI, qrAPI, institucionAPI } from '../api/endpoints';
 import { TableSkeleton } from './LoadingSpinner';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AlumnosPanel() {
   const [alumnos, setAlumnos] = useState([]);
@@ -15,6 +18,9 @@ export default function AlumnosPanel() {
   const [filterGrado, setFilterGrado] = useState('');
   const [filterJornada, setFilterJornada] = useState('');
   const [filterEstado, setFilterEstado] = useState('');
+  const [institucion, setInstitucion] = useState(null);
+  const [posiblesGrados, setPosiblesGrados] = useState([]);
+
   const [formData, setFormData] = useState({
     carnet: '',
     nombres: '',
@@ -22,53 +28,84 @@ export default function AlumnosPanel() {
     grado: '',
     especialidad: '',
     jornada: '',
-    sexo: ''
+    sexo: '',
+    foto: null,
+    preview: null
   });
 
   useEffect(() => {
-    fetchAlumnos();
+    fetchData();
   }, []);
 
-  const fetchAlumnos = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await alumnosAPI.list();
-      console.log('📊 Respuesta de alumnos:', response.data);
-      console.log('📊 Primer alumno completo:', response.data.alumnos?.[0]);
-      console.log('📊 Especialidad primer alumno:', response.data.alumnos?.[0]?.especialidad);
-      setAlumnos(response.data.alumnos || []);
+      const [alumnosRes, instRes] = await Promise.all([
+        alumnosAPI.list(),
+        institucionAPI.get().catch(e => ({ data: {} }))
+      ]);
+      setAlumnos(alumnosRes.data.alumnos || []);
+      setInstitucion(instRes.data);
+      generarGrados(instRes.data?.pais);
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Error al cargar alumnos: ' + (error.response?.data?.error || error.message));
+      toast.error('Error al cargar datos');
     } finally {
       setLoading(false);
     }
+  };
+
+  const generarGrados = (pais) => {
+    let grados = [
+      '1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria',
+      '1ro Básico', '2do Básico', '3ro Básico',
+      '4to Diversificado', '5to Diversificado', '6to Diversificado'
+    ];
+    // Aquí se podría personalizar más según el país si fuera necesario
+    setPosiblesGrados(grados);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const toastId = toast.loading(editingAlumno ? 'Actualizando alumno...' : 'Creando alumno...');
     
-    console.log('📝 Datos a enviar:', formData);
-    console.log('📝 Especialidad a enviar:', formData.especialidad);
-    
     try {
+      let alumnoId;
+      
+      // 1. Crear o Actualizar datos básicos
       if (editingAlumno) {
-        const response = await alumnosAPI.update(editingAlumno.id, formData);
-        console.log('✅ Respuesta actualización:', response.data);
-        console.log('✅ Especialidad en respuesta:', response.data.especialidad);
-        toast.success('Alumno actualizado exitosamente', { id: toastId });
+        // En update, eliminamos la foto del payload JSON, se maneja aparte
+        const { foto, preview, ...dataToSend } = formData;
+        await alumnosAPI.update(editingAlumno.id, dataToSend);
+        alumnoId = editingAlumno.id;
+        toast.success('Datos actualizados', { id: toastId });
       } else {
-        const response = await alumnosAPI.create(formData);
-        console.log('✅ Respuesta creación:', response.data);
-        console.log('✅ Especialidad en respuesta:', response.data.especialidad);
-        toast.success('Alumno creado exitosamente', { id: toastId });
+        const { foto, preview, ...dataToSend } = formData;
+        const res = await alumnosAPI.create(dataToSend);
+        alumnoId = res.data.id;
+        toast.success('Alumno creado', { id: toastId });
+      }
+
+      // 2. Subir Foto si existe y es un archivo nuevo
+      if (formData.foto instanceof File) {
+        const fotoData = new FormData();
+        fotoData.append('foto', formData.foto);
+        
+        // Usar axios directamente para multipart
+        const token = localStorage.getItem('token');
+        await axios.post(`${API_URL}/alumnos/${alumnoId}/foto`, fotoData, {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data' 
+            }
+        });
+        toast.success('Foto subida exitosamente', { id: toastId });
       }
       
       setShowModal(false);
       setEditingAlumno(null);
-      setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', especialidad: '', jornada: '', sexo: '' });
-      fetchAlumnos();
+      setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', especialidad: '', jornada: '', sexo: '', foto: null, preview: null });
+      fetchData(); // Recargar todo
     } catch (error) {
       console.error('❌ Error:', error);
       toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
@@ -84,7 +121,9 @@ export default function AlumnosPanel() {
       grado: alumno.grado || '',
       especialidad: alumno.especialidad || '',
       jornada: alumno.jornada || '',
-      sexo: alumno.sexo || ''
+      sexo: alumno.sexo || '',
+      foto: null,
+      preview: alumno.foto_path ? (alumno.foto_path.startsWith('http') ? alumno.foto_path : `${API_URL}/uploads/${alumno.foto_path}`) : null
     });
     setShowModal(true);
   };
@@ -96,7 +135,7 @@ export default function AlumnosPanel() {
     try {
       await alumnosAPI.update(id, { estado: nuevoEstado });
       toast.success(`${nombre} ahora está ${nuevoEstado}`, { id: toastId });
-      fetchAlumnos();
+      fetchData();
     } catch (error) {
       toast.error('Error: ' + (error.response?.data||error.message), { id: toastId });
     }
@@ -106,23 +145,17 @@ export default function AlumnosPanel() {
     if (!confirm(`¿Eliminar a ${nombre}?`)) return;
     const toastId = toast.loading('Eliminando alumno...');
     
-    // Optimistic update: eliminar de UI inmediatamente
-    const previousAlumnos = [...alumnos];
-    setAlumnos(prev => prev.filter(a => a.id !== id));
-    
     try {
       await alumnosAPI.delete(id);
       toast.success(`${nombre} eliminado exitosamente`, { id: toastId });
+      setAlumnos(prev => prev.filter(a => a.id !== id));
     } catch (error) {
-      // Rollback: restaurar alumno eliminado
-      setAlumnos(previousAlumnos);
       toast.error('Error: ' + (error.response?.data?.error || error.message), { id: toastId });
     }
   };
 
   const handleDownloadQR = async (id, carnet) => {
     const toastId = toast.loading('Generando código QR...');
-    
     try {
       const response = await qrAPI.download(id);
       const blob = new Blob([response.data], { type: 'image/png' });
@@ -136,7 +169,6 @@ export default function AlumnosPanel() {
       window.URL.revokeObjectURL(url);
       toast.success('Código QR descargado', { id: toastId });
     } catch (error) {
-      console.error('Error downloading QR:', error);
       toast.error('Error al descargar QR: ' + error.message, { id: toastId });
     }
   };
@@ -171,7 +203,7 @@ export default function AlumnosPanel() {
         <button
           onClick={() => {
             setEditingAlumno(null);
-            setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', especialidad: '', jornada: '', sexo: '' });
+            setFormData({ carnet: '', nombres: '', apellidos: '', grado: '', especialidad: '', jornada: '', sexo: '', foto: null, preview: null });
             setShowModal(true);
           }}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center justify-center gap-2 transition shadow-lg hover:shadow-xl"
@@ -471,6 +503,32 @@ export default function AlumnosPanel() {
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
+               <div className="flex flex-col items-center mb-4">
+                  <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden mb-2 border-2 border-dashed border-slate-400 relative">
+                    {formData.preview ? (
+                      <img src={formData.preview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={40} className="text-slate-400" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setFormData({
+                            ...formData,
+                            foto: file,
+                            preview: URL.createObjectURL(file)
+                          });
+                        }
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  <span className="text-sm text-slate-500">Toca para subir foto</span>
+              </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Carnet *</label>
                   <input
@@ -505,14 +563,17 @@ export default function AlumnosPanel() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Grado *</label>
-                    <input
-                      type="text"
+                     <select
                       required
                       value={formData.grado}
                       onChange={(e) => setFormData({ ...formData, grado: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="1ro"
-                    />
+                    >
+                      <option value="">-</option>
+                      {posiblesGrados.map((g) => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>

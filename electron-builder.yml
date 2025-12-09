@@ -1,5 +1,5 @@
 appId: "com.asistencias.app"
-productName: "Sistema de Registro Institucional"
+productName: "HikariOpen"
 directories:
   output: "dist-electron"
   buildResources: "public"

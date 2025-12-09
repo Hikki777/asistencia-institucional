@@ -3,6 +3,10 @@ const prisma = new PrismaClient();
 
 async function resetDatabase() {
   console.log('🗑️  Iniciando limpieza de base de datos...');
+  console.log('URL (masked):', process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:]*@/, ':****@') : 'UNDEFINED');
+  
+  const count = await prisma.institucion.count();
+  console.log(`Found ${count} institutions to delete.`);
 
   try {
     // Orden importante para respetar foreign keys

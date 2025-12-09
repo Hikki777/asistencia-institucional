@@ -51,7 +51,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full mb-4 shadow-lg">
             <GraduationCap size={40} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Sistema de Registro Institucional</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">HikariOpen</h1>
           <p className="text-gray-500">Gestión de Asistencias Escolares</p>
         </div>
 

@@ -210,7 +210,7 @@ class ReportService {
 
     // Footer
     doc.fontSize(8).font('Helvetica').text(
-      `Generado por Sistema de Registro Institucional - Página ${doc.bufferedPageRange().count}`,
+      `Generado por HikariOpen - Página ${doc.bufferedPageRange().count}`,
       50,
       doc.page.height - 50,
       { align: 'center' }
@@ -280,7 +280,7 @@ class ReportService {
 
     // Crear workbook con ExcelJS
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'Sistema de Registro Institucional';
+    workbook.creator = 'HikariOpen';
     workbook.created = new Date();
 
     // ===== HOJA ÚNICA: REPORTE DE ASISTENCIAS =====

@@ -1,0 +1,1 @@
+{"error":"Error al obtener datos de la institución","detalle":"\nInvalid `prisma.institucion.findFirst()` invocation:\n\n\nThe column `institucion.pais` does not exist in the current database."}

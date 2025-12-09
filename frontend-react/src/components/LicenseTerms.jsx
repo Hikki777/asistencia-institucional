@@ -10,7 +10,7 @@ export default function LicenseTerms() {
           Licencia de Uso del Sistema
         </h3>
         <p className="text-blue-800 text-xs">
-          Versión 1.0 - Sistema de Registro Institucional
+          Versión 1.0.1 - HikariOpen
         </p>
       </div>
 

@@ -111,7 +111,7 @@ export default function Dashboard() {
               <div>
                 <h1 className="text-3xl font-bold">{institucion.nombre}</h1>
                 <p className="text-blue-100 mt-1">
-                  Sistema de Registro Institucional
+                  HikariOpen
                 </p>
               </div>
             </div>

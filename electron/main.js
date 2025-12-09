@@ -18,7 +18,7 @@ function createWindow() {
     height: 800,
     minWidth: 1024,
     minHeight: 768,
-    title: "Sistema de Registro Institucional",
+    title: "HikariOpen",
     icon: path.join(__dirname, "..", "public", "logo.png"), // Asegúrate de tener un icono
     webPreferences: {
       nodeIntegration: false,

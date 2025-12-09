@@ -181,13 +181,13 @@ export default function SetupWizard({ onComplete }) {
               </p>
               
               <div className="space-y-4">
-                {['Institución', 'Administrador', 'Confirmar'].map((label, index) => {
+                {['Modo de Instalación', 'Institución', 'Administrador', 'Confirmar'].map((label, index) => {
                   const stepNum = index + 1;
-                  const isActive = step === stepNum;
-                  const isCompleted = step > stepNum;
+                  const isActive = step === index;
+                  const isCompleted = step > index;
                   
                   return (
-                    <div key={stepNum} className={`flex items-center gap-3 transition-all ${
+                    <div key={index} className={`flex items-center gap-3 transition-all ${
                       isActive ? 'text-white scale-105' : isCompleted ? 'text-green-300' : 'text-blue-400'
                     }`}>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
@@ -204,7 +204,7 @@ export default function SetupWizard({ onComplete }) {
               </div>
             </div>
             <div className="text-xs text-blue-300 mt-8">
-              Sistema de Registro v1.0
+              HikariOpen V1.0.1
             </div>
           </div>
 
@@ -245,7 +245,7 @@ export default function SetupWizard({ onComplete }) {
                   </div>
                 </div>
 
-                <div className="border-2 border-gray-200 rounded-xl p-6">
+                <div className="border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-colors">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="bg-green-100 p-3 rounded-full text-green-700">
                       <Wifi size={32} />
@@ -253,7 +253,7 @@ export default function SetupWizard({ onComplete }) {
                     <div>
                       <h3 className="text-lg font-bold text-gray-800">Conectar a Existente (Cliente)</h3>
                       <p className="text-gray-600 text-sm">
-                        Conecta este equipo a un servidor ya configurado en la red local.
+                        Conecta este equipo a un servidor en la nube (Railway) o local.
                       </p>
                     </div>
                   </div>
@@ -267,26 +267,37 @@ export default function SetupWizard({ onComplete }) {
                           type="url"
                           value={serverUrl}
                           onChange={(e) => setServerUrl(e.target.value)}
-                          placeholder="http://192.168.1.X:5000"
+                          placeholder="https://tu-proyecto.up.railway.app"
                           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           required
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        Ingresa la IP del servidor principal. Asegúrate de estar en la misma red WiFi/LAN.
+                        Ingresa la URL proporcionada por el administrador (ej. Railway).
                       </p>
                     </div>
                     <button
                       type="submit"
                       disabled={connectionStatus === 'checking' || connectionStatus === 'success'}
-                      className={`w-full font-bold py-2 rounded-lg transition-all ${
+                      className={`w-full font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 ${
                         connectionStatus === 'success' 
                           ? 'bg-green-500 text-white' 
                           : 'bg-green-600 hover:bg-green-700 text-white'
                       }`}
                     >
-                      {connectionStatus === 'checking' ? 'Conectando...' : 
-                       connectionStatus === 'success' ? '¡Conectado!' : 'Conectar'}
+                      {connectionStatus === 'checking' ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                          Conectando...
+                        </>
+                      ) : connectionStatus === 'success' ? (
+                        <>
+                          <CheckCircle size={18} />
+                          ¡Conectado!
+                        </>
+                      ) : (
+                        'Conectar'
+                      )}
                     </button>
                   </form>
                 </div>

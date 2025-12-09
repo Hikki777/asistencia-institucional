@@ -168,11 +168,7 @@ export default function Dashboard() {
                 <h1 className="text-4xl font-bold tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
                   {institucion.nombre}
                 </h1>
-                <p className="text-slate-300 font-medium text-lg flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  HikariOpen System
-                </p>
-                {(institucion.direccion || institucion.email) && (
+                {(institucion.direccion || institucion.email || institucion.pais) && (
                   <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-400">
                     {institucion.direccion && (
                       <span className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
@@ -184,8 +180,17 @@ export default function Dashboard() {
                         ✉️ {institucion.email}
                       </span>
                     )}
+                    {institucion.pais && (
+                      <span className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
+                        🌍 {institucion.pais}
+                      </span>
+                    )}
                   </div>
                 )}
+                <p className="text-slate-300 font-medium text-lg flex items-center gap-2 mt-4">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  HikariOpen System
+                </p>
               </div>
             </div>
 

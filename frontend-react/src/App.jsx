@@ -111,7 +111,7 @@ function App() {
               </div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                 <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                  {institucion?.nombre || 'HikariOpen'}
+                  HikariOpen
                 </h1>
               </div>
             </div>
@@ -170,7 +170,7 @@ function App() {
                    <Activity className="text-blue-400" size={24} />
                )}
                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                  {institucion?.nombre || 'HikariOpen'}
+                  HikariOpen
                </h1>
             </div>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-slate-300 hover:text-white">

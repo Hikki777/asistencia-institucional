@@ -1,0 +1,109 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Tests y Cobertura
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Instalar dependencias
+        run: npm ci
+      
+      - name: Verificar formato de código
+        run: |
+          echo "Verificando formato..."
+          # Aquí se puede agregar prettier/eslint si se desea
+      
+      - name: Ejecutar tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-jwt-secret-for-ci
+          HMAC_SECRET: test-hmac-secret-for-ci
+          DATABASE_URL: file:./backend/prisma/test.db
+      
+      - name: Generar reporte de cobertura
+        uses: codecov/codecov-action@v4
+        if: matrix.node-version == '20.x'
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+  
+  lint:
+    name: Análisis de Código
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: Instalar dependencias
+        run: npm ci
+      
+      - name: Verificar vulnerabilidades
+        run: npm audit --audit-level=high
+        continue-on-error: true
+      
+      - name: Listar dependencias desactualizadas
+        run: npm outdated || true
+  
+  build:
+    name: Build de Frontend
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: Instalar dependencias raíz
+        run: npm ci
+      
+      - name: Instalar dependencias frontend
+        run: cd frontend-react && npm ci
+      
+      - name: Build frontend
+        run: cd frontend-react && npm run build
+      
+      - name: Verificar artifacts
+        run: |
+          if [ -d "frontend-react/dist" ]; then
+            echo "✅ Build exitoso"
+            ls -lh frontend-react/dist
+          else
+            echo "❌ Build falló"
+            exit 1
+          fi

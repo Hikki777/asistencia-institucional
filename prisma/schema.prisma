@@ -1,0 +1,186 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Datos de la institución (valores únicos)
+model Institucion {
+  id                     Int      @id @default(1)
+  nombre                 String
+  logo_base64            String? // Almacenar logo en base64 para regeneraciones
+  logo_path              String? // Ruta relativa al logo generado
+  horario_inicio         String? // HH:mm formato 24h
+  horario_salida         String? // HH:mm formato 24h
+  margen_puntualidad_min Int      @default(5) // minutos de tolerancia
+  direccion              String?
+  pais                   String? // Nuevo: País seleccionado
+  departamento           String? // Nuevo: Departamento/Estado/Provincia
+  municipio              String?
+  email                  String?
+  telefono               String?
+  inicializado           Boolean  @default(false)
+  creado_en              DateTime @default(now())
+  actualizado_en         DateTime @updatedAt
+
+  @@map("institucion")
+}
+
+// Tabla base reutilizable: alumnos
+model Alumno {
+  id             Int      @id @default(autoincrement())
+  carnet         String   @unique
+  nombres        String
+  apellidos      String
+  sexo           String? // "M" o "F"
+  grado          String // "1ro", "2do", etc.
+  especialidad   String? // "Bachillerato en Computación", "Bachillerato en Salud", etc.
+  jornada        String? // "Matutina", "Vespertina"
+  estado         String   @default("activo") // "activo" o "inactivo"
+  foto_path      String? // Ruta relativa a foto
+  creado_en      DateTime @default(now())
+  actualizado_en DateTime @updatedAt
+
+  // Relaciones
+  codigos_qr  CodigoQr[]   @relation("alumno_qr")
+  asistencias Asistencia[] @relation("alumno_asistencia")
+  excusas     Excusa[]     @relation("alumno_excusa")
+
+  @@index([estado])
+  @@map("alumnos")
+}
+
+// Personal (maestros, administrativos, etc.)
+model Personal {
+  id             Int      @id @default(autoincrement())
+  carnet         String   @unique
+  nombres        String
+  apellidos      String
+  sexo           String?
+  cargo          String? // "Director", "Directora", "Docente", "Secretaria", "Secretario", "Operativo", "Auxiliar"
+  jornada        String?
+  estado         String   @default("activo")
+  foto_path      String?
+  creado_en      DateTime @default(now())
+  actualizado_en DateTime @updatedAt
+
+  codigos_qr  CodigoQr[]   @relation("personal_qr")
+  asistencias Asistencia[] @relation("personal_asistencia")
+  excusas     Excusa[]     @relation("personal_excusa")
+
+  @@index([estado])
+  @@map("personal")
+}
+
+// Códigos QR generados
+model CodigoQr {
+  id            Int       @id @default(autoincrement())
+  persona_tipo  String // "alumno" o "personal"
+  alumno_id     Int?
+  personal_id   Int?
+  token         String    @unique // Token HMAC firmado en base64url
+  png_path      String? // Ruta relativa al PNG generado
+  vigente       Boolean   @default(true)
+  generado_en   DateTime  @default(now())
+  regenerado_en DateTime? // Última regeneración
+
+  // Relaciones
+  alumno   Alumno?   @relation("alumno_qr", fields: [alumno_id], references: [id], onDelete: Cascade)
+  personal Personal? @relation("personal_qr", fields: [personal_id], references: [id], onDelete: Cascade)
+
+  @@unique([persona_tipo, alumno_id])
+  @@unique([persona_tipo, personal_id])
+  @@index([token])
+  @@index([vigente])
+  @@map("codigos_qr")
+}
+
+// Registro de asistencias
+model Asistencia {
+  id                 Int      @id @default(autoincrement())
+  persona_tipo       String // "alumno" o "personal"
+  alumno_id          Int?
+  personal_id        Int?
+  tipo_evento        String // "entrada" o "salida"
+  timestamp          DateTime @default(now())
+  origen             String   @default("QR") // "QR" o "Manual"
+  dispositivo        String? // Identificador del dispositivo que leyó QR
+  estado_puntualidad String? // "puntual", "tarde", "ausente"
+  observaciones      String?
+  creado_en          DateTime @default(now())
+
+  alumno   Alumno?   @relation("alumno_asistencia", fields: [alumno_id], references: [id], onDelete: SetNull)
+  personal Personal? @relation("personal_asistencia", fields: [personal_id], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([persona_tipo])
+  @@map("asistencias")
+}
+
+// Usuarios administrativos
+model Usuario {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  rol            String   @default("operador") // "admin", "operador"
+  hash_pass      String
+  activo         Boolean  @default(true)
+  creado_en      DateTime @default(now())
+  actualizado_en DateTime @updatedAt
+
+  auditorias Auditoria[] @relation("usuario_auditoria")
+
+  @@map("usuarios")
+}
+
+// Log de auditoría (para diagnosticar y reparaciones)
+model Auditoria {
+  id         Int      @id @default(autoincrement())
+  entidad    String // "CodigoQr", "Alumno", "Personal", "Institucion"
+  entidad_id Int?
+  usuario_id Int?
+  accion     String // "crear", "actualizar", "regenerar", "reparar", "backup"
+  detalle    String? // JSON con detalles
+  timestamp  DateTime @default(now())
+
+  usuario Usuario? @relation("usuario_auditoria", fields: [usuario_id], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([entidad])
+  @@map("auditoria")
+}
+
+// Estados de reparación y diagnóstico
+// Excusas de ausencias
+model Excusa {
+  id           Int      @id @default(autoincrement())
+  alumno_id    Int?
+  personal_id  Int?
+  motivo       String
+  fecha        DateTime @default(now())
+
+  alumno   Alumno?   @relation("alumno_excusa", fields: [alumno_id], references: [id], onDelete: Cascade)
+  personal Personal? @relation("personal_excusa", fields: [personal_id], references: [id], onDelete: Cascade)
+
+  @@index([fecha])
+  @@map("excusas")
+}
+model DiagnosticResult {
+  id           Int       @id @default(autoincrement())
+  tipo         String // "missing_qr", "missing_logo", "corrupted_file"
+  codigo_qr_id Int?
+  descripcion  String
+  reparado     Boolean   @default(false)
+  reparado_en  DateTime?
+  timestamp    DateTime  @default(now())
+
+  @@index([reparado])
+  @@index([timestamp])
+  @@map("diagnostic_results")
+}

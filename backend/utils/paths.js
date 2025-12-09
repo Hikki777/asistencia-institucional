@@ -20,13 +20,5 @@ const FRONTEND_DIR = (isProduction && resourcesPath)
   ? path.join(resourcesPath, 'app.asar/frontend-react/dist') // Electron empaqueta source en app.asar
   : path.join(__dirname, '../../frontend-react/dist');
 
-const BACKUPS_DIR = (isProduction && resourcesPath)
-  ? path.join(resourcesPath, 'backups')
-  : path.join(__dirname, '../../backups');
-
-module.exports = {
-  UPLOADS_DIR,
-  DB_PATH,
-  FRONTEND_DIR,
-  BACKUPS_DIR
+  FRONTEND_DIR
 };

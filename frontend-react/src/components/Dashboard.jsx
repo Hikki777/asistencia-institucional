@@ -6,6 +6,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Calendar,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import {
   LineChart,
@@ -21,13 +23,13 @@ import {
 } from "recharts";
 import {
   healthAPI,
-  diagnosticsAPI,
   alumnosAPI,
   asistenciasAPI,
   docentesAPI,
   institucionAPI,
 } from "../api/endpoints";
 import toast, { Toaster } from "react-hot-toast";
+import offlineQueueService from "../services/offlineQueue";
 import { CardSkeleton } from "./LoadingSpinner";
 
 export default function Dashboard() {
@@ -36,11 +38,14 @@ export default function Dashboard() {
     alumnos: 0,
     personal: 0,
     qrs: 0,
-    issues: 0,
   });
   const [institucion, setInstitucion] = useState(null);
   const [asistenciasStats, setAsistenciasStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Estado de red local y cola
+  const [isNetworkOnline, setIsNetworkOnline] = useState(navigator.onLine);
+  const [pendingSync, setPendingSync] = useState(0);
 
   useEffect(() => {
     fetchInstitucion();
@@ -51,6 +56,28 @@ export default function Dashboard() {
       fetchAsistenciasStats();
     }, 60000); // Actualizar cada minuto
     return () => clearInterval(interval);
+  }, []);
+
+  // Monitor de red y cola offline
+  useEffect(() => {
+    const updateStatus = () => {
+      setIsNetworkOnline(navigator.onLine);
+      setPendingSync(offlineQueueService.getPendingCount());
+    };
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    
+    // Intervalo para verificar la cola (por si se sincroniza en otro tab o en fondo)
+    const queueInterval = setInterval(() => {
+        setPendingSync(offlineQueueService.getPendingCount());
+    }, 2000);
+
+    return () => {
+      window.removeEventListener('online', updateStatus);
+      window.removeEventListener('offline', updateStatus);
+      clearInterval(queueInterval);
+    };
   }, []);
 
   const fetchInstitucion = async () => {
@@ -76,25 +103,12 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const [health, diag, alumnos, personalResp] = await Promise.all([
+      // Usar qrAPI.list para contar QRs reales en BD en lugar de diagnostics
+      const [health, alumnos, personalResp] = await Promise.all([
         healthAPI.check().catch(() => ({ data: { status: "error" } })),
-        diagnosticsAPI
-          .execute()
-          .catch(() => ({
-            data: { total_qrs: 0, corrupt: 0, missing: 0, missing_logo: 0 },
-          })),
         alumnosAPI.list().catch(() => ({ data: { total: 0, alumnos: [] } })),
         docentesAPI.list().catch(() => ({ data: { personal: [] } })),
       ]);
-      const diagData = diag.data || {};
-      const corruptCount = Array.isArray(diagData.corrupt_qrs)
-        ? diagData.corrupt_qrs.length
-        : diagData.corrupt || 0;
-      const missingCount = Array.isArray(diagData.missing_qrs)
-        ? diagData.missing_qrs.length
-        : diagData.missing || 0;
-      const issues =
-        corruptCount + missingCount + (diagData.missing_logo ? 1 : 0);
 
       const newStatus = health.data?.status === "ok" ? "online" : "offline";
       setStats({
@@ -104,8 +118,7 @@ export default function Dashboard() {
           personalResp.data?.personal?.length ||
           personalResp.data?.docentes?.length ||
           0,
-        qrs: diagData.total_qrs || 0,
-        issues: issues,
+        qrs: 0, // Ya no contamos QRs por diagnóstico de archivos. Podríamos implementar un endpoint de conteo si fuera vital.
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -224,21 +237,42 @@ export default function Dashboard() {
 
       {/* Status Banner */}
       <div
-        className={`rounded-lg p-4 flex items-center gap-3 ${
-          stats.status === "online"
+        className={`rounded-lg p-4 flex items-center justify-between gap-3 ${
+          isNetworkOnline && stats.status !== "error"
             ? "bg-green-100 text-green-800"
             : "bg-red-100 text-red-800"
         }`}
       >
-        <div
-          className={`w-3 h-3 rounded-full ${
-            stats.status === "online" ? "bg-green-600" : "bg-red-600"
-          } animate-pulse`}
-        ></div>
-        <span className="font-semibold">
-          Sistema{" "}
-          {stats.status === "online" ? "🟢 En Línea" : "🔴 Sin Conexión"}
-        </span>
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-3 h-3 rounded-full ${
+              isNetworkOnline && stats.status !== "error" ? "bg-green-600" : "bg-red-600"
+            } animate-pulse`}
+          ></div>
+          <span className="font-semibold flex items-center gap-2">
+            Sistema{" "}
+            {isNetworkOnline 
+              ? (stats.status === "online" ? "🟢 En Línea" : "🔴 Backend Inaccesible") 
+              : "📡 Modo Sin Conexión"}
+          </span>
+        </div>
+
+        {!isNetworkOnline ? (
+           <div className="flex items-center gap-2 bg-red-200/50 px-3 py-1 rounded-full text-sm font-bold">
+             <WifiOff size={18} />
+             <span>Sin Internet</span>
+           </div>
+        ) : pendingSync > 0 ? (
+           <div className="flex items-center gap-2 bg-yellow-100 px-3 py-1 rounded-full text-yellow-800 text-sm font-bold animate-pulse">
+             <Activity size={18} />
+             <span>Sincronizando {pendingSync} registros...</span>
+           </div>
+        ) : (
+           <div className="flex items-center gap-2 bg-green-200/50 px-3 py-1 rounded-full text-sm font-bold">
+             <Wifi size={18} />
+             <span>Conectado</span>
+           </div>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -270,12 +304,6 @@ export default function Dashboard() {
               label="QR Generados"
               value={stats.qrs}
               color="blue"
-            />
-            <StatCard
-              icon={AlertTriangle}
-              label="Problemas"
-              value={stats.issues}
-              color={stats.issues > 0 ? "red" : "green"}
             />
           </>
         )}

@@ -8,14 +8,15 @@ import AlumnosPanel from './components/AlumnosPanel';
 import PersonalPanel from './components/PersonalPanel';
 import AsistenciasPanel from './components/AsistenciasPanel';
 import ConfiguracionPanel from './components/ConfiguracionPanel';
-import DiagnosticsPanel from './components/DiagnosticsPanel';
-import RepairPanel from './components/RepairPanel';
+
 import ReportesPanel from './components/ReportesPanel';
 import MetricsPanel from './components/MetricsPanel';
 
 import SetupWizard from './components/SetupWizard';
 import LoginPage from './pages/LoginPage';
 import client from './api/client';
+import offlineQueueService from './services/offlineQueue';
+import toast from 'react-hot-toast';
 import './App.css';
 
 function App() {
@@ -60,6 +61,57 @@ function App() {
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Manejo de conexión y sincronización
+  useEffect(() => {
+    const handleOnline = async () => {
+      toast.success('Conexión restaurada. Sincronizando...', { id: 'online-toast' });
+      
+      const queue = offlineQueueService.getQueue();
+      if (queue.length === 0) return;
+
+      let processed = 0;
+      for (const item of queue) {
+        try {
+          // Re-enviar peticiones
+          await client({
+            method: item.method,
+            url: item.url,
+            data: item.data
+          });
+          offlineQueueService.removeFromQueue(item.id);
+          processed++;
+        } catch (error) {
+          console.error('Error sincronizando item:', item, error);
+          // Si falla, se queda en la cola para el próximo intento
+        }
+      }
+      
+      if (processed > 0) {
+        toast.success(`Se sincronizaron ${processed} registros pendientes.`);
+      }
+    };
+
+    const handleOffline = () => {
+      toast('Modo sin conexión activado', { 
+        icon: '📡',
+        style: { background: '#333', color: '#fff' }
+      });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Intentar sincronizar al cargar si ya hay internet
+    if (navigator.onLine) {
+      handleOnline();
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   useEffect(() => {
@@ -197,8 +249,7 @@ function App() {
               <Route path="/reportes" element={isLoggedIn ? <ReportesPanel /> : <Navigate to="/login" />} />
               <Route path="/metricas" element={isLoggedIn ? <MetricsPanel /> : <Navigate to="/login" />} />
                 <Route path="/configuracion" element={isLoggedIn ? <ConfiguracionPanel /> : <Navigate to="/login" />} />
-              <Route path="/diagnostics" element={isLoggedIn ? <DiagnosticsPanel /> : <Navigate to="/login" />} />
-              <Route path="/repair" element={isLoggedIn ? <RepairPanel /> : <Navigate to="/login" />} />
+
             </Routes>
           </main>
         </div>

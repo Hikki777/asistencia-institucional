@@ -19,14 +19,7 @@ export const qrAPI = {
   download: (id) => client.get(`/qr/${id}/png`, { responseType: 'blob' }),
 };
 
-export const diagnosticsAPI = {
-  execute: () => client.get('/diagnostics/qrs'),
-};
 
-export const repairAPI = {
-  regenerateQrs: () => client.post('/repair/qrs/regenerate'),
-  regenerateLogo: () => client.post('/repair/logo/regenerate'),
-};
 
 export const healthAPI = {
   check: () => client.get('/health'),

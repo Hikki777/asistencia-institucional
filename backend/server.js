@@ -18,14 +18,12 @@ const { UPLOADS_DIR, FRONTEND_DIR } = require('./utils/paths');
 
 const prisma = require('./prismaClient');
 const qrService = require('./services/qrService');
-const backupService = require('./services/backupService');
-const diagnosticsService = require('./services/diagnosticsService');
-const scheduler = require('./jobs/scheduler');
+
 const { apiLimiter } = require('./middlewares/rateLimiter');
 
 // Importar rutas
 const qrRoutes = require('./routes/qr');
-const repairRoutes = require('./routes/repair');
+
 const authRoutes = require('./routes/auth');
 const alumnosRoutes = require('./routes/alumnos');
 const asistenciasRoutes = require('./routes/asistencias');
@@ -105,7 +103,8 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Servir archivos estáticos (QR, logos, fotos)
-app.use('/uploads', express.static(UPLOADS_DIR));
+// Servir archivos estáticos (QR, logos, fotos) - REMOVIDO: Se usa Cloudinary
+// app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Servir frontend HTML
 app.use(express.static(FRONTEND_DIR));
@@ -251,7 +250,7 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
 
 const excusasRoutes = require('./routes/excusas');
 app.use('/api/qr', qrRoutes);
-app.use('/api/repair', repairRoutes);
+
 app.use('/api/alumnos', alumnosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/asistencias', asistenciasRoutes);
@@ -261,31 +260,7 @@ app.use('/api/institucion', institucionRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/excusas', excusasRoutes);
 
-// ============ RUTA DE DIAGNÓSTICO ============
 
-/**
- * GET /api/diagnostics/qrs
- * Ejecutar diagnóstico de QR
- */
-app.get('/api/diagnostics/qrs', async (req, res) => {
-  try {
-    logger.info({ requestId: req.id }, '🔍 Iniciando diagnóstico de QRs');
-    const resultado = await diagnosticsService.ejecutarDiagnosticos();
-    
-    // Registrar en auditoria
-    await diagnosticsService.registrarDiagnostico(null, resultado);
-    
-    logger.info({ 
-      totalIssues: resultado.resumen?.total_issues || 0,
-      duration: resultado.timestamp
-    }, '✅ Diagnóstico de QRs completado');
-    
-    res.json(resultado);
-  } catch (error) {
-    logger.error({ err: error, requestId: req.id }, '❌ Error en diagnóstico de QRs');
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // ============ ERROR HANDLER ============
 
@@ -319,15 +294,7 @@ async function iniciar() {
     await prisma.$queryRaw`SELECT 1`;
     logger.info('✅ Base de datos conectada correctamente');
 
-    // Inicializar directorios y backups
-    logger.info('💾 Inicializando sistema de backups...');
-    await backupService.inicializarBackups();
-    logger.info('✅ Backups inicializados');
-    
-    // Iniciar scheduler
-    logger.info('⏰ Iniciando scheduler de tareas...');
-    scheduler.iniciar();
-    logger.info('✅ Scheduler activo');
+
 
     // Iniciar servidor con Promise
     return new Promise((resolve, reject) => {

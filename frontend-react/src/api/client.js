@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import offlineQueueService from '../services/offlineQueue';
 
 const API_BASE = localStorage.getItem('api_url') || import.meta.env.VITE_API_URL || '/api';
 
@@ -36,15 +37,23 @@ client.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Aviso controlado cuando el backend está offline (sin response)
-    if (!error.response) {
+    // Aviso controlado cuando el backend está offline (sin response) o error de red
+    if (!error.response || error.code === 'ERR_NETWORK') {
+      const config = error.config;
+      
+      // Solo encolar métodos que modifican datos (POST, PUT, DELETE) y si no es un intento de auth
+      if (['post', 'put', 'delete'].includes(config.method) && !config.url.includes('/auth')) {
+        offlineQueueService.addToQueue(config.url, config.method, config.data);
+        return Promise.resolve({ data: { success: true, offline: true, message: 'Guardado localmente' } });
+      }
+
       if (typeof window !== 'undefined') {
         const key = '__last_network_toast__';
         const now = Date.now();
         const last = Number(sessionStorage.getItem(key) || 0);
         if (now - last > 10000) {
           try {
-            toast.error('No se pudo conectar con el servidor. Verifica tu conexión o intenta más tarde.');
+            toast.error('Modo Offline: Verificando conexión...', { id: 'offline-toast' });
           } catch {}
           sessionStorage.setItem(key, String(now));
         }

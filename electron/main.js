@@ -1,16 +1,9 @@
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, shell } = require("electron");
 const path = require("path");
-const { fork } = require("child_process");
-const fs = require("fs");
 
 // Variables globales
 let mainWindow;
-let backendProcess;
 const isDev = !app.isPackaged;
-const PORT = 5000; // Puerto fijo por ahora, idealmente dinámico
-
-// Ruta al backend
-const backendScript = path.join(__dirname, "..", "backend", "server.js");
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -19,7 +12,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     title: "HikariOpen",
-    icon: path.join(__dirname, "..", "frontend-react", "public", "logo.png"), // Asegúrate de tener un icono
+    icon: path.join(__dirname, "..", "frontend-react", "public", "logo.png"),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -27,21 +20,16 @@ function createWindow() {
     },
   });
 
-  // Ocultar menú por defecto en producción
-  if (!isDev) {
-    mainWindow.setMenuBarVisibility(false);
-  }
+  // Ocultar menú por defecto
+  mainWindow.setMenuBarVisibility(false);
 
   // Cargar la app
-  const startUrl = isDev ? "http://localhost:5173" : `http://localhost:${PORT}`; // En prod servimos el frontend desde el backend
-
-  // Esperar a que el backend esté listo antes de cargar
-  setTimeout(() => {
-    mainWindow.loadURL(startUrl).catch((err) => {
-      console.error("Error loading URL:", err);
-      // Reintentar o mostrar página de error
-    });
-  }, 2000);
+  if (isDev) {
+    mainWindow.loadURL("http://localhost:5173");
+  } else {
+    // En producción, cargar el archivo local compilado
+    mainWindow.loadFile(path.join(__dirname, "..", "frontend-react", "dist", "index.html"));
+  }
 
   // Abrir enlaces externos en el navegador
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -54,20 +42,7 @@ function createWindow() {
   });
 }
 
-function startBackend() {
-  if (isDev) {
-    console.log(
-      "Modo desarrollo: Backend debe ser iniciado manualmente o por script separado"
-    );
-    return;
-  }
-  backendProcess.stderr.on("data", (data) => {
-    console.error(`[Backend Error]: ${data}`);
-  });
-}
-
 app.whenReady().then(() => {
-  startBackend();
   createWindow();
 
   app.on("activate", () => {
@@ -83,8 +58,3 @@ app.on("window-all-closed", () => {
   }
 });
 
-app.on("will-quit", () => {
-  if (backendProcess) {
-    backendProcess.kill();
-  }
-});

@@ -177,11 +177,11 @@ export default function Dashboard() {
               )}
 
               <div>
-                <h1 className="text-xl md:text-2xl font-bold py-2 leading-normal inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+                <h1 className="text-xl md:text-2xl font-bold pt-2 pb-4 leading-relaxed inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
                   {institucion.nombre}
                 </h1>
                 {(institucion.direccion || institucion.email || institucion.pais) && (
-                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-400">
+                  <div className="mt-0 flex flex-wrap gap-4 text-sm text-slate-400">
                     {institucion.direccion && (
                       <span className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
                         📍 {institucion.direccion}

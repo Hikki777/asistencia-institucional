@@ -19,7 +19,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     title: "HikariOpen",
-    icon: path.join(__dirname, "..", "public", "logo.png"), // Asegúrate de tener un icono
+    icon: path.join(__dirname, "..", "frontend-react", "public", "logo.png"), // Asegúrate de tener un icono
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

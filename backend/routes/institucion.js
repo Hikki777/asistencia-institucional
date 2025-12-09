@@ -53,6 +53,10 @@ router.post('/init', async (req, res) => {
       logo_base64,
       admin_email,
       admin_password,
+      admin_nombres,
+      admin_apellidos,
+      admin_cargo,
+      admin_jornada,
       municipio // Asegurar que lo leemos
     } = req.body;
 
@@ -107,12 +111,20 @@ router.post('/init', async (req, res) => {
       where: { email: admin_email },
       update: {
         hash_pass,
+        nombres: admin_nombres,
+        apellidos: admin_apellidos,
+        cargo: admin_cargo,
+        jornada: admin_jornada,
         rol: 'admin',
         activo: true
       },
       create: {
         email: admin_email,
         hash_pass,
+        nombres: admin_nombres,
+        apellidos: admin_apellidos,
+        cargo: admin_cargo,
+        jornada: admin_jornada,
         rol: 'admin',
         activo: true
       }

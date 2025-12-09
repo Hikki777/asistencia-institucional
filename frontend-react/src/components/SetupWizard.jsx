@@ -25,7 +25,11 @@ export default function SetupWizard({ onComplete }) {
     logo_base64: '',
     admin_email: '',
     admin_password: '',
-    admin_password_confirm: ''
+    admin_password_confirm: '',
+    admin_nombres: '',
+    admin_apellidos: '',
+    admin_cargo: '',
+    admin_jornada: ''
   });
 
   // Configuración de Países y sus divisiones administrativas
@@ -141,7 +145,11 @@ export default function SetupWizard({ onComplete }) {
         telefono: formData.telefono,
         logo_base64: formData.logo_base64,
         admin_email: formData.admin_email,
-        admin_password: formData.admin_password
+        admin_password: formData.admin_password,
+        admin_nombres: formData.admin_nombres,
+        admin_apellidos: formData.admin_apellidos,
+        admin_cargo: formData.admin_cargo,
+        admin_jornada: formData.admin_jornada
       });
 
       toast.success('¡Sistema inicializado correctamente!');
@@ -172,12 +180,12 @@ export default function SetupWizard({ onComplete }) {
           {/* Sidebar */}
           <div className="bg-gradient-to-br from-blue-900 to-blue-800 text-white p-8 md:w-1/3 flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-3 mb-8">
-                <School size={32} className="text-blue-300" />
-                <h1 className="text-2xl font-bold">Bienvenido</h1>
+              <div className="flex flex-col items-center text-center gap-4 mb-8">
+                <img src="/logo.png" alt="HikariOpen Logo" className="h-24 object-contain drop-shadow-md" />
+                <h1 className="text-2xl font-bold">Bienvenido a HikariOpen</h1>
               </div>
-              <p className="text-blue-100 mb-6">
-                Configuremos tu sistema de registro institucional en unos sencillos pasos.
+              <p className="text-blue-100 mb-6 text-center text-sm leading-relaxed">
+                Completa los parámetros esenciales para activar el sistema de registro en tu institución.
               </p>
               
               <div className="space-y-4">
@@ -209,7 +217,8 @@ export default function SetupWizard({ onComplete }) {
           </div>
 
           {/* Formulario */}
-          <div className="p-8 md:w-2/3 overflow-y-auto max-h-[80vh]">
+          <div className="md:w-2/3">
+            <div className="p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
               {step === 0 ? 'Modo de Instalación' : 
                step === 1 ? 'Datos de la Institución' : 
@@ -506,10 +515,85 @@ export default function SetupWizard({ onComplete }) {
               {/* PASO 2: Administrador */}
               {step === 2 && (
                 <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombres</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 text-gray-400" size={18} />
+                        <input
+                          type="text"
+                          name="admin_nombres"
+                          value={formData.admin_nombres}
+                          onChange={handleChange}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Juan"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 text-gray-400" size={18} />
+                        <input
+                          type="text"
+                          name="admin_apellidos"
+                          value={formData.admin_apellidos}
+                          onChange={handleChange}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Pérez"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 text-gray-400" size={18} />
+                        <select
+                          name="admin_cargo"
+                          value={formData.admin_cargo}
+                          onChange={handleChange}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                          required
+                        >
+                          <option value="">Seleccione...</option>
+                          <option value="Director">Director(a)</option>
+                          <option value="Subdirector">Subdirector(a)</option>
+                          <option value="Secretaria">Secretaria(o)</option>
+                          <option value="Administrador">Administrador(a)</option>
+                          <option value="Coordinador">Coordinador(a)</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Jornada</label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-3 text-gray-400" size={18} />
+                        <select
+                          name="admin_jornada"
+                          value={formData.admin_jornada}
+                          onChange={handleChange}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                          required
+                        >
+                          <option value="">Seleccione...</option>
+                          <option value="Matutina">Matutina</option>
+                          <option value="Vespertina">Vespertina</option>
+                          <option value="Doble">Doble</option>
+                          <option value="Fin de Semana">Fin de Semana</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email del Administrador</label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 text-gray-400" size={18} />
+                      <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
                         type="email"
                         name="admin_email"
@@ -657,6 +741,14 @@ export default function SetupWizard({ onComplete }) {
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
+                        <span className="text-gray-600">Nombre:</span>
+                        <span className="font-medium text-gray-800">{formData.admin_nombres} {formData.admin_apellidos}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Cargo:</span>
+                        <span className="font-medium text-gray-800">{formData.admin_cargo} ({formData.admin_jornada})</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-gray-600">Email:</span>
                         <span className="font-medium text-gray-800">{formData.admin_email}</span>
                       </div>
@@ -696,6 +788,7 @@ export default function SetupWizard({ onComplete }) {
                 </div>
               )}
             </form>
+            </div>
           </div>
         </div>
       </div>

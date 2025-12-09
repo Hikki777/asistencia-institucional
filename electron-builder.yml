@@ -20,7 +20,7 @@ extraResources:
     to: "uploads"
 win:
   target: "nsis"
-  icon: "public/logo.png"
+  icon: "frontend-react/public/logo.png"
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

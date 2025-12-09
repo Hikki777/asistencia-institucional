@@ -146,7 +146,6 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header con nombre e información institucional */}
-      {/* Header con nombre e información institucional */}
       {institucion && (
         <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl shadow-2xl p-8 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 blur-2xl"></div>

@@ -72,6 +72,8 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
+  'https://sistema-asistencias-30769.web.app',
+  'https://sistema-asistencias-30769.firebaseapp.com',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 

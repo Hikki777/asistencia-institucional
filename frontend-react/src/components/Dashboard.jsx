@@ -130,12 +130,12 @@ export default function Dashboard() {
   /* eslint-disable no-unused-vars */
   const StatCard = ({ icon: Icon, label, value, color }) => (
     <div
-      className={`bg-white rounded-lg shadow p-6 border-l-4 border-${color}-500`}
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-6 border-l-4 border-${color}-500`}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-600 text-sm font-semibold">{label}</p>
-          <p className={`text-3xl font-bold text-${color}-600 mt-2`}>{value}</p>
+          <p className="text-gray-700 dark:text-gray-400 text-sm font-semibold">{label}</p>
+          <p className={`text-3xl font-bold text-${color}-600 dark:text-${color}-400 mt-2`}>{value}</p>
         </div>
         <Icon className={`text-${color}-600 opacity-20`} size={48} />
       </div>
@@ -147,7 +147,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header con nombre e información institucional */}
       {institucion && (
-        <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl shadow-2xl p-8 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-2xl p-8 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
 
           <div className="flex flex-col md:flex-row items-center justify-between relative z-10 gap-6">
@@ -177,7 +177,7 @@ export default function Dashboard() {
               )}
 
               <div>
-                <h1 className="text-xl md:text-2xl font-bold text-blue-400">
+                <h1 className="text-xl md:text-2xl font-bold mb-4 text-blue-400">
                   {institucion.nombre}
                 </h1>
                 {(institucion.direccion || institucion.email || institucion.pais) && (
@@ -238,8 +238,8 @@ export default function Dashboard() {
       <div
         className={`rounded-lg p-4 flex items-center justify-between gap-3 ${
           isNetworkOnline && stats.status !== "error"
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
+            ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+            : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
         }`}
       >
         <div className="flex items-center gap-3">
@@ -312,10 +312,10 @@ export default function Dashboard() {
       {!loading && asistenciasStats && asistenciasStats.porDia && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico de Líneas - Tendencia */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-900/50 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="text-blue-600" size={24} />
-              <h3 className="text-xl font-bold text-gray-800">
+              <TrendingUp className="text-blue-600 dark:text-blue-400" size={24} />
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200">
                 Tendencia de Asistencias
               </h3>
             </div>
@@ -364,10 +364,10 @@ export default function Dashboard() {
           </div>
 
           {/* Gráfico de Barras - Entradas vs Salidas */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-900/50 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="text-green-600" size={24} />
-              <h3 className="text-xl font-bold text-gray-800">
+              <Calendar className="text-green-600 dark:text-green-400" size={24} />
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200">
                 Entradas vs Salidas
               </h3>
             </div>

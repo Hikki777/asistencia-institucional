@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { Menu, X, LogOut, Home, Settings, BarChart3, Wrench, User, Clock, Users, FileText, Activity } from 'lucide-react';
+import ThemeToggle from './components/ThemeToggle';
 import { authAPI } from './api/endpoints';
 import ErrorBoundary from './components/ErrorBoundary';
 import Dashboard from './components/Dashboard';
@@ -133,7 +134,7 @@ function App() {
   };
 
   if (isInitialized === null) {
-    return <div className="flex items-center justify-center h-screen bg-gray-100">Cargando sistema...</div>;
+    return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 dark:text-white">Cargando sistema...</div>;
   }
 
   const logoUrl = institucion?.logo_path?.startsWith('http') 
@@ -145,7 +146,7 @@ function App() {
   return (
     <ErrorBoundary fallbackMessage="Ha ocurrido un error en la aplicación. Por favor, recarga la página.">
       <Router>
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
           {isLoggedIn && (
           <aside
             className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-slate-900 to-slate-800 text-white transform transition-all duration-300 ease-in-out shadow-xl ${
@@ -191,6 +192,10 @@ function App() {
             <NavLink to="/configuracion" icon={Settings} label="Configuración" />
           </nav>
 
+          <div className="absolute bottom-20 left-4 right-4 overflow-hidden flex justify-center">
+            <ThemeToggle />
+          </div>
+
           <div className="absolute bottom-4 left-4 right-4 overflow-hidden">
             <button
               onClick={handleLogout}
@@ -207,7 +212,7 @@ function App() {
           )}
 
         {/* Main Content */}
-        <div className={`flex-1 overflow-auto bg-slate-50 transition-all duration-300 ${isLoggedIn ? 'md:ml-20' : ''}`}>
+        <div className={`flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 transition-all duration-300 ${isLoggedIn ? 'md:ml-20' : ''}`}>
           {/* Mobile Menu - Solo mostrar si está autenticado */}
           {isLoggedIn && (
           <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">

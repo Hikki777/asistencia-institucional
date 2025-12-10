@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Calendar, Filter, FileSpreadsheet, Users, TrendingUp, Clock } from 'lucide-react';
 import client from '../api/client';
+import { generatePDF, generateExcel } from '../utils/reportGenerator';
 
 export default function ReportesPanel() {
   const [filtros, setFiltros] = useState({
@@ -50,52 +51,28 @@ export default function ReportesPanel() {
         Object.entries(filtros).filter(([, v]) => v !== '')
       );
       
-      console.log('📊 Generando reporte:', formato, filtrosLimpios);
+      console.log('📊 Obteniendo datos para reporte:', formato, filtrosLimpios);
       
+      // 1. Obtener datos del backend (JSON)
       const response = await client.post(
         `/reportes/${formato}`,
-        filtrosLimpios,
-        { 
-          responseType: 'blob',
-          timeout: 60000 // 60 segundos
-        }
+        filtrosLimpios
       );
       
-      // Crear URL del blob y descargar
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
+      const data = response.data;
       
-      const timestamp = new Date().toISOString().split('T')[0];
-      const extension = formato === 'pdf' ? 'pdf' : 'xlsx';
-      link.setAttribute('download', `reporte_asistencias_${timestamp}.${extension}`);
-      
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-      console.log('✅ Reporte descargado exitosamente');
-    } catch (error) {
-      console.error('Error generando reporte:', error);
-      
-      let errorMessage = error.message;
-      
-      // Si la respuesta es un Blob (común al descargar archivos), intentar leer el texto
-      if (error.response?.data instanceof Blob) {
-        try {
-          const text = await error.response.data.text();
-          const json = JSON.parse(text);
-          errorMessage = json.error || json.message || text;
-        } catch (e) {
-          // Si no es JSON, usar el texto plano o mensaje por defecto
-          errorMessage = 'Error desconocido al procesar la respuesta del servidor';
-        }
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
+      // 2. Generar archivo en el cliente
+      if (formato === 'pdf') {
+        await generatePDF(data);
+      } else {
+        await generateExcel(data);
       }
       
-      alert(`Error al generar el reporte: ${errorMessage}`);
+      console.log('✅ Reporte generado exitosamente');
+      
+    } catch (error) {
+      console.error('Error generando reporte:', error);
+      alert(`Error al generar el reporte: ${error.response?.data?.error || error.message}`);
     } finally {
       setGenerando(false);
     }

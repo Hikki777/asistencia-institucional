@@ -21,13 +21,10 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
     logger.info({ filtros }, '📄 Generando reporte PDF');
     
     // Generar Buffer
-    const { buffer, fileName } = await reportService.generarReportePDF(filtros);
+    const data = await reportService.generarReportePDF(filtros);
     
-    // Enviar Buffer
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-    res.send(buffer);
-    
+    // Enviar JSON Data
+    res.json(data);
   } catch (error) {
     logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte PDF');
     res.status(500).json({ error: error.message });
@@ -45,11 +42,9 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
     
     logger.info({ filtros }, '📊 Generando reporte Excel');
     
-    const { buffer, fileName } = await reportService.generarReporteExcel(filtros);
+    const data = await reportService.generarReporteExcel(filtros);
     
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-    res.send(buffer);
+    res.json(data);
 
   } catch (error) {
     logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte Excel');
@@ -68,11 +63,9 @@ router.get('/alumno/:id/pdf', async (req, res) => {
     
     logger.info({ alumnoId }, '📄 Generando reporte PDF para alumno');
     
-    const { buffer, fileName } = await reportService.generarReporteAlumno(alumnoId, 'pdf');
+    const data = await reportService.generarReporteAlumno(alumnoId, 'pdf');
     
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-    res.send(buffer);
+    res.json(data);
 
   } catch (error) {
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte PDF de alumno');
@@ -91,11 +84,9 @@ router.get('/alumno/:id/excel', async (req, res) => {
     
     logger.info({ alumnoId }, '📊 Generando reporte Excel para alumno');
     
-    const { buffer, fileName } = await reportService.generarReporteAlumno(alumnoId, 'excel');
+    const data = await reportService.generarReporteAlumno(alumnoId, 'excel');
     
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-    res.send(buffer);
+    res.json(data);
 
   } catch (error) {
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte Excel de alumno');

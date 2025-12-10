@@ -189,8 +189,8 @@ export default function PersonalPanel() {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
-          <Users className="text-green-600" size={32} />
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+          <Users className="text-success dark:text-success-light" size={32} />
           Personal
         </h2>
         <button
@@ -206,7 +206,7 @@ export default function PersonalPanel() {
             });
             setShowModal(true);
           }}
-          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center justify-center gap-2 transition shadow-lg hover:shadow-xl"
+          className="bg-success hover:bg-success-dark dark:bg-success-light dark:hover:bg-success text-white font-bold py-2.5 px-5 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg hover:shadow-xl"
         >
           <Plus size={20} />
           <span className="hidden sm:inline">Nuevo miembro</span>
@@ -218,11 +218,11 @@ export default function PersonalPanel() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-xl shadow-md p-4"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-gray-900/50 p-4 border border-gray-200 dark:border-gray-700"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Search size={16} />
               Buscar
             </label>
@@ -231,18 +231,18 @@ export default function PersonalPanel() {
               placeholder="Nombre o carnet..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Sun size={16} />
               Jornada
             </label>
             <select
               value={filterJornada}
               onChange={(e) => setFilterJornada(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
             >
               <option value="">Todas</option>
               {jornadasUnicas.map((jornada) => (
@@ -253,14 +253,14 @@ export default function PersonalPanel() {
             </select>
           </div>
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Filter size={16} />
               Estado
             </label>
             <select
               value={filterEstado}
               onChange={(e) => setFilterEstado(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
             >
               <option value="">Todos</option>
               <option value="activo">Activo</option>
@@ -268,7 +268,7 @@ export default function PersonalPanel() {
             </select>
           </div>
           <div className="flex items-end">
-            <div className="text-sm text-gray-600 font-medium">
+            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
               {filteredPersonal.length} de {personal.length} miembro(s)
             </div>
           </div>
@@ -279,13 +279,13 @@ export default function PersonalPanel() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-xl shadow-lg overflow-hidden"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 overflow-hidden border border-gray-200 dark:border-gray-700"
       >
         {loading ? (
           <TableSkeleton rows={5} columns={7} />
         ) : filteredPersonal.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
-            <User size={48} className="mx-auto mb-4 text-gray-300" />
+          <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+            <User size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
             <p>No hay personal registrados</p>
           </div>
         ) : (
@@ -293,7 +293,7 @@ export default function PersonalPanel() {
             {/* Desktop Table */}
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-green-600 to-green-700 text-white">
+                <thead className="bg-success dark:bg-success-dark text-white">
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold">Carnet</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold">Nombre Completo</th>
@@ -303,38 +303,38 @@ export default function PersonalPanel() {
                     <th className="px-6 py-4 text-center text-sm font-semibold">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredPersonal.map((miembro, index) => (
                     <motion.tr
                       key={miembro.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="hover:bg-green-50 transition"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-mono text-sm font-semibold text-purple-600">
+                        <span className="font-mono text-sm font-semibold text-success dark:text-success-light">
                           {miembro.carnet}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
                           {miembro.nombres} {miembro.apellidos}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                         {miembro.cargo || 'Sin cargo'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {miembro.jornada || '-'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
                           miembro.estado === 'activo'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                         }`}>
                           {miembro.estado}
                         </span>

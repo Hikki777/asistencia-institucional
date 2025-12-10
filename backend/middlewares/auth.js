@@ -37,4 +37,11 @@ function signJWT(user, expiresIn = '8h') {
   );
 }
 
-module.exports = { verifyJWT, signJWT };
+function verifyAdmin(req, res, next) {
+  if (!req.user || req.user.rol !== 'admin') {
+    return res.status(403).json({ error: 'Acceso denegado: se requieren permisos de administrador' });
+  }
+  next();
+}
+
+module.exports = { verifyJWT, signJWT, verifyAdmin };

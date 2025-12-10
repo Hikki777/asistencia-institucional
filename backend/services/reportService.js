@@ -9,18 +9,15 @@ const os = require('os');
 
 class ReportService {
   constructor() {
-    this.reportsDir = path.join(os.tmpdir(), 'hikari-reports');
-    this.ensureReportsDir();
+    // No temp dir needed
   }
 
-  async ensureReportsDir() {
-    await fs.ensureDir(this.reportsDir);
-  }
+
 
   /**
    * Generar reporte de asistencias en PDF
    */
-  async generarReportePDF(filtros = {}) {
+  async generarReportePDF(filtros = {}, res) {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
 
     logger.info({ filtros }, '📄 Iniciando generación de PDF');
@@ -61,11 +58,12 @@ class ReportService {
 
     // Crear PDF
     const doc = new PDFDocument({ margin: 50, size: 'LETTER' });
+    // Headers para descarga directa (Streaming)
     const fileName = `reporte_asistencias_${Date.now()}.pdf`;
-    const filePath = path.join(this.reportsDir, fileName);
-    const stream = fs.createWriteStream(filePath);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
 
-    doc.pipe(stream);
+    doc.pipe(res);
 
     // Logo institucional (si existe)
     let logoPath = path.join(__dirname, '../../uploads/logos/logo.png');
@@ -218,28 +216,13 @@ class ReportService {
     );
 
     doc.end();
-
-    logger.debug({ fileName }, '⏳ Esperando finalización del PDF');
-    
-    // Esperar a que termine de escribir
-    await new Promise((resolve, reject) => {
-      stream.on('finish', () => {
-        logger.info({ fileName, filePath }, '✅ PDF generado exitosamente');
-        resolve();
-      });
-      stream.on('error', (err) => {
-        logger.error({ err, fileName }, '❌ Error generando PDF');
-        reject(err);
-      });
-    });
-
-    return { filePath, fileName };
+    logger.info('✅ PDF enviado via stream');
   }
 
   /**
    * Generar reporte de asistencias en Excel con ExcelJS
    */
-  async generarReporteExcel(filtros = {}) {
+  async generarReporteExcel(filtros = {}, res) {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
     const where = this.construirFiltros(filtros);
 
@@ -425,19 +408,21 @@ class ReportService {
     sheet.getColumn(9).width = 10;  // Origen
 
     // Guardar archivo
+    // Stream to response
     const fileName = `reporte_asistencias_${Date.now()}.xlsx`;
-    const filePath = path.join(this.reportsDir, fileName);
-    
-    await workbook.xlsx.writeFile(filePath);
-    logger.info({ fileName, filePath }, '✅ Excel generado exitosamente');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
 
-    return { filePath, fileName };
+    await workbook.xlsx.write(res);
+    res.end();
+    
+    logger.info('✅ Excel enviado via stream');
   }
 
   /**
    * Generar reporte por alumno específico
    */
-  async generarReporteAlumno(alumnoId, formato = 'pdf') {
+  async generarReporteAlumno(alumnoId, formato = 'pdf', res) {
     const alumno = await prisma.alumno.findUnique({
       where: { id: parseInt(alumnoId) }
     });
@@ -452,9 +437,9 @@ class ReportService {
     };
 
     if (formato === 'pdf') {
-      return await this.generarReportePDF(filtros);
+      return await this.generarReportePDF(filtros, res);
     } else {
-      return await this.generarReporteExcel(filtros);
+      return await this.generarReporteExcel(filtros, res);
     }
   }
 

@@ -20,28 +20,19 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
     
     logger.info({ filtros }, '📄 Generando reporte PDF');
     
-    const { filePath, fileName } = await reportService.generarReportePDF(filtros);
+    // El servicio escribe directamente al stream de respuesta
+    await reportService.generarReportePDF(filtros, res);
     
-    // Enviar archivo
-    res.download(filePath, fileName, (err) => {
-      if (err) {
-        logger.error({ err, fileName }, '❌ Error enviando PDF');
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Error enviando archivo' });
-        }
-      }
-      
-      // Limpiar archivo después de enviar (con delay)
-      setTimeout(async () => {
-        try {
-          const fs = require('fs-extra');
-          await fs.unlink(filePath);
-          logger.debug({ fileName }, '🗑️ Archivo temporal eliminado');
-        } catch (error) {
-          logger.error({ err: error, fileName }, '❌ Error eliminando archivo temporal');
-        }
-      }, 5000);
-    });
+  } catch (error) {
+    if (!res.headersSent) {
+      logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte PDF');
+      res.status(500).json({ error: error.message });
+    } else {
+      logger.error({ err: error }, '❌ Error de stream PDF interrumpido');
+      res.end();
+    }
+  }
+});
   } catch (error) {
     logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte PDF');
     res.status(500).json({ error: error.message });
@@ -58,28 +49,17 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
     
     logger.info({ filtros }, '📊 Generando reporte Excel');
     
-    const { filePath, fileName } = await reportService.generarReporteExcel(filtros);
-    
-    // Enviar archivo
-    res.download(filePath, fileName, (err) => {
-      if (err) {
-        logger.error({ err, fileName }, '❌ Error enviando Excel');
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Error enviando archivo' });
-        }
-      }
-      
-      // Limpiar archivo después de enviar (con delay)
-      setTimeout(async () => {
-        try {
-          const fs = require('fs-extra');
-          await fs.unlink(filePath);
-          logger.debug({ fileName }, '🗑️ Archivo temporal eliminado');
-        } catch (error) {
-          logger.error({ err: error, fileName }, '❌ Error eliminando archivo temporal');
-        }
-      }, 5000);
-    });
+    await reportService.generarReporteExcel(filtros, res);
+
+  } catch (error) {
+    if (!res.headersSent) {
+      logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte Excel');
+      res.status(500).json({ error: error.message });
+    } else {
+      res.end();
+    }
+  }
+});
   } catch (error) {
     logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte Excel');
     res.status(500).json({ error: error.message });
@@ -96,25 +76,17 @@ router.get('/alumno/:id/pdf', async (req, res) => {
     
     logger.info({ alumnoId }, '📄 Generando reporte PDF para alumno');
     
-    const { filePath, fileName } = await reportService.generarReporteAlumno(alumnoId, 'pdf');
-    
-    res.download(filePath, fileName, (err) => {
-      if (err) {
-        logger.error({ err, fileName, alumnoId }, '❌ Error enviando PDF');
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Error enviando archivo' });
-        }
-      }
-      
-      setTimeout(async () => {
-        try {
-          const fs = require('fs-extra');
-          await fs.unlink(filePath);
-        } catch (error) {
-          logger.error({ err: error, fileName }, '❌ Error eliminando archivo temporal');
-        }
-      }, 5000);
-    });
+    await reportService.generarReporteAlumno(alumnoId, 'pdf', res);
+
+  } catch (error) {
+    if (!res.headersSent) {
+      logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte PDF de alumno');
+      res.status(500).json({ error: error.message });
+    } else {
+      res.end();
+    }
+  }
+});
   } catch (error) {
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte PDF de alumno');
     res.status(500).json({ error: error.message });
@@ -131,25 +103,17 @@ router.get('/alumno/:id/excel', async (req, res) => {
     
     logger.info({ alumnoId }, '📊 Generando reporte Excel para alumno');
     
-    const { filePath, fileName } = await reportService.generarReporteAlumno(alumnoId, 'excel');
-    
-    res.download(filePath, fileName, (err) => {
-      if (err) {
-        logger.error({ err, fileName, alumnoId }, '❌ Error enviando Excel');
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Error enviando archivo' });
-        }
-      }
-      
-      setTimeout(async () => {
-        try {
-          const fs = require('fs-extra');
-          await fs.unlink(filePath);
-        } catch (error) {
-          logger.error({ err: error, fileName }, '❌ Error eliminando archivo temporal');
-        }
-      }, 5000);
-    });
+    await reportService.generarReporteAlumno(alumnoId, 'excel', res);
+
+  } catch (error) {
+    if (!res.headersSent) {
+      logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte Excel de alumno');
+      res.status(500).json({ error: error.message });
+    } else {
+      res.end();
+    }
+  }
+});
   } catch (error) {
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte Excel de alumno');
     res.status(500).json({ error: error.message });

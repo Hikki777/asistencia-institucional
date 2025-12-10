@@ -31,7 +31,6 @@ class ReportService {
             carnet: true,
             nombres: true,
             apellidos: true,
-            grado: true,
             cargo: true
           }
         }
@@ -132,10 +131,7 @@ class ReportService {
 
     // Filtro por grado (requiere join)
     if (filtros.grado) {
-      where.OR = [
-        { alumno: { grado: filtros.grado } },
-        { personal: { grado: filtros.grado } }
-      ];
+      where.alumno = { grado: filtros.grado };
     }
 
     return where;

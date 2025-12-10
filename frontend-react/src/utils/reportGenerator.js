@@ -29,30 +29,58 @@ export const generatePDF = async (data) => {
   const { asistencias, institucion, stats, filtrosGenerated } = data;
   const doc = new jsPDF();
 
-  // Cargar Logo
-  try {
-    const logoBase64 = await loadImageBase64('/logo.png'); // Logo público
-    if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', 15, 15, 25, 25);
+  // 1. Logo Institucional (Izquierda)
+  if (institucion?.logo_base64) {
+    try {
+      doc.addImage(institucion.logo_base64, 'PNG', 15, 15, 25, 25);
+    } catch (e) {
+      console.warn('Error rendering institutional logo', e);
     }
-  } catch (error) {
-    console.warn('Error cargando logo para PDF', error);
   }
 
-  // Encabezado
+  // 2. Logo HikariOpen (Derecha)
+  try {
+    const appLogoBase64 = await loadImageBase64('/logo.png');
+    if (appLogoBase64) {
+      doc.addImage(appLogoBase64, 'PNG', 170, 15, 25, 25);
+    }
+  } catch (error) {
+    console.warn('Error loading app logo', error);
+  }
+
+  // Encabezado (Centrado)
   doc.setFontSize(16);
   doc.setTextColor(31, 71, 136); // #1F4788
-  doc.text(institucion?.nombre || 'Instituto Educativo', 50, 22);
+  doc.text(institucion?.nombre || 'Instituto Educativo', 105, 22, { align: 'center' });
 
   doc.setFontSize(10);
   doc.setTextColor(0);
-  const info = [];
-  if (institucion?.direccion) info.push(institucion.direccion);
-  if (institucion?.telefono) info.push(`Tel: ${institucion.telefono}`);
-  doc.text(info.join(' | '), 50, 30);
+  
+  // Línea 1: Dirección y Teléfono
+  const infoLine1 = [];
+  if (institucion?.direccion) infoLine1.push(institucion.direccion);
+  if (institucion?.telefono) infoLine1.push(`Tel: ${institucion.telefono}`);
+  doc.text(infoLine1.join(' | '), 105, 30, { align: 'center' });
 
-  // Título
+  // Línea 2: Email y País (Nuevo requerimiento)
+  const infoLine2 = [];
+  if (institucion?.email) infoLine2.push(institucion.email);
+  
+  // Construcción limpia de ubicación
+  const ubicacionParts = [institucion?.municipio, institucion?.departamento].filter(Boolean);
+  if (ubicacionParts.length > 0) {
+    infoLine2.push(ubicacionParts.join(', '));
+  }
+  
+  if (institucion?.pais) infoLine2.push(institucion.pais);
+  
+  if (infoLine2.length > 0) {
+    doc.text(infoLine2.join(' | '), 105, 36, { align: 'center' });
+  }
+
+  // Título del Reporte
   doc.setFontSize(14);
+  doc.setTextColor(50);
   doc.text('REPORTE DE ASISTENCIAS', 105, 50, { align: 'center' });
   doc.setDrawColor(200);
   doc.line(15, 55, 195, 55);
@@ -69,6 +97,8 @@ export const generatePDF = async (data) => {
   // Tabla
   const tableData = asistencias.map(a => {
     const persona = a.alumno || a.personal;
+    const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '-';
+    
     return [
       new Date(a.timestamp).toLocaleString(),
       persona?.carnet || 'N/A',
@@ -76,7 +106,7 @@ export const generatePDF = async (data) => {
       persona?.grado || (persona?.cargo || 'N/A'),
       a.alumno ? 'Alumno' : 'Personal',
       a.tipo_evento === 'entrada' ? 'Entrada' : 'Salida',
-      a.estado_puntualidad?.toUpperCase() || '-'
+      capitalize(a.estado_puntualidad)
     ];
   });
 
@@ -105,38 +135,95 @@ export const generateExcel = async (data) => {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Asistencias');
 
-  // Logo (si pudiéramos cargar buffers en browser easily, for now skip logo in excel or use base64)
-  // ExcelJS in browser supports base64 images
-  try {
-    const logoBase64 = await loadImageBase64('/logo.png');
-    if (logoBase64) {
+  // 1. Logo Institucional (Izquierda - Columna A)
+  if (institucion?.logo_base64) {
+    try {
       const imageId = workbook.addImage({
-        base64: logoBase64,
+        base64: institucion.logo_base64,
         extension: 'png',
       });
       sheet.addImage(imageId, {
         tl: { col: 0, row: 0 },
-        ext: { width: 60, height: 60 }
+        ext: { width: 80, height: 80 }
       });
-      sheet.getRow(1).height = 40;
+    } catch (e) {
+      console.warn('Error logo institucional Excel', e);
     }
-  } catch (e) {
-    console.warn('Error logo Excel', e);
   }
 
-  // Título Institución
-  sheet.mergeCells('B2:H2');
-  const titleCell = sheet.getCell('B2');
+  // 2. Logo HikariOpen (Derecha - Columna H)
+  try {
+    const appLogoBase64 = await loadImageBase64('/logo.png');
+    if (appLogoBase64) {
+      const imageId = workbook.addImage({
+        base64: appLogoBase64,
+        extension: 'png',
+      });
+      // Ajustar posición a columna H (índice 7)
+      sheet.addImage(imageId, {
+        tl: { col: 7, row: 0 }, 
+        ext: { width: 80, height: 80 },
+        editAs: 'absolute'
+      });
+    }
+  } catch (e) {
+    console.warn('Error logo app Excel', e);
+  }
+
+  // Configurar altura de filas de encabezado
+  sheet.getRow(1).height = 20;
+  sheet.getRow(2).height = 20;
+  sheet.getRow(3).height = 20;
+  sheet.getRow(4).height = 25;
+
+  // Título Institución (Centrado C1:F1)
+  sheet.mergeCells('C1:F1');
+  const titleCell = sheet.getCell('C1');
   titleCell.value = institucion?.nombre || 'Instituto Educativo';
   titleCell.font = { size: 16, bold: true, color: { argb: 'FF1F4788' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  // Dirección y Teléfono (Centrado C2:F2)
+  sheet.mergeCells('C2:F2');
+  const addressCell = sheet.getCell('C2');
+  const infoLine1 = [];
+  if (institucion?.direccion) infoLine1.push(institucion.direccion);
+  if (institucion?.telefono) infoLine1.push(`Tel: ${institucion.telefono}`);
+  addressCell.value = infoLine1.join(' | ');
+  addressCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  // Email y Ubicación (Centrado C3:F3)
+  sheet.mergeCells('C3:F3');
+  const locationCell = sheet.getCell('C3');
+  const infoLine2 = [];
+  if (institucion?.email) infoLine2.push(institucion.email);
+  const ubicacionParts = [institucion?.municipio, institucion?.departamento].filter(Boolean);
+  if (ubicacionParts.length > 0) infoLine2.push(ubicacionParts.join(', '));
+  if (institucion?.pais) infoLine2.push(institucion.pais);
+  locationCell.value = infoLine2.join(' | ');
+  locationCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
   // Título Reporte
   sheet.mergeCells('A5:H5');
   const reportCell = sheet.getCell('A5');
   reportCell.value = 'REPORTE DE ASISTENCIAS';
-  reportCell.alignment = { horizontal: 'center' };
-  reportCell.font = { bold: true, size: 12 };
+  reportCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  reportCell.font = { bold: true, size: 14 };
   reportCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } };
+
+  // Filtros (Fila 6)
+  sheet.mergeCells('A6:H6');
+  const statsCell = sheet.getCell('A6');
+  const filterParts = [];
+  if (filtrosGenerated.fechaInicio) filterParts.push(`Desde: ${new Date(filtrosGenerated.fechaInicio).toLocaleDateString()}`);
+  if (filtrosGenerated.fechaFin) filterParts.push(`Hasta: ${new Date(filtrosGenerated.fechaFin).toLocaleDateString()}`);
+  filterParts.push(`Total: ${stats.total} | Entradas: ${stats.entradas} | Salidas: ${stats.salidas} | Tardes: ${stats.tardes}`);
+  statsCell.value = filterParts.join(' • ');
+  statsCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  statsCell.font = { size: 10, italic: true };
+  sheet.getRow(6).height = 20;
+
+
 
   // Headers
   const headers = ['Fecha', 'Hora', 'Carnet', 'Nombre', 'Grado/Cargo', 'Tipo', 'Evento', 'Puntualidad'];
@@ -160,8 +247,10 @@ export const generateExcel = async (data) => {
     row.getCell(4).value = `${persona?.nombres} ${persona?.apellidos}`;
     row.getCell(5).value = persona?.grado || persona?.cargo || '';
     row.getCell(6).value = a.alumno ? 'Alumno' : 'Personal';
-    row.getCell(7).value = a.tipo_evento;
-    row.getCell(8).value = a.estado_puntualidad;
+    row.getCell(7).value = a.tipo_evento === 'entrada' ? 'Entrada' : 'Salida';
+    
+    const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '-';
+    row.getCell(8).value = capitalize(a.estado_puntualidad);
 
     // Colores condicionales
     if (a.estado_puntualidad === 'tarde') {

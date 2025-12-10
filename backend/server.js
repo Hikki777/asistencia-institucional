@@ -32,6 +32,7 @@ const docentesRoutes = require('./routes/docentes');
 const reportesRoutes = require('./routes/reportes');
 const institucionRoutes = require('./routes/institucion');
 const metricsRoutes = require('./routes/metrics');
+const adminRoutes = require('./routes/admin');
 
 // Verificar variables de entorno críticas
 const checkEnv = () => {
@@ -260,6 +261,7 @@ app.use('/api/reportes', reportesRoutes);
 app.use('/api/institucion', institucionRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/excusas', excusasRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 

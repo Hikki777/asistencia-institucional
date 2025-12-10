@@ -771,14 +771,14 @@ export default function AsistenciasPanel() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 mb-2"
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6"
       >
         <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
           <Clock className="text-blue-600" size={36} />
           Panel de Asistencias
         </h2>
-        <div className="text-sm text-gray-600 dark:text-gray-400 ml-4">
-          <Calendar size={16} className="inline mr-1" />
+        <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+          <Calendar size={18} className="text-blue-500" />
           {new Date().toLocaleDateString('es-ES', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -858,9 +858,7 @@ export default function AsistenciasPanel() {
             <button
               className="min-w-[220px] text-lg bg-orange-600 hover:bg-orange-700 font-bold py-3 px-6 rounded-xl shadow transition text-white"
               onClick={() => {
-                setTomaIniciada(false);
-                setScannerActive(false);
-                setScanMessage('');
+                setShowAusentesModal(true);
               }}
             >
               Finalizar toma de asistencias
@@ -1472,6 +1470,122 @@ export default function AsistenciasPanel() {
           },
         }}
       />
+      {/* Modal de Ausentes al finalizar */}
+      {showAusentesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+          >
+            {/* Header Modal */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <UserX className="text-orange-500" />
+                Resumen de Inasistencias
+              </h3>
+              <button
+                onClick={() => setShowAusentesModal(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Content Modal */}
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+                <p className="text-blue-800 dark:text-blue-200 text-sm">
+                  ℹ️ Revise la lista de personas que no registraron su asistencia hoy. Puede ingresar una justificación si corresponde.
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Persona</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo/Grado</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Justificación</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {(() => {
+                        const asistidosIds = new Set([
+                          ...asistenciasHoy.map(a => a.alumno_id),
+                          ...asistenciasHoy.map(a => a.docente_id),
+                          ...asistenciasHoy.map(a => a.personal_id)
+                        ]);
+                        const todos = [...alumnos, ...docentes];
+                        const ausentes = todos.filter(p => !asistidosIds.has(p.id));
+                        
+                        if (ausentes.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan="3" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <UserCheck className="mx-auto mb-2 text-green-500" size={24} />
+                                ¡Excelente! Todos han registrado asistencia hoy.
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        return ausentes.map((persona) => (
+                          <tr key={persona.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                                {persona.nombres} {persona.apellidos}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                                {persona.carnet}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                              {persona.grado || persona.cargo || 'Personal'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <input
+                                type="text"
+                                placeholder="Escribir justificación..."
+                                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                                onChange={(e) => {
+                                  // Aquí podríamos guardar en un estado local temporal 'justificaciones' 
+                                  // setJustificaciones(prev => ({...prev, [persona.id]: e.target.value}))
+                                }}
+                              />
+                            </td>
+                          </tr>
+                        ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Footer Modal */}
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 bg-gray-50 dark:bg-gray-900/50">
+              <button
+                onClick={() => setShowAusentesModal(false)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition font-medium"
+              >
+                Volver
+              </button>
+              <button
+                onClick={() => {
+                  setTomaIniciada(false);
+                  setScannerActive(false);
+                  setScanMessage('');
+                  setShowAusentesModal(false);
+                  toast.success('Toma de asistencias finalizada correctamente');
+                }}
+                className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-bold shadow-lg hover:translate-y-0.5"
+              >
+                Confirmar y Finalizar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -183,17 +183,17 @@ export default function Dashboard() {
                 {(institucion.direccion || institucion.email || institucion.pais) && (
                   <div className="mt-0 flex flex-wrap gap-4 text-sm text-slate-400">
                     {institucion.direccion && (
-                      <span className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
+                      <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300">
                         📍 {institucion.direccion}
                       </span>
                     )}
                     {institucion.email && (
-                      <span className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
+                      <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300">
                         ✉️ {institucion.email}
                       </span>
                     )}
                     {institucion.pais && (
-                      <span className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
+                      <span className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300">
                         🌍 {institucion.pais}
                       </span>
                     )}
@@ -206,16 +206,16 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="text-right space-y-2 bg-white/5 p-4 rounded-xl backdrop-blur-sm border border-white/10">
-              <div className="flex items-center justify-end gap-2 text-slate-300">
-                <span className="font-medium text-slate-400">
+            <div className="text-right space-y-2 bg-slate-50 dark:bg-white/5 p-4 rounded-xl backdrop-blur-sm border border-slate-200 dark:border-white/10">
+              <div className="flex items-center justify-end gap-2 text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-slate-500 dark:text-slate-400">
                   Horario Entrada:
                 </span>
                 <span className="font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
                   {institucion.horario_inicio || "--:--"}
                 </span>
               </div>
-              <div className="flex items-center justify-end gap-2 text-slate-300">
+              <div className="flex items-center justify-end gap-2 text-slate-600 dark:text-slate-300">
                 <span className="font-medium text-slate-400">
                   Horario Salida:
                 </span>
@@ -223,7 +223,7 @@ export default function Dashboard() {
                   {institucion.horario_salida || "--:--"}
                 </span>
               </div>
-              <div className="flex items-center justify-end gap-2 text-slate-300">
+              <div className="flex items-center justify-end gap-2 text-slate-600 dark:text-slate-300">
                 <span className="font-medium text-slate-400">Tolerancia:</span>
                 <span className="font-mono text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded">
                   {institucion.margen_puntualidad_min} min

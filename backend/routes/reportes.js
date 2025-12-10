@@ -33,11 +33,7 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
     }
   }
 });
-  } catch (error) {
-    logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte PDF');
-    res.status(500).json({ error: error.message });
-  }
-});
+
 
 /**
  * POST /api/reportes/excel
@@ -60,11 +56,7 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
     }
   }
 });
-  } catch (error) {
-    logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte Excel');
-    res.status(500).json({ error: error.message });
-  }
-});
+
 
 /**
  * GET /api/reportes/alumno/:id/pdf
@@ -87,11 +79,7 @@ router.get('/alumno/:id/pdf', async (req, res) => {
     }
   }
 });
-  } catch (error) {
-    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte PDF de alumno');
-    res.status(500).json({ error: error.message });
-  }
-});
+
 
 /**
  * GET /api/reportes/alumno/:id/excel
@@ -114,11 +102,7 @@ router.get('/alumno/:id/excel', async (req, res) => {
     }
   }
 });
-  } catch (error) {
-    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte Excel de alumno');
-    res.status(500).json({ error: error.message });
-  }
-});
+
 
 /**
  * POST /api/reportes/limpiar

@@ -17,7 +17,7 @@ class ReportService {
   /**
    * Generar reporte de asistencias en PDF
    */
-  async generarReportePDF(filtros = {}, res) {
+  async generarReportePDF(filtros = {}) {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
 
     logger.info({ filtros }, '📄 Iniciando generación de PDF');
@@ -60,33 +60,22 @@ class ReportService {
     const doc = new PDFDocument({ margin: 50, size: 'LETTER' });
     // Headers para descarga directa (Streaming)
     const fileName = `reporte_asistencias_${Date.now()}.pdf`;
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-
-    doc.pipe(res);
-
-    // Logo institucional (si existe)
-    // Desactivar logo temporalmente para debug
-    /*
-    let logoPath = path.join(__dirname, '../../uploads/logos/logo.png');
-    if (!fs.existsSync(logoPath)) {
-      logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
-    }
+    // Crear PDF en memoria
+    const doc = new PDFDocument({ margin: 50, size: 'LETTER' });
+    const buffers = [];
     
-    let startY = 50; // Posición inicial
-    
-    if (fs.existsSync(logoPath)) {
-      try {
-        doc.image(logoPath, 50, startY, { width: 70, height: 70 });
-        logger.debug('✅ Logo agregado al PDF');
-      } catch (error) {
-        logger.warn({ err: error }, '⚠️ No se pudo cargar el logo en PDF');
-      }
-    } else {
-      logger.debug('ℹ️ No se encontró logo institucional para PDF');
-    }
-    */
-    let startY = 50;
+    // Promesa para retornar el buffer al finalizar
+    const pdfPromise = new Promise((resolve, reject) => {
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+    });
+
+    // Logo Vectorial (Indestructible)
+    doc.save();
+    doc.circle(85, 85, 30).fill('#1F4788'); // Círculo azul
+    doc.fontSize(24).font('Helvetica-Bold').fillColor('#FFFFFF').text('H', 76, 73); // Letra H
+    doc.restore();
 
     // Encabezado institucional (centrado al lado del logo)
     const headerX = 130;
@@ -220,13 +209,18 @@ class ReportService {
     );
 
     doc.end();
-    logger.info('✅ PDF enviado via stream');
+    
+    // Esperar a que se genere el buffer
+    const pdfBuffer = await pdfPromise;
+    logger.info({ size: pdfBuffer.length }, '✅ PDF generado en memoria');
+    
+    return { buffer: pdfBuffer, fileName: `reporte_asistencias_${Date.now()}.pdf` };
   }
 
   /**
    * Generar reporte de asistencias en Excel con ExcelJS
    */
-  async generarReporteExcel(filtros = {}, res) {
+  async generarReporteExcel(filtros = {}) {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
     const where = this.construirFiltros(filtros);
 
@@ -415,21 +409,17 @@ class ReportService {
     sheet.getColumn(9).width = 10;  // Origen
 
     // Guardar archivo
-    // Stream to response
-    const fileName = `reporte_asistencias_${Date.now()}.xlsx`;
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-
-    await workbook.xlsx.write(res);
-    res.end();
+    // Buffer in memory
+    const buffer = await workbook.xlsx.writeBuffer();
+    logger.info({ size: buffer.length }, '✅ Excel generado en memoria');
     
-    logger.info('✅ Excel enviado via stream');
+    return { buffer, fileName: `reporte_asistencias_${Date.now()}.xlsx` };
   }
 
   /**
    * Generar reporte por alumno específico
    */
-  async generarReporteAlumno(alumnoId, formato = 'pdf', res) {
+  async generarReporteAlumno(alumnoId, formato = 'pdf') {
     const alumno = await prisma.alumno.findUnique({
       where: { id: parseInt(alumnoId) }
     });
@@ -444,9 +434,9 @@ class ReportService {
     };
 
     if (formato === 'pdf') {
-      return await this.generarReportePDF(filtros, res);
+      return await this.generarReportePDF(filtros);
     } else {
-      return await this.generarReporteExcel(filtros, res);
+      return await this.generarReporteExcel(filtros);
     }
   }
 

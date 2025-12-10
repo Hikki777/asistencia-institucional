@@ -20,17 +20,17 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
     
     logger.info({ filtros }, '📄 Generando reporte PDF');
     
-    // El servicio escribe directamente al stream de respuesta
-    await reportService.generarReportePDF(filtros, res);
+    // Generar Buffer
+    const { buffer, fileName } = await reportService.generarReportePDF(filtros);
+    
+    // Enviar Buffer
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.send(buffer);
     
   } catch (error) {
-    if (!res.headersSent) {
-      logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte PDF');
-      res.status(500).json({ error: error.message });
-    } else {
-      logger.error({ err: error }, '❌ Error de stream PDF interrumpido');
-      res.end();
-    }
+    logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte PDF');
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -45,15 +45,15 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
     
     logger.info({ filtros }, '📊 Generando reporte Excel');
     
-    await reportService.generarReporteExcel(filtros, res);
+    const { buffer, fileName } = await reportService.generarReporteExcel(filtros);
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.send(buffer);
 
   } catch (error) {
-    if (!res.headersSent) {
-      logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte Excel');
-      res.status(500).json({ error: error.message });
-    } else {
-      res.end();
-    }
+    logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte Excel');
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -68,15 +68,15 @@ router.get('/alumno/:id/pdf', async (req, res) => {
     
     logger.info({ alumnoId }, '📄 Generando reporte PDF para alumno');
     
-    await reportService.generarReporteAlumno(alumnoId, 'pdf', res);
+    const { buffer, fileName } = await reportService.generarReporteAlumno(alumnoId, 'pdf');
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.send(buffer);
 
   } catch (error) {
-    if (!res.headersSent) {
-      logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte PDF de alumno');
-      res.status(500).json({ error: error.message });
-    } else {
-      res.end();
-    }
+    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte PDF de alumno');
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -91,15 +91,15 @@ router.get('/alumno/:id/excel', async (req, res) => {
     
     logger.info({ alumnoId }, '📊 Generando reporte Excel para alumno');
     
-    await reportService.generarReporteAlumno(alumnoId, 'excel', res);
+    const { buffer, fileName } = await reportService.generarReporteAlumno(alumnoId, 'excel');
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.send(buffer);
 
   } catch (error) {
-    if (!res.headersSent) {
-      logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte Excel de alumno');
-      res.status(500).json({ error: error.message });
-    } else {
-      res.end();
-    }
+    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte Excel de alumno');
+    res.status(500).json({ error: error.message });
   }
 });
 

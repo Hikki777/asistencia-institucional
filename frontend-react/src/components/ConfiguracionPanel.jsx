@@ -139,7 +139,7 @@ export default function ConfiguracionPanel() {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between"
       >
-        <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
           <Settings className="text-blue-600" size={36} />
           Configuración Institucional
         </h2>
@@ -149,12 +149,12 @@ export default function ConfiguracionPanel() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-lg shadow-lg p-8"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Información General */}
           <div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Building2 size={24} className="text-blue-600" />
               Información General
             </h3>
@@ -168,7 +168,7 @@ export default function ConfiguracionPanel() {
                   required
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                   placeholder="Ej: Colegio San José"
                 />
               </div>
@@ -180,7 +180,7 @@ export default function ConfiguracionPanel() {
                   type="text"
                   value={formData.direccion}
                   onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                   placeholder="Calle, número, colonia, ciudad"
                 />
               </div>
@@ -193,7 +193,7 @@ export default function ConfiguracionPanel() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                     placeholder="contacto@institucion.edu"
                   />
                 </div>
@@ -205,7 +205,7 @@ export default function ConfiguracionPanel() {
                     type="tel"
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                     placeholder="+503 1234-5678"
                   />
                 </div>
@@ -219,7 +219,7 @@ export default function ConfiguracionPanel() {
                       type="text"
                       value={formData.pais}
                       onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                       placeholder="Ej: Guatemala"
                     />
                 </div>
@@ -231,7 +231,7 @@ export default function ConfiguracionPanel() {
                       type="text"
                       value={formData.departamento}
                       onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                       placeholder="Ej: Guatemala"
                     />
                 </div>
@@ -241,7 +241,7 @@ export default function ConfiguracionPanel() {
 
           {/* Logo */}
           <div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Upload size={24} className="text-blue-600" />
               Logo Institucional
             </h3>
@@ -251,7 +251,7 @@ export default function ConfiguracionPanel() {
                   <img
                     src={logoPreview}
                     alt="Logo preview"
-                    className="max-w-md max-h-64 object-contain border border-gray-300 rounded-lg p-4"
+                    className="max-w-md max-h-64 object-contain border border-gray-300 dark:border-gray-600 rounded-lg p-4"
                   />
                 </div>
               )}
@@ -263,7 +263,7 @@ export default function ConfiguracionPanel() {
                   type="file"
                   accept="image/png,image/jpeg,image/jpg"
                   onChange={handleLogoChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="mt-2 text-xs text-gray-500 flex items-start gap-1">
                   <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
@@ -275,7 +275,7 @@ export default function ConfiguracionPanel() {
 
           {/* Horarios y Puntualidad */}
           <div>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Clock size={24} className="text-blue-600" />
               Horarios y Puntualidad
             </h3>
@@ -289,7 +289,7 @@ export default function ConfiguracionPanel() {
                   required
                   value={formData.horario_inicio}
                   onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -301,7 +301,7 @@ export default function ConfiguracionPanel() {
                   required
                   value={formData.horario_salida}
                   onChange={(e) => setFormData({ ...formData, horario_salida: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -315,7 +315,7 @@ export default function ConfiguracionPanel() {
                   required
                   value={formData.margen_puntualidad_min}
                   onChange={(e) => setFormData({ ...formData, margen_puntualidad_min: parseInt(e.target.value) })}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -326,7 +326,7 @@ export default function ConfiguracionPanel() {
             <button
               type="button"
               onClick={fetchInstitucion}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg transition"
+              className="bg-gray-300 hover:bg-gray-400 text-gray-900 dark:text-gray-100 font-bold py-3 px-6 rounded-lg transition"
             >
               Cancelar
             </button>
@@ -344,3 +344,4 @@ export default function ConfiguracionPanel() {
     </div>
   );
 }
+

@@ -773,11 +773,11 @@ export default function AsistenciasPanel() {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center gap-3 mb-2"
       >
-        <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
           <Clock className="text-blue-600" size={36} />
           Panel de Asistencias
         </h2>
-        <div className="text-sm text-gray-600 ml-4">
+        <div className="text-sm text-gray-600 dark:text-gray-400 ml-4">
           <Calendar size={16} className="inline mr-1" />
           {new Date().toLocaleDateString('es-ES', { 
             weekday: 'long', 
@@ -901,10 +901,10 @@ export default function AsistenciasPanel() {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-white rounded-lg shadow-lg p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6"
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <QrCode className="text-blue-600" size={24} />
               Escanear QR
             </h3>
@@ -955,9 +955,9 @@ export default function AsistenciasPanel() {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-white rounded-lg shadow-lg p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <UserCheck className="text-green-600" size={24} />
             Registro Manual
           </h3>
@@ -1036,7 +1036,7 @@ export default function AsistenciasPanel() {
                           <span className="text-xs font-semibold text-blue-600">🎓 ALUMNO</span>
                           <div className="font-medium">{alumno.nombres} {alumno.apellidos}</div>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
                           {alumno.carnet} - {alumno.grado} - {alumno.jornada}
                         </div>
                       </button>
@@ -1059,7 +1059,7 @@ export default function AsistenciasPanel() {
                           <span className="text-xs font-semibold text-green-600">👨‍🏫 DOCENTE</span>
                           <div className="font-medium">{docente.nombres} {docente.apellidos}</div>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
                           {docente.carnet} - {docente.grado || 'Docente'} - {docente.jornada}
                         </div>
                       </button>
@@ -1099,10 +1099,10 @@ export default function AsistenciasPanel() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-lg p-6"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6"
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <Clock className="text-blue-600" size={24} />
             Asistencias de Hoy
           </h3>
@@ -1153,10 +1153,10 @@ export default function AsistenciasPanel() {
                       <td className="px-3 py-2 font-medium text-gray-700">
                         {formatTime(asistencia.timestamp || asistencia.created_at)}
                       </td>
-                      <td className="px-3 py-2 text-gray-600 font-medium">
+                      <td className="px-3 py-2 text-gray-600 dark:text-gray-400 font-medium">
                         {persona?.carnet}
                       </td>
-                      <td className="px-3 py-2 font-medium text-gray-800">
+                      <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">
                         {persona?.nombres} {persona?.apellidos}
                       </td>
                       <td className="px-3 py-2">
@@ -1226,7 +1226,7 @@ export default function AsistenciasPanel() {
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
-            className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Icono de éxito */}
@@ -1250,7 +1250,7 @@ export default function AsistenciasPanel() {
               {/* 1. Tipo */}
               <div>
                 <p className="text-gray-500 text-sm">Tipo</p>
-                <p className="text-xl font-semibold text-gray-800">{modalData.tipo}</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">{modalData.tipo}</p>
               </div>
 
               {/* 2. Carnet */}
@@ -1270,11 +1270,11 @@ export default function AsistenciasPanel() {
                 <div className="flex justify-center gap-8">
                   <div>
                     <p className="text-gray-500 text-sm">Grado</p>
-                    <p className="text-lg font-semibold text-gray-800">{modalData.grado}</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{modalData.grado}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-sm">Sección</p>
-                    <p className="text-lg font-semibold text-gray-800">{modalData.seccion}</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{modalData.seccion}</p>
                   </div>
                 </div>
               )}
@@ -1284,12 +1284,12 @@ export default function AsistenciasPanel() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-gray-500 text-sm">Cargo</p>
-                    <p className="text-lg font-semibold text-gray-800">{modalData.cargo}</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{modalData.cargo}</p>
                   </div>
                   {modalData.departamento && modalData.departamento !== 'N/A' && (
                     <div>
                       <p className="text-gray-500 text-sm">Departamento</p>
-                      <p className="text-lg font-semibold text-gray-800">{modalData.departamento}</p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{modalData.departamento}</p>
                     </div>
                   )}
                 </div>
@@ -1326,11 +1326,11 @@ export default function AsistenciasPanel() {
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
-            className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-8 max-w-2xl w-full mx-4"
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-2xl font-bold text-orange-700 mb-4 text-center">Ausentes del día</h2>
-            <p className="text-gray-600 text-center mb-4">Personas que no registraron asistencia hoy. Puedes añadir excusa si corresponde.</p>
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-4">Personas que no registraron asistencia hoy. Puedes añadir excusa si corresponde.</p>
             <div className="overflow-x-auto mb-4">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -1397,11 +1397,11 @@ export default function AsistenciasPanel() {
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
-            className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full mx-4"
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-xl font-bold text-blue-700 mb-4 text-center">Añadir excusa</h2>
-            <p className="text-gray-600 text-center mb-2">{personaExcusa.nombres} {personaExcusa.apellidos} ({personaExcusa.carnet})</p>
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-2">{personaExcusa.nombres} {personaExcusa.apellidos} ({personaExcusa.carnet})</p>
             <textarea
               className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4"
               rows={3}
@@ -1493,3 +1493,4 @@ function StatCard({ icon, title, value, color }) {
     </motion.div>
   );
 }
+

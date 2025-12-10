@@ -147,7 +147,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header con nombre e información institucional */}
       {institucion && (
-        <div className="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-2xl p-8 text-white relative overflow-hidden">
+        <div className="bg-white dark:bg-gradient-to-r dark:from-slate-800 dark:to-slate-900 rounded-xl shadow-2xl p-8 text-gray-800 dark:text-white relative overflow-hidden border border-gray-200 dark:border-transparent">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
 
           <div className="flex flex-col md:flex-row items-center justify-between relative z-10 gap-6">

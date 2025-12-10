@@ -133,7 +133,7 @@ export default function ReportesPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Reportes de Asistencias</h1>
-          <p className="text-gray-600 mt-1">Genera reportes personalizados en PDF o Excel</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Genera reportes personalizados en PDF o Excel</p>
         </div>
         <div className="flex items-center gap-2">
           <FileText className="text-blue-600 w-10 h-10" />
@@ -142,7 +142,7 @@ export default function ReportesPanel() {
 
       {/* Filtros */}
       <div
-        className="bg-white rounded-lg shadow-md p-6"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
       >
         <div className="flex items-center gap-2 mb-4">
           <Filter className="text-blue-600 w-5 h-5" />
@@ -276,7 +276,7 @@ export default function ReportesPanel() {
       </div>
 
       {/* Botones de descarga */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           <Download className="inline w-5 h-5 mr-2" />
           Generar Reporte
@@ -325,7 +325,7 @@ export default function ReportesPanel() {
         {generando && (
           <div className="mt-4 text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="text-gray-600 mt-2">Generando reporte, por favor espera...</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Generando reporte, por favor espera...</p>
           </div>
         )}
       </div>
@@ -353,3 +353,4 @@ export default function ReportesPanel() {
     </div>
   );
 }
+

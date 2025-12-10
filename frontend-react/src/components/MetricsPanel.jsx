@@ -93,7 +93,7 @@ export default function MetricsPanel() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-3xl font-bold text-gray-800">📊 Métricas del Sistema</h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">📊 Métricas del Sistema</h2>
         <CardSkeleton count={4} />
       </div>
     );
@@ -103,7 +103,7 @@ export default function MetricsPanel() {
     return (
       <div className="text-center py-12">
         <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
-        <p className="text-gray-600">No se pudieron cargar las métricas</p>
+        <p className="text-gray-600 dark:text-gray-400">No se pudieron cargar las métricas</p>
       </div>
     );
   }
@@ -130,11 +130,11 @@ export default function MetricsPanel() {
         className="flex items-center justify-between"
       >
         <div>
-          <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
             <BarChart3 className="text-blue-600" size={36} />
             Métricas del Sistema
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Monitoreo en tiempo real del rendimiento y uso de recursos
           </p>
         </div>
@@ -224,9 +224,9 @@ export default function MetricsPanel() {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-white rounded-lg shadow-lg p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <TrendingUp className="text-blue-600" size={24} />
             Requests por Status Code
           </h3>
@@ -263,9 +263,9 @@ export default function MetricsPanel() {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-white rounded-lg shadow-lg p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Server className="text-purple-600" size={24} />
             Uso de Memoria
           </h3>
@@ -285,9 +285,9 @@ export default function MetricsPanel() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-lg p-6"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
       >
-        <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <Activity className="text-green-600" size={24} />
           Top 10 Endpoints Más Usados
         </h3>
@@ -305,10 +305,10 @@ export default function MetricsPanel() {
               {metrics.requests.topEndpoints.length > 0 ? (
                 metrics.requests.topEndpoints.map((endpoint, idx) => (
                   <tr key={idx} className="border-b hover:bg-gray-50 transition">
-                    <td className="px-4 py-3 text-gray-600">{idx + 1}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{idx + 1}</td>
                     <td className="px-4 py-3 font-mono text-sm text-blue-600">{endpoint.path}</td>
                     <td className="px-4 py-3 text-right font-semibold">{endpoint.count}</td>
-                    <td className="px-4 py-3 text-right text-gray-600">
+                    <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">
                       {((endpoint.count / metrics.requests.total) * 100).toFixed(1)}%
                     </td>
                   </tr>
@@ -331,9 +331,9 @@ export default function MetricsPanel() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-lg p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
         >
-          <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
             <Database className="text-purple-600" size={20} />
             Base de Datos
           </h3>
@@ -351,9 +351,9 @@ export default function MetricsPanel() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-lg p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
         >
-          <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
             <Activity className="text-blue-600" size={20} />
             Sistema de Caché
           </h3>
@@ -369,9 +369,9 @@ export default function MetricsPanel() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-lg p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
         >
-          <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
             <Server className="text-green-600" size={20} />
             Sistema
           </h3>
@@ -433,12 +433,12 @@ function MetricCard({ icon, title, value, subtitle, color }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-white rounded-lg shadow-lg p-6"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
     >
       <div className={`${color} w-12 h-12 rounded-lg flex items-center justify-center mb-3`}>
         {icon}
       </div>
-      <p className="text-sm text-gray-600 font-medium">{title}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{title}</p>
       <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
       <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
     </motion.div>
@@ -448,8 +448,9 @@ function MetricCard({ icon, title, value, subtitle, color }) {
 function StatRow({ label, value, color = 'text-gray-900' }) {
   return (
     <div className="flex justify-between items-center py-1">
-      <span className="text-sm text-gray-600">{label}:</span>
+      <span className="text-sm text-gray-600 dark:text-gray-400">{label}:</span>
       <span className={`text-sm font-semibold ${color}`}>{value}</span>
     </div>
   );
 }
+

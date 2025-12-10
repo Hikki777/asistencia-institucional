@@ -1,5 +1,4 @@
 const PDFDocument = require('pdfkit');
-require('pdfkit-table'); // Extiende PDFDocument
 const ExcelJS = require('exceljs');
 const fs = require('fs-extra');
 const path = require('path');

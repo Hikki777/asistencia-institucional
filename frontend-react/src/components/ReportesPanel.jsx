@@ -78,7 +78,24 @@ export default function ReportesPanel() {
       console.log('✅ Reporte descargado exitosamente');
     } catch (error) {
       console.error('Error generando reporte:', error);
-      alert(`Error al generar el reporte: ${error.response?.data?.error || error.message}`);
+      
+      let errorMessage = error.message;
+      
+      // Si la respuesta es un Blob (común al descargar archivos), intentar leer el texto
+      if (error.response?.data instanceof Blob) {
+        try {
+          const text = await error.response.data.text();
+          const json = JSON.parse(text);
+          errorMessage = json.error || json.message || text;
+        } catch (e) {
+          // Si no es JSON, usar el texto plano o mensaje por defecto
+          errorMessage = 'Error desconocido al procesar la respuesta del servidor';
+        }
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      alert(`Error al generar el reporte: ${errorMessage}`);
     } finally {
       setGenerando(false);
     }

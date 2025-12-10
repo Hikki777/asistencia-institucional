@@ -26,8 +26,13 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
     // Enviar JSON Data
     res.json(data);
   } catch (error) {
-    logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte PDF');
-    res.status(500).json({ error: error.message });
+    console.error("🔥 CRITICAL ERROR REPORT PDF:", error);
+    logger.error({ err: error, msg: error.message, stack: error.stack }, '❌ Error generando reporte PDF');
+    res.status(500).json({ 
+      error: error.message,
+      stack: error.stack,
+      details: error.toString()
+    });
   }
 });
 
@@ -47,8 +52,13 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
     res.json(data);
 
   } catch (error) {
-    logger.error({ err: error, filtros: req.body }, '❌ Error generando reporte Excel');
-    res.status(500).json({ error: error.message });
+    console.error("🔥 CRITICAL ERROR REPORT EXCEL:", error);
+    logger.error({ err: error, msg: error.message, stack: error.stack }, '❌ Error generando reporte Excel');
+    res.status(500).json({ 
+      error: error.message,
+      stack: error.stack,
+      details: error.toString()
+    });
   }
 });
 

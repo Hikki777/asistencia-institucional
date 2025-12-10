@@ -6,9 +6,11 @@ const path = require('path');
 const prisma = require('../prismaClient');
 const { logger } = require('../utils/logger');
 
+const os = require('os');
+
 class ReportService {
   constructor() {
-    this.reportsDir = path.join(__dirname, '../../temp-reports');
+    this.reportsDir = path.join(os.tmpdir(), 'hikari-reports');
     this.ensureReportsDir();
   }
 

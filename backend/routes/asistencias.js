@@ -142,14 +142,21 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const cursor = req.query.cursor ? parseInt(req.query.cursor) : undefined;
     const fecha = req.query.fecha; // YYYY-MM-DD
+    const fechaDesde = req.query.desde;
+    const fechaHasta = req.query.hasta;
     const alumno_id = req.query.alumno_id;
     const personal_id = req.query.personal_id;
     const tipo_evento = req.query.tipo_evento; // "entrada" o "salida"
 
     const where = {};
 
-    // Filtro por fecha (día completo)
-    if (fecha) {
+    // Filtro por fecha (día completo o rango personalizado)
+    if (fechaDesde && fechaHasta) {
+      where.timestamp = {
+        gte: new Date(fechaDesde),
+        lte: new Date(fechaHasta)
+      };
+    } else if (fecha) {
       const fechaInicio = new Date(fecha);
       fechaInicio.setHours(0, 0, 0, 0);
       const fechaFin = new Date(fecha);

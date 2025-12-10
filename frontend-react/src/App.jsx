@@ -149,40 +149,40 @@ function App() {
         <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
           {isLoggedIn && (
           <aside
-            className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-slate-900 to-slate-800 text-white transform transition-all duration-300 ease-in-out shadow-xl ${
+            className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gradient-to-b dark:from-slate-900 dark:to-slate-800 text-gray-800 dark:text-white transform transition-all duration-300 ease-in-out shadow-xl border-r border-gray-200 dark:border-transparent ${
               sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
             } md:w-20 md:hover:w-64 group overflow-hidden`}
           >
-          <div className="p-6 border-b border-slate-700 flex items-center h-20 overflow-hidden">
+          <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex items-center h-16 overflow-hidden">
             <div className="flex items-center gap-4 min-w-max">
               <div className="w-8 flex justify-center flex-shrink-0">
                  <img src="/logo.png" alt="HikariOpen Logo" className="w-8 h-8 object-contain" />
               </div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                <h1 className="text-xl font-bold text-blue-600 dark:bg-clip-text dark:text-transparent dark:bg-gradient-to-r dark:from-blue-400 dark:to-emerald-400">
                   HikariOpen
                 </h1>
               </div>
             </div>
           </div>
 
-          <div className="px-4 py-6 border-b border-slate-700/50 overflow-hidden">
+          <div className="px-3 py-3 border-b border-gray-200 dark:border-slate-700/50 overflow-hidden">
              {user && (
                <div className="flex items-center gap-3 min-w-max">
                  <div className="w-10 flex justify-center flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-emerald-400 shadow-inner">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 flex items-center justify-center text-blue-600 dark:text-emerald-400 shadow-inner">
                       <User size={20} />
                     </div>
                  </div>
-                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                    <p className="font-medium text-white text-sm truncate w-40">{user.nombres ? `${user.nombres} ${user.apellidos || ''}` : user.email}</p>
-                    <p className="text-xs text-emerald-400 capitalize">{user.cargo || user.rol}</p>
+                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                    <p className="font-medium text-gray-800 dark:text-white text-sm truncate max-w-[140px]">{user.nombres ? `${user.nombres} ${user.apellidos || ''}` : user.email}</p>
+                    <p className="text-xs text-blue-600 dark:text-emerald-400 capitalize truncate">{user.cargo || user.rol}</p>
                  </div>
                </div>
              )}
           </div>
 
-          <nav className="p-3 space-y-1">
+          <nav className="p-2 space-y-0.5 flex-1">
             <NavLink to="/" icon={Home} label="Dashboard" />
             <NavLink to="/alumnos" icon={BarChart3} label="Alumnos" />
             <NavLink to="/docentes" icon={Users} label="Personal" />
@@ -192,14 +192,14 @@ function App() {
             <NavLink to="/configuracion" icon={Settings} label="Configuración" />
           </nav>
 
-          <div className="absolute bottom-20 left-4 right-4 overflow-hidden flex justify-center">
+          <div className="absolute bottom-16 left-3 right-3 overflow-hidden flex justify-center py-2">
             <ThemeToggle />
           </div>
 
-          <div className="absolute bottom-4 left-4 right-4 overflow-hidden">
+          <div className="absolute bottom-3 left-3 right-3 overflow-hidden">
             <button
               onClick={handleLogout}
-              className="w-full bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white font-medium py-2 rounded-lg flex items-center px-3 gap-3 transition-all duration-300 group/btn min-w-max"
+              className="w-full bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white font-medium py-2 px-2 rounded-lg flex items-center gap-2 transition-all duration-300 group/btn min-w-max"
               title="Cerrar Sesión"
             >
               <div className="w-5 flex justify-center flex-shrink-0">
@@ -269,7 +269,7 @@ function NavLink({ to, icon: Icon, label }) {
   return (
     <Link
       to={to}
-      className="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors font-medium text-slate-300 hover:text-white group/item min-w-max"
+      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors font-medium text-gray-700 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white group/item min-w-max"
     >
       <div className="w-8 flex justify-center flex-shrink-0">
         <Icon size={20} />

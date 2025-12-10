@@ -13,21 +13,9 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { CardSkeleton } from './LoadingSpinner';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const client = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' }
-});
-
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+import client from '../api/client';
 
 export default function MetricsPanel() {
   const [metrics, setMetrics] = useState(null);

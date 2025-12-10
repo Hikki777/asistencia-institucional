@@ -97,9 +97,33 @@ export default function AsistenciasPanel() {
   const fetchAsistenciasHoy = async () => {
     setLoading(true);
     try {
-      const response = await client.get('/asistencias/hoy');
-      setAsistenciasHoy(response.data.asistencias || []);
-      setStats(response.data.stats || {});
+      // Calcular inicio y fin del día local en formato ISO para enviar al backend
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      
+      const response = await client.get('/asistencias', {
+        params: {
+          desde: start.toISOString(),
+          hasta: end.toISOString(),
+          limit: 100 // Obtener suficientes registros del día
+        }
+      });
+      
+      const asistencias = response.data.asistencias || [];
+      setAsistenciasHoy(asistencias);
+      
+      // Calcular stats localmente si el endpoint general no los devuelve pre-calculados
+      const stats = {
+        total: asistencias.length,
+        entradas: asistencias.filter(a => a.tipo_evento === 'entrada').length,
+        salidas: asistencias.filter(a => a.tipo_evento === 'salida').length,
+        puntuales: asistencias.filter(a => a.estado_puntualidad === 'puntual').length,
+        tardes: asistencias.filter(a => a.estado_puntualidad === 'tarde').length
+      };
+      setStats(stats);
+      
     } catch (error) {
       console.error('Error fetching asistencias:', error);
       toast.error('Error al cargar asistencias: ' + (error.response?.data?.error || error.message));
@@ -1311,143 +1335,8 @@ export default function AsistenciasPanel() {
         </motion.div>
       )}
 
-      {/* Modal de ausentes y excusas */}
-      {showAusentesModal && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-          onClick={() => setShowAusentesModal(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-8 max-w-2xl w-full mx-4"
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-bold text-orange-700 mb-4 text-center">Ausentes del día</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-center mb-4">Personas que no registraron asistencia hoy. Puedes añadir excusa si corresponde.</p>
-            <div className="overflow-x-auto mb-4">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-3 py-2 text-left">Carnet</th>
-                    <th className="px-3 py-2 text-left">Nombre</th>
-                    <th className="px-3 py-2 text-center">Tipo</th>
-                    <th className="px-3 py-2 text-center">Excusa</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...alumnos, ...docentes].filter(p => {
-                    const id = p.id;
-                    const esAlumno = !!p.grado;
-                    return !asistenciasHoy.some(a => (esAlumno ? a.alumno_id === id : a.docente_id === id || a.personal_id === id));
-                  }).map(p => {
-                    const esAlumno = !!p.grado;
-                    const tieneExcusa = excusas.some(e => (esAlumno ? e.alumno_id === p.id : e.personal_id === p.id));
-                    return (
-                      <tr key={p.id} className="border-b">
-                        <td className="px-3 py-2">{p.carnet}</td>
-                        <td className="px-3 py-2">{p.nombres} {p.apellidos}</td>
-                        <td className="px-3 py-2 text-center">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${esAlumno ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>{esAlumno ? 'Alumno' : p.cargo || 'Personal'}</span>
-                        </td>
-                        <td className="px-3 py-2 text-center">
-                          {tieneExcusa ? (
-                            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Con excusa</span>
-                          ) : (
-                            <button
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-xs font-semibold"
-                              onClick={() => { setPersonaExcusa(p); setExcusaInput(''); }}
-                            >
-                              Añadir excusa
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <button
-              className="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-colors"
-              onClick={() => setShowAusentesModal(false)}
-            >
-              Cerrar
-            </button>
-          </motion.div>
-        </motion.div>
-      )}
 
-      {/* Modal para añadir excusa */}
-      {personaExcusa && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-          onClick={() => setPersonaExcusa(null)}
-        >
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full mx-4"
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 className="text-xl font-bold text-blue-700 mb-4 text-center">Añadir excusa</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-center mb-2">{personaExcusa.nombres} {personaExcusa.apellidos} ({personaExcusa.carnet})</p>
-            <textarea
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4"
-              rows={3}
-              placeholder="Motivo de la excusa..."
-              value={excusaInput}
-              onChange={e => setExcusaInput(e.target.value)}
-            />
-            <button
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors"
-              onClick={() => {
-                if (!excusaInput.trim()) return;
-                // Llamada a la API para guardar la excusa
-                const tipo = personaExcusa.grado ? 'alumno' : 'personal';
-                const id = personaExcusa.id;
-                client.post('/excusas', {
-                  motivo: excusaInput,
-                  tipo,
-                  alumno_id: tipo === 'alumno' ? id : undefined,
-                  personal_id: tipo === 'personal' ? id : undefined
-                })
-                  .then(() => {
-                    toast.success('Excusa añadida');
-                    // Actualizar UI: marcar excusa en la persona
-                    setAsistenciasHoy(prev => prev.map(a => {
-                      if ((tipo === 'alumno' && a.alumno_id === id) || (tipo === 'personal' && (a.docente_id === id || a.personal_id === id))) {
-                        return { ...a, excusa: excusaInput };
-                      }
-                      return a;
-                    }));
-                    setPersonaExcusa(null);
-                  })
-                  .catch(err => {
-                    toast.error('Error al guardar excusa: ' + (err.response?.data?.error || err.message));
-                  });
-              }}
-              disabled={!excusaInput.trim()}
-            >
-              Guardar excusa
-            </button>
-            <button
-              className="mt-2 w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg transition-colors"
-              onClick={() => setPersonaExcusa(null)}
-            >
-              Cancelar
-            </button>
-          </motion.div>
-        </motion.div>
-      )}
+
       <Toaster 
         position="top-right"
         toastOptions={{

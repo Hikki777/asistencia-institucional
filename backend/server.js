@@ -23,6 +23,7 @@ const { apiLimiter } = require('./middlewares/rateLimiter');
 
 // Importar rutas
 const qrRoutes = require('./routes/qr');
+const usuariosRoutes = require('./routes/usuarios');
 
 const authRoutes = require('./routes/auth');
 const alumnosRoutes = require('./routes/alumnos');
@@ -250,7 +251,7 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
 
 const excusasRoutes = require('./routes/excusas');
 app.use('/api/qr', qrRoutes);
-
+app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/alumnos', alumnosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/asistencias', asistenciasRoutes);

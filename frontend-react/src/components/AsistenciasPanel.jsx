@@ -910,7 +910,7 @@ export default function AsistenciasPanel() {
             </h3>
             {/* Botón para activar/desactivar el escáner QR */}
             <button
-              className={`ml-2 px-4 py-2 rounded-lg font-semibold transition-colors ${scannerActive ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+              className={`ml-2 px-4 py-2 rounded-lg font-semibold transition-colors ${scannerActive ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
               onClick={() => {
                 if (!scannerActive) {
                   startScanner();
@@ -934,9 +934,9 @@ export default function AsistenciasPanel() {
               </div>
               {scanMessage && (
                 <div className={`mt-4 text-center text-lg font-bold py-3 px-4 rounded-lg ${
-                  scanMessage.includes('✅') ? 'bg-green-100 text-green-800' :
-                  scanMessage.includes('❌') ? 'bg-red-100 text-red-800' :
-                  'bg-blue-100 text-blue-800'
+                  scanMessage.includes('✅') ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                  scanMessage.includes('❌') ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                  'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                 }`}>
                   {scanMessage}
                 </div>
@@ -970,8 +970,8 @@ export default function AsistenciasPanel() {
               </label>
               <div className={`w-full border rounded-lg px-3 py-2 font-semibold text-center ${
                 tipoPersona === 'alumno' 
-                  ? 'bg-blue-50 text-blue-700 border-blue-300' 
-                  : 'bg-green-50 text-green-700 border-green-300'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700' 
+                  : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700'
               }`}>
                 {tipoPersona === 'alumno' ? '🎓 Alumno' : '👨‍🏫 Docente'}
               </div>

@@ -66,6 +66,8 @@ class ReportService {
     doc.pipe(res);
 
     // Logo institucional (si existe)
+    // Desactivar logo temporalmente para debug
+    /*
     let logoPath = path.join(__dirname, '../../uploads/logos/logo.png');
     if (!fs.existsSync(logoPath)) {
       logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
@@ -83,6 +85,8 @@ class ReportService {
     } else {
       logger.debug('ℹ️ No se encontró logo institucional para PDF');
     }
+    */
+    let startY = 50;
 
     // Encabezado institucional (centrado al lado del logo)
     const headerX = 130;
@@ -273,6 +277,8 @@ class ReportService {
     });
 
     // Fila 1: Logo en A1 y Nombre de institución en C1
+    // Desactivar logo temporalmente para debug
+    /*
     let logoPath = path.join(__dirname, '../../uploads/logos/logo.png');
     if (!fs.existsSync(logoPath)) {
       logoPath = path.join(__dirname, '../../uploads/logos/logo_institucion.png');
@@ -296,6 +302,7 @@ class ReportService {
         logger.warn({ err: error }, '⚠️ No se pudo cargar el logo en Excel');
       }
     }
+    */
 
     // Nombre de la institución en C1:L1 (para no chocar con logo en A1)
     sheet.mergeCells('C1:L1');

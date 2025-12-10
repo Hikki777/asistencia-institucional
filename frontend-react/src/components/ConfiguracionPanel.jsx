@@ -160,7 +160,7 @@ export default function ConfiguracionPanel() {
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Nombre de la Institución *
                 </label>
                 <input
@@ -168,7 +168,7 @@ export default function ConfiguracionPanel() {
                   required
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="Ej: Colegio San José"
                 />
               </div>
@@ -326,14 +326,14 @@ export default function ConfiguracionPanel() {
             <button
               type="button"
               onClick={fetchInstitucion}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-900 dark:text-gray-100 font-bold py-3 px-6 rounded-lg transition"
+              className="bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200 font-bold py-3 px-6 rounded-lg transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition"
+              className="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-colors"
             >
               <Save size={20} />
               {saving ? 'Guardando...' : 'Guardar Cambios'}

@@ -193,28 +193,28 @@ export default function MetricsPanel() {
           title="Uptime"
           value={formatUptime(metrics.uptime.hours)}
           subtitle={`Desde ${new Date(metrics.uptime.startedAt).toLocaleString('es-ES')}`}
-          color="bg-green-100"
+          color="green"
         />
         <MetricCard
           icon={<Activity className="text-blue-600" size={24} />}
           title="Requests Totales"
           value={metrics.requests.total.toLocaleString()}
           subtitle={`Hit rate: ${metrics.cache.hitRate}`}
-          color="bg-blue-100"
+          color="blue"
         />
         <MetricCard
           icon={<Database className="text-purple-600" size={24} />}
           title="Base de Datos"
           value={`${metrics.database.alumnos + metrics.database.personal}`}
           subtitle={`${metrics.database.alumnos} alumnos, ${metrics.database.personal} personal`}
-          color="bg-purple-100"
+          color="purple"
         />
         <MetricCard
           icon={<Server className="text-orange-600" size={24} />}
           title="Memoria RSS"
           value={formatBytes(metrics.system.memoryUsage.rss)}
           subtitle={`Heap: ${formatBytes(metrics.system.memoryUsage.heapUsed)}`}
-          color="bg-orange-100"
+          color="orange"
         />
       </div>
 
@@ -343,7 +343,7 @@ export default function MetricsPanel() {
             <StatRow label="Asistencias Hoy" value={metrics.database.asistenciasHoy} />
             <StatRow label="QRs Vigentes" value={metrics.database.qrsVigentes} />
             <StatRow label="Queries Totales" value={metrics.database.queries} />
-            <StatRow label="Errores BD" value={metrics.database.errors} color="text-red-600" />
+            <StatRow label="Errores BD" value={metrics.database.errors} color="text-red-600 dark:text-red-400" />
           </div>
         </motion.div>
 
@@ -359,9 +359,9 @@ export default function MetricsPanel() {
           </h3>
           <div className="space-y-2">
             <StatRow label="Tamaño" value={metrics.cache.size} />
-            <StatRow label="Activos" value={metrics.cache.active} color="text-green-600" />
-            <StatRow label="Expirados" value={metrics.cache.expired} color="text-orange-600" />
-            <StatRow label="Hit Rate" value={metrics.cache.hitRate} color="text-blue-600" />
+            <StatRow label="Activos" value={metrics.cache.active} color="text-green-600 dark:text-green-400" />
+            <StatRow label="Expirados" value={metrics.cache.expired} color="text-orange-600 dark:text-orange-400" />
+            <StatRow label="Hit Rate" value={metrics.cache.hitRate} color="text-blue-600 dark:text-blue-400" />
           </div>
         </motion.div>
 
@@ -389,7 +389,7 @@ export default function MetricsPanel() {
       <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg">
         <div className="flex items-start gap-3">
           <CheckCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
-          <div className="text-sm text-blue-800">
+          <div className="text-sm text-blue-800 dark:text-blue-100">
             <p className="font-semibold mb-1">ℹ️ Información de Métricas</p>
             <ul className="space-y-1 ml-4 list-disc">
               <li>Las métricas se resetean al reiniciar el servidor</li>
@@ -433,14 +433,14 @@ function MetricCard({ icon, title, value, subtitle, color }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-900/50 p-6 border border-gray-100 dark:border-gray-700"
     >
-      <div className={`${color} w-12 h-12 rounded-lg flex items-center justify-center mb-3`}>
+      <div className={`bg-${color}-100 dark:bg-${color}-900/20 text-${color}-600 dark:text-${color}-400 w-12 h-12 rounded-lg flex items-center justify-center mb-3`}>
         {icon}
       </div>
       <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{title}</p>
-      <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
-      <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+      <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">{value}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{subtitle}</p>
     </motion.div>
   );
 }
@@ -449,7 +449,7 @@ function StatRow({ label, value, color = 'text-gray-900' }) {
   return (
     <div className="flex justify-between items-center py-1">
       <span className="text-sm text-gray-600 dark:text-gray-400">{label}:</span>
-      <span className={`text-sm font-semibold ${color}`}>{value}</span>
+      <span className={`text-sm font-semibold ${color === 'text-gray-900' ? 'text-gray-900 dark:text-gray-100' : color}`}>{value}</span>
     </div>
   );
 }

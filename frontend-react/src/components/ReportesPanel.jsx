@@ -132,7 +132,7 @@ export default function ReportesPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reportes de Asistencias</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Reportes de Asistencias</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">Genera reportes personalizados en PDF o Excel</p>
         </div>
         <div className="flex items-center gap-2">
@@ -146,18 +146,18 @@ export default function ReportesPanel() {
       >
         <div className="flex items-center gap-2 mb-4">
           <Filter className="text-blue-600 w-5 h-5" />
-          <h2 className="text-xl font-semibold text-gray-900">Filtros</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Filtros</h2>
         </div>
 
         {/* Rangos rápidos */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Rangos rápidos:
           </label>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => establecerRangoRapido(7)}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition"
+              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-lg text-sm transition"
             >
               Últimos 7 días
             </button>
@@ -185,7 +185,7 @@ export default function ReportesPanel() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Fecha Inicio */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Calendar className="inline w-4 h-4 mr-1" />
               Fecha Inicio
             </label>
@@ -193,7 +193,7 @@ export default function ReportesPanel() {
               type="date"
               value={filtros.fechaInicio}
               onChange={(e) => setFiltros({ ...filtros, fechaInicio: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
             />
           </div>
 
@@ -267,7 +267,7 @@ export default function ReportesPanel() {
           <div className="flex items-end">
             <button
               onClick={limpiarFiltros}
-              className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
+              className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition"
             >
               Limpiar Filtros
             </button>
@@ -277,7 +277,7 @@ export default function ReportesPanel() {
 
       {/* Botones de descarga */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
           <Download className="inline w-5 h-5 mr-2" />
           Generar Reporte
         </h2>
@@ -338,7 +338,7 @@ export default function ReportesPanel() {
           </div>
           <div className="ml-3">
             <h3 className="text-sm font-medium text-blue-800">Información sobre reportes</h3>
-            <div className="mt-2 text-sm text-blue-700">
+            <div className="mt-2 text-sm text-blue-700 dark:text-blue-200">
               <ul className="list-disc list-inside space-y-1">
                 <li><strong>PDF:</strong> Formato profesional con datos institucionales, filtros aplicados, estadísticas completas y tabla detallada</li>
                 <li><strong>Excel:</strong> Dos hojas: "Información" (datos institucionales + resumen) y "Asistencias" (datos detallados)</li>

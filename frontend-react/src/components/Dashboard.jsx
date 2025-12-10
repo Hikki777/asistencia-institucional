@@ -134,10 +134,10 @@ export default function Dashboard() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-700 dark:text-gray-400 text-sm font-semibold">{label}</p>
+          <p className="text-gray-700 dark:text-gray-300 text-sm font-semibold">{label}</p>
           <p className={`text-3xl font-bold text-${color}-600 dark:text-${color}-400 mt-2`}>{value}</p>
         </div>
-        <Icon className={`text-${color}-600 opacity-20`} size={48} />
+        <Icon className={`text-${color}-600 dark:text-${color}-500 opacity-40 dark:opacity-30`} size={48} />
       </div>
     </div>
   );
@@ -238,8 +238,8 @@ export default function Dashboard() {
       <div
         className={`rounded-lg p-4 flex items-center justify-between gap-3 ${
           isNetworkOnline && stats.status !== "error"
-            ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
-            : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+            ? "bg-green-100 dark:bg-emerald-900/40 text-green-800 dark:text-emerald-200 border border-green-200 dark:border-emerald-800"
+            : "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800"
         }`}
       >
         <div className="flex items-center gap-3">
@@ -267,7 +267,7 @@ export default function Dashboard() {
              <span>Sincronizando {pendingSync} registros...</span>
            </div>
         ) : (
-           <div className="flex items-center gap-2 bg-green-200/50 px-3 py-1 rounded-full text-sm font-bold">
+           <div className="flex items-center gap-2 bg-green-200/50 dark:bg-emerald-800/50 px-3 py-1 rounded-full text-sm font-bold text-green-800 dark:text-emerald-100">
              <Wifi size={18} />
              <span>Conectado</span>
            </div>

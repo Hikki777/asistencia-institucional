@@ -8,7 +8,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 // CORRECCIÓN AUTOMÁTICA: Si el usuario pegó "DATABASE_URL=..." en el valor
 if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('DATABASE_URL=')) {
   process.env.DATABASE_URL = process.env.DATABASE_URL.replace('DATABASE_URL=', '');
-  console.log('⚠️ Se corrigió automáticamente la variable DATABASE_URL malformada');
+  console.log('[WARNING] Se corrigió automáticamente la variable DATABASE_URL malformada');
 }
 
 // Importar logger PRIMERO
@@ -42,7 +42,7 @@ const checkEnv = () => {
     logger.fatal({ missing }, '❌ Faltan variables de entorno críticas');
     process.exit(1);
   }
-  logger.info({ variables: required }, '✅ Variables de entorno verificadas');
+  logger.info({ variables: required }, '[OK] Variables de entorno verificadas');
 };
 
 checkEnv();
@@ -88,7 +88,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      logger.warn({ origin, allowedOrigins }, '⚠️ CORS bloqueó origen no permitido');
+      logger.warn({ origin, allowedOrigins }, '[CORS] CORS bloqueo origen no permitido');
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -149,7 +149,7 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res, next) => {
   // Si existe el frontend, express.static lo servirá antes.
   // Si no, respondemos esto para evitar 404 y que Railway no mate el servicio.
-  res.send('Backend de Sistema de Asistencia Institucional - Funcionando 🚀');
+  res.send('Backend de Sistema de Asistencia Institucional - Funcionando [OK]');
 });
 
 // ============ RUTAS DE INICIALIZACIÓN ============
@@ -235,7 +235,7 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
       }
     });
 
-    logger.info({ institucion: nombre, adminEmail: admin.email }, '✅ Institución inicializada exitosamente');
+    logger.info({ institucion: nombre, adminEmail: admin.email }, '[OK] Institucion inicializada exitosamente');
     return res.status(201).json({
       success: true,
       institucion,
@@ -243,7 +243,7 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
       message: 'Institución y admin creados exitosamente'
     });
   } catch (error) {
-    logger.error({ err: error, body: req.body }, '❌ Error al inicializar institución');
+    logger.error({ err: error, body: req.body }, '[ERROR] Error al inicializar institucion');
     res.status(500).json({ error: error.message });
   }
 });
@@ -273,7 +273,7 @@ app.use((err, req, res, next) => {
     requestId: req.id,
     url: req.url,
     method: req.method
-  }, '❌ Error no capturado en la aplicación');
+  }, '[ERROR] Error no capturado en la aplicacion');
   
   res.status(500).json({
     error: 'Internal Server Error',
@@ -287,15 +287,15 @@ app.use((err, req, res, next) => {
 async function iniciar() {
   try {
     // Conectar BD
-    logger.info('🔌 Probando conexión a base de datos...');
+    logger.info('[DATABASE] Probando conexión a base de datos...');
     
     // DEBUG: Verificar formato de URL (sin revelar credenciales)
     const dbUrl = process.env.DATABASE_URL || '';
     const maskedUrl = dbUrl.length > 15 ? `${dbUrl.substring(0, 15)}...` : 'TOO_SHORT';
-    logger.info({ urlPrefix: maskedUrl, length: dbUrl.length }, '🔍 Debug DATABASE_URL');
+    logger.info({ urlPrefix: maskedUrl, length: dbUrl.length }, '[DEBUG] Debug DATABASE_URL');
 
     await prisma.$queryRaw`SELECT 1`;
-    logger.info('✅ Base de datos conectada correctamente');
+    logger.info('[OK] Base de datos conectada correctamente');
 
 
 
@@ -307,25 +307,25 @@ async function iniciar() {
           databaseUrl: process.env.DATABASE_URL
         });
         
-        logger.info(`📋 API Health: http://localhost:${PORT}/api/health`);
-        logger.info(`📝 API Docs: http://localhost:${PORT}/api-docs`);
+        logger.info(`[API] Health: http://localhost:${PORT}/api/health`);
+        logger.info(`[API] Docs: http://localhost:${PORT}/api-docs`);
         
         resolve(server);
       });
       
       server.on('error', (err) => {
-        logger.fatal({ err }, '❌ Error al iniciar servidor');
+        logger.fatal({ err }, '[FATAL] Error al iniciar servidor');
         reject(err);
       });
     });
   } catch (error) {
-    logger.fatal({ err: error }, '❌ Error crítico durante el inicio');
+    logger.fatal({ err: error }, '[FATAL] Error critico durante el inicio');
     process.exit(1);
   }
 }
 
 iniciar().catch(err => {
-  logger.fatal({ err }, '❌ Fallo al iniciar el servidor');
+  logger.fatal({ err }, '[FATAL] Fallo al iniciar el servidor');
   process.exit(1);
 });
 

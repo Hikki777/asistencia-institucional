@@ -17,25 +17,26 @@ router.use(verifyJWT);
 router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
   try {
     const filtros = req.body;
-    
-    logger.info({ filtros }, '📄 Generando reporte PDF');
-    
+
+    logger.info({ filtros }, '[REPORT] Generando reporte PDF');
+
     // Generar Buffer
     const data = await reportService.generarReportePDF(filtros);
-    
+
     // Enviar JSON Data
     res.json(data);
   } catch (error) {
-    console.error("🔥 CRITICAL ERROR REPORT PDF:", error);
-    logger.error({ err: error, msg: error.message, stack: error.stack }, '❌ Error generando reporte PDF');
-    res.status(500).json({ 
+    logger.error(
+      { err: error, msg: error.message, stack: error.stack },
+      '❌ Error generando reporte PDF'
+    );
+    res.status(500).json({
       error: error.message,
       stack: error.stack,
-      details: error.toString()
+      details: error.toString(),
     });
   }
 });
-
 
 /**
  * POST /api/reportes/excel
@@ -44,24 +45,24 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
 router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => {
   try {
     const filtros = req.body;
-    
-    logger.info({ filtros }, '📊 Generando reporte Excel');
-    
-    const data = await reportService.generarReporteExcel(filtros);
-    
-    res.json(data);
 
+    logger.info({ filtros }, '[REPORT] Generando reporte Excel');
+
+    const data = await reportService.generarReporteExcel(filtros);
+
+    res.json(data);
   } catch (error) {
-    console.error("🔥 CRITICAL ERROR REPORT EXCEL:", error);
-    logger.error({ err: error, msg: error.message, stack: error.stack }, '❌ Error generando reporte Excel');
-    res.status(500).json({ 
+    logger.error(
+      { err: error, msg: error.message, stack: error.stack },
+      '❌ Error generando reporte Excel'
+    );
+    res.status(500).json({
       error: error.message,
       stack: error.stack,
-      details: error.toString()
+      details: error.toString(),
     });
   }
 });
-
 
 /**
  * GET /api/reportes/alumno/:id/pdf
@@ -70,19 +71,20 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
 router.get('/alumno/:id/pdf', async (req, res) => {
   try {
     const alumnoId = req.params.id;
-    
-    logger.info({ alumnoId }, '📄 Generando reporte PDF para alumno');
-    
-    const data = await reportService.generarReporteAlumno(alumnoId, 'pdf');
-    
-    res.json(data);
 
+    logger.info({ alumnoId }, '[REPORT] Generando reporte PDF para alumno');
+
+    const data = await reportService.generarReporteAlumno(alumnoId, 'pdf');
+
+    res.json(data);
   } catch (error) {
-    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte PDF de alumno');
+    logger.error(
+      { err: error, alumnoId: req.params.id },
+      '❌ Error generando reporte PDF de alumno'
+    );
     res.status(500).json({ error: error.message });
   }
 });
-
 
 /**
  * GET /api/reportes/alumno/:id/excel
@@ -91,19 +93,20 @@ router.get('/alumno/:id/pdf', async (req, res) => {
 router.get('/alumno/:id/excel', async (req, res) => {
   try {
     const alumnoId = req.params.id;
-    
-    logger.info({ alumnoId }, '📊 Generando reporte Excel para alumno');
-    
-    const data = await reportService.generarReporteAlumno(alumnoId, 'excel');
-    
-    res.json(data);
 
+    logger.info({ alumnoId }, '[REPORT] Generando reporte Excel para alumno');
+
+    const data = await reportService.generarReporteAlumno(alumnoId, 'excel');
+
+    res.json(data);
   } catch (error) {
-    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error generando reporte Excel de alumno');
+    logger.error(
+      { err: error, alumnoId: req.params.id },
+      '❌ Error generando reporte Excel de alumno'
+    );
     res.status(500).json({ error: error.message });
   }
 });
-
 
 /**
  * POST /api/reportes/limpiar
@@ -115,9 +118,9 @@ router.post('/limpiar', async (req, res) => {
     if (req.user.rol !== 'admin') {
       return res.status(403).json({ error: 'No autorizado' });
     }
-    
+
     await reportService.limpiarArchivosTemporales();
-    
+
     res.json({ success: true, message: 'Archivos temporales limpiados' });
   } catch (error) {
     logger.error({ err: error, userId: req.user.id }, '❌ Error limpiando archivos temporales');

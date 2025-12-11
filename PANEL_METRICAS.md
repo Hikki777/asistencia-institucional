@@ -317,6 +317,6 @@ El panel incluye:
 
 ---
 
-**Última actualización**: 12 de noviembre, 2025  
+**Última actualización**: 10 de diciembre, 2025  
 **Versión**: 1.0.0  
 **Estado**: Producción

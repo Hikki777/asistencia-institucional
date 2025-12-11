@@ -8,7 +8,7 @@ const prisma = require('./backend/prismaClient');
 
 const commands = {
   'list': async () => {
-    console.log('\n📊 === DATOS DEL SISTEMA ===\n');
+    console.log('\n[SYSTEM] === DATOS DEL SISTEMA ===\n');
     
     const alumnos = await prisma.alumno.count();
     const personal = await prisma.personal.count();
@@ -16,16 +16,16 @@ const commands = {
     const qrs = await prisma.codigoQr.count();
     const usuarios = await prisma.usuario.count();
     
-    console.log(`👨‍🎓 Alumnos:      ${alumnos}`);
-    console.log(`👨‍🏫 Personal:     ${personal}`);
-    console.log(`📋 Asistencias:  ${asistencias}`);
-    console.log(`🔲 Códigos QR:   ${qrs}`);
-    console.log(`👤 Usuarios:     ${usuarios}`);
+    console.log(`[ALUMNOS] Alumnos:      ${alumnos}`);
+    console.log(`[PERSONAL] Personal:     ${personal}`);
+    console.log(`[ASISTENCIAS] Asistencias:  ${asistencias}`);
+    console.log(`[QR] Codigos QR:   ${qrs}`);
+    console.log(`[USERS] Usuarios:     ${usuarios}`);
     
     const institucion = await prisma.institucion.findFirst();
     if (institucion) {
-      console.log(`\n🏫 Institución: ${institucion.nombre}`);
-      console.log(`   Inicializada: ${institucion.inicializado ? '✅' : '❌'}`);
+      console.log(`\n[INSTITUCION] Institucion: ${institucion.nombre}`);
+      console.log(`   Inicializada: ${institucion.inicializado ? '[OK]' : '[NO]'}`);
     }
   },
   
@@ -35,7 +35,7 @@ const commands = {
       orderBy: { carnet: 'asc' }
     });
     
-    console.log('\n👨‍🎓 === ALUMNOS (primeros 20) ===\n');
+    console.log('\n[ALUMNOS] === ALUMNOS (primeros 20) ===\n');
     alumnos.forEach(a => {
       console.log(`   ${a.carnet}: ${a.nombres} ${a.apellidos} - ${a.grado} (${a.jornada})`);
     });
@@ -47,7 +47,7 @@ const commands = {
       orderBy: { carnet: 'asc' }
     });
     
-    console.log('\n👨‍🏫 === PERSONAL ===\n');
+    console.log('\n[PERSONAL] === PERSONAL ===\n');
     personal.forEach(p => {
       console.log(`   ${p.carnet}: ${p.nombres} ${p.apellidos} - ${p.cargo} (${p.jornada})`);
     });
@@ -71,7 +71,7 @@ const commands = {
       orderBy: { timestamp: 'desc' }
     });
     
-    console.log(`\n📋 === ASISTENCIAS HOY (${asistencias.length}) ===\n`);
+    console.log(`\n[ASISTENCIAS] === ASISTENCIAS HOY (${asistencias.length}) ===\n`);
     
     const entradas = asistencias.filter(a => a.tipo_evento === 'entrada').length;
     const salidas = asistencias.filter(a => a.tipo_evento === 'salida').length;
@@ -81,12 +81,12 @@ const commands = {
     
     asistencias.slice(0, 10).forEach(a => {
       const persona = a.alumno || a.personal;
-      const tipo = a.tipo_evento === 'entrada' ? '➡️ ' : '⬅️ ';
+      const tipo = a.tipo_evento === 'entrada' ? '>> ' : '<< ';
       console.log(`   ${tipo} ${persona.carnet}: ${persona.nombres} ${persona.apellidos} - ${a.timestamp.toLocaleTimeString('es-ES')}`);
     });
     
     if (asistencias.length > 10) {
-      console.log(`   ... y ${asistencias.length - 10} más`);
+      console.log(`   ... y ${asistencias.length - 10} mas`);
     }
   },
   
@@ -98,7 +98,7 @@ const commands = {
       }
     });
     
-    console.log('\n🔲 === CÓDIGOS QR ===\n');
+    console.log('\n[QR] === CODIGOS QR ===\n');
     
     const vigentes = qrs.filter(q => q.vigente).length;
     const expirados = qrs.filter(q => !q.vigente).length;
@@ -109,17 +109,17 @@ const commands = {
   },
   
   'health': async () => {
-    console.log('\n🏥 === SALUD DEL SISTEMA ===\n');
+    console.log('\n[HEALTH] === SALUD DEL SISTEMA ===\n');
     
     try {
       await prisma.$queryRaw`SELECT 1`;
-      console.log('   Base de datos: ✅ OK');
+      console.log('   Base de datos: [OK]');
       
       const alumnos = await prisma.alumno.count();
       const personal = await prisma.personal.count();
       const asistencias = await prisma.asistencia.count();
       
-      console.log('   Tablas verificadas: ✅ OK');
+      console.log('   Tablas verificadas: [OK]');
       console.log(`   Registros totales: ${alumnos + personal + asistencias}`);
       
       const qrsSinArchivo = await prisma.codigoQr.findMany({
@@ -133,22 +133,22 @@ const commands = {
       });
       
       if (qrsSinArchivo.length > 0) {
-        console.log(`   ⚠️  QRs sin archivo: ${qrsSinArchivo.length}`);
+        console.log(`   [WARN] QRs sin archivo: ${qrsSinArchivo.length}`);
       } else {
-        console.log('   QRs: ✅ OK');
+        console.log('   QRs: [OK]');
       }
       
-      console.log('\n✅ Sistema operativo');
+      console.log('\n[OK] Sistema operativo');
     } catch (error) {
-      console.log('   ❌ Error:', error.message);
+      console.log('   [ERROR] Error:', error.message);
     }
   },
   
   'help': () => {
     console.log(`
-╔══════════════════════════════════════════════════════════════╗
-║  🛠️  Utilidades de Base de Datos                             ║
-╚══════════════════════════════════════════════════════════════╝
+================================================================================
+  [UTILS] Utilidades de Base de Datos
+================================================================================
 
 Uso: node utils.js <comando>
 
@@ -157,8 +157,8 @@ Comandos disponibles:
   list              Resumen de datos del sistema
   alumnos           Listar alumnos (primeros 20)
   personal          Listar personal completo
-  asistencias-hoy   Asistencias del día actual
-  qrs               Estado de códigos QR
+  asistencias-hoy   Asistencias del dia actual
+  qrs               Estado de codigos QR
   health            Verificar salud del sistema
   help              Mostrar esta ayuda
 

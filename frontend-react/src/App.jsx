@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { Menu, X, LogOut, Home, Settings, BarChart3, Wrench, User, Clock, Users, FileText, Activity } from 'lucide-react';
+import { Menu, X, LogOut, Home, Settings, BarChart3, Wrench, User, Clock, Users, FileText, Activity, ClipboardList } from 'lucide-react';
 import ThemeToggle from './components/ThemeToggle';
 import { authAPI } from './api/endpoints';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -12,6 +12,7 @@ import ConfiguracionPanel from './components/ConfiguracionPanel';
 
 import ReportesPanel from './components/ReportesPanel';
 import MetricsPanel from './components/MetricsPanel';
+import ExcusasPanel from './components/ExcusasPanel';
 
 import SetupWizard from './components/SetupWizard';
 import LoginPage from './pages/LoginPage';
@@ -187,6 +188,7 @@ function App() {
             <NavLink to="/alumnos" icon={BarChart3} label="Alumnos" />
             <NavLink to="/docentes" icon={Users} label="Personal" />
             <NavLink to="/asistencias" icon={Clock} label="Asistencias" />
+            <NavLink to="/excusas" icon={ClipboardList} label="Excusas" />
             <NavLink to="/reportes" icon={FileText} label="Reportes" />
             <NavLink to="/metricas" icon={Activity} label="Métricas" />
             <NavLink to="/configuracion" icon={Settings} label="Configuración" />
@@ -251,6 +253,7 @@ function App() {
               <Route path="/alumnos" element={isLoggedIn ? <AlumnosPanel /> : <Navigate to="/login" />} />
               <Route path="/docentes" element={isLoggedIn ? <PersonalPanel /> : <Navigate to="/login" />} />
               <Route path="/asistencias" element={isLoggedIn ? <AsistenciasPanel /> : <Navigate to="/login" />} />
+              <Route path="/excusas" element={isLoggedIn ? <ExcusasPanel /> : <Navigate to="/login" />} />
               <Route path="/reportes" element={isLoggedIn ? <ReportesPanel /> : <Navigate to="/login" />} />
               <Route path="/metricas" element={isLoggedIn ? <MetricsPanel /> : <Navigate to="/login" />} />
                 <Route path="/configuracion" element={isLoggedIn ? <ConfiguracionPanel /> : <Navigate to="/login" />} />

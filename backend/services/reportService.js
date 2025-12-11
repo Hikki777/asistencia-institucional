@@ -8,7 +8,7 @@ class ReportService {
   async obtenerDatosReporte(filtros = {}) {
     const { fechaInicio, fechaFin, personaTipo, grado, tipoEvento } = filtros;
 
-    logger.info({ filtros }, '📄 Obteniendo datos para reporte');
+    logger.info({ filtros }, '[REPORT] Obteniendo datos para reporte');
     
     // Construir query con filtros
     const where = this.construirFiltros(filtros);
@@ -44,7 +44,7 @@ class ReportService {
     // Estadísticas
     const stats = this.calcularEstadisticas(asistencias);
 
-    logger.info({ count: asistencias.length }, `✅ Datos obtenidos exitosamente`);
+    logger.info({ count: asistencias.length }, `[OK] Datos obtenidos exitosamente`);
 
     return { 
       asistencias, 
@@ -59,16 +59,12 @@ class ReportService {
     };
   }
 
-  /**
-   * Alias detallado para compatibilidad
-   */
+  // Alias para mantener compatibilidad con frontend
   async generarReportePDF(filtros = {}) {
     return this.obtenerDatosReporte(filtros);
   }
 
-  /**
-   * Alias detallado para compatibilidad
-   */
+  // Alias para mantener compatibilidad con frontend
   async generarReporteExcel(filtros = {}) {
     return this.obtenerDatosReporte(filtros);
   }
@@ -152,8 +148,7 @@ class ReportService {
     };
   }
 
-  // Deprecated cleanup
-  async limpiarArchivosTemporales() {}
+
 }
 
 module.exports = new ReportService();

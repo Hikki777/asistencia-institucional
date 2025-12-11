@@ -45,3 +45,30 @@ export const docentesAPI = {
   update: (id, data) => client.put(`/docentes/${id}`, data),
   delete: (id) => client.delete(`/docentes/${id}`),
 };
+
+export const reportesAPI = {
+  pdf: (filtros) => client.post('/reportes/pdf', filtros, { responseType: 'blob' }),
+  excel: (filtros) => client.post('/reportes/excel', filtros, { responseType: 'blob' }),
+  alumno: {
+    pdf: (id) => client.get(`/reportes/alumno/${id}/pdf`, { responseType: 'blob' }),
+    excel: (id) => client.get(`/reportes/alumno/${id}/excel`, { responseType: 'blob' })
+  }
+};
+
+export const metricsAPI = {
+  get: () => client.get('/metrics'),
+  reset: () => client.post('/metrics/reset')
+};
+
+export const usuariosAPI = {
+  list: () => client.get('/usuarios'),
+  create: (data) => client.post('/usuarios', data),
+  delete: (id) => client.delete(`/usuarios/${id}`)
+};
+
+export const excusasAPI = {
+  list: (params) => client.get('/excusas', { params }),
+  create: (data) => client.post('/excusas', data),
+  update: (id, data) => client.put(`/excusas/${id}`, data),
+  delete: (id) => client.delete(`/excusas/${id}`)
+};

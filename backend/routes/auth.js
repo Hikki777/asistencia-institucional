@@ -23,12 +23,12 @@ router.post('/login', loginLimiter, validarLogin, async (req, res) => {
 
     const ok = await bcrypt.compare(password, user.hash_pass);
     if (!ok) {
-      logger.warn({ email, userId: user.id }, '⚠️ Intento de login con contraseña incorrecta');
+      logger.warn({ email, userId: user.id }, '[WARNING] Intento de login con contraseña incorrecta');
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
     const token = signJWT(user);
-    logger.info({ userId: user.id, email, rol: user.rol }, '✅ Login exitoso');
+    logger.info({ userId: user.id, email, rol: user.rol }, '[OK] Login exitoso');
     
     return res.json({
       accessToken: token,
@@ -48,7 +48,7 @@ router.get('/me', verifyJWT, async (req, res) => {
       select: { id: true, email: true, rol: true, activo: true, creado_en: true }
     });
     if (!user) {
-      logger.warn({ userId: req.user.id }, '⚠️ Usuario no encontrado en /me');
+      logger.warn({ userId: req.user.id }, '[WARNING] Usuario no encontrado en /me');
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
     return res.json(user);

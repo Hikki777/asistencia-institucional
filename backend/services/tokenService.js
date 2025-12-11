@@ -47,7 +47,7 @@ function validarToken(tokenB64) {
       .digest('hex');
     
     if (expected !== signature) {
-      logger.warn({ tokenPreview: tokenB64.substring(0, 20) }, '⚠️ Firma de token inválida');
+      logger.warn({ tokenPreview: tokenB64.substring(0, 20) }, '[WARNING] Firma de token inválida');
       return null;
     }
     

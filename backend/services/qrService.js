@@ -86,7 +86,7 @@ async function generarQrConLogo(token, logoFuente, filename, size = 600) {
     const publicId = path.parse(filename).name;
     const result = await cloudinaryService.uploadBuffer(finalBuffer, 'qrs', publicId);
 
-    logger.debug({ url: result.secure_url }, '✅ QR generado y subido a Cloudinary');
+    logger.debug({ url: result.secure_url }, '[OK] QR generado y subido a Cloudinary');
     return result.secure_url;
   } catch (error) {
     logger.error({ err: error, filename }, '❌ Error generando QR con Cloudinary');
@@ -182,7 +182,7 @@ async function guardarLogo(base64Data, filename = 'logo.png') {
     // Subir a carpeta 'logos'
     const result = await cloudinaryService.uploadBuffer(buffer, 'logos', publicId);
     
-    logger.info({ url: result.secure_url }, '✅ Logo subido a Cloudinary');
+    logger.info({ url: result.secure_url }, '[OK] Logo subido a Cloudinary');
     return result.secure_url;
   } catch (error) {
     logger.error({ err: error }, '❌ Error guardando logo');

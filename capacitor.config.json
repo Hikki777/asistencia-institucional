@@ -1,8 +1,0 @@
-{
-  "appId": "com.asistencias.app",
-  "appName": "HikariOpen",
-  "webDir": "frontend-react/dist",
-  "server": {
-    "androidScheme": "https"
-  }
-}

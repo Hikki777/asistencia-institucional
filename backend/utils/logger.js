@@ -186,8 +186,8 @@ const logSystemStart = (config) => {
     port: config.port,
     nodeVersion: process.version,
     environment: process.env.NODE_ENV,
-    database: config.databaseUrl ? '✓ Connected' : '✗ Not configured'
-  }, '🚀 Sistema iniciado correctamente');
+    database: config.databaseUrl ? '[OK] Connected' : '[ERROR] Not configured'
+  }, '[SYSTEM] Sistema iniciado correctamente');
 };
 
 /**
@@ -195,7 +195,7 @@ const logSystemStart = (config) => {
  */
 const setupGlobalErrorHandlers = () => {
   process.on('uncaughtException', (error) => {
-    logger.fatal({ err: error }, '💥 Uncaught Exception - El proceso se detendrá');
+    logger.fatal({ err: error }, '[FATAL] Uncaught Exception - El proceso se detendrá');
     process.exit(1);
   });
 
@@ -203,15 +203,15 @@ const setupGlobalErrorHandlers = () => {
     logger.error({
       err: reason,
       promise: promise
-    }, '⚠️ Unhandled Promise Rejection');
+    }, '[WARNING] Unhandled Promise Rejection');
   });
 
   process.on('SIGTERM', () => {
-    logger.info('👋 SIGTERM recibido, cerrando servidor gracefully...');
+    logger.info('[SHUTDOWN] SIGTERM recibido, cerrando servidor gracefully...');
   });
 
   process.on('SIGINT', () => {
-    logger.info('👋 SIGINT recibido, cerrando servidor...');
+    logger.info('[SHUTDOWN] SIGINT recibido, cerrando servidor...');
   });
 };
 

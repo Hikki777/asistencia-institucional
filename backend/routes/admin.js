@@ -19,7 +19,7 @@ router.post('/reset-factory', async (req, res) => {
     // Verificación adicional de seguridad (confirmar contraseña del admin actual)
     // TODO: Implementar validación de password si es crítico
 
-    logger.warn({ user: req.user.id }, '⚠️ INICIANDO RESET DE FÁBRICA');
+    logger.warn({ user: req.user.id }, '[WARNING] INICIANDO RESET DE FÁBRICA');
 
     await prisma.$transaction([
       // 1. Borrar datos transaccionales
@@ -37,11 +37,11 @@ router.post('/reset-factory', async (req, res) => {
       // prisma.institucion.update({ where: { id: 1 }, data: { inicializado: false, ... } }) 
     ]);
 
-    logger.info('✅ Sistema restablecido de fábrica exitosamente');
+    logger.info('[SUCCESS] Sistema restablecido de fábrica exitosamente');
     res.json({ success: true, message: 'Sistema restablecido correctamente' });
 
   } catch (error) {
-    logger.error({ err: error }, '❌ Error en Factory Reset');
+    logger.error({ err: error }, '[ERROR] Error en Factory Reset');
     res.status(500).json({ error: error.message });
   }
 });

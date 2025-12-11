@@ -167,12 +167,12 @@ const qrService = require('../services/qrService');
     // Generar QR automáticamente
     try {
         await qrService.generarQrParaPersona('alumno', alumno.id);
-        logger.info({ alumnoId: alumno.id }, '✅ QR generado automáticamente');
+        logger.info({ alumnoId: alumno.id }, '[OK] QR generado automáticamente');
     } catch (qrError) {
         logger.error({ err: qrError, alumnoId: alumno.id }, '⚠️ Falló generación automática de QR');
     }
 
-    logger.info({ alumnoId: alumno.id, carnet, nombres, apellidos }, '✅ Alumno creado');
+    logger.info({ alumnoId: alumno.id, carnet, nombres, apellidos }, '[OK] Alumno creado');
     res.status(201).json(alumno);
   } catch (error) {
     logger.error({ err: error, body: req.body }, '❌ Error al crear alumno');
@@ -226,7 +226,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/alumnos'), validarActualizarA
       }
     });
 
-    logger.info({ alumnoId: id, campos: Object.keys(req.body) }, '✅ Alumno actualizado');
+    logger.info({ alumnoId: id, campos: Object.keys(req.body) }, '[OK] Alumno actualizado');
     res.json(alumno);
   } catch (error) {
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al actualizar alumno');
@@ -257,7 +257,7 @@ router.delete('/:id', invalidateCacheMiddleware('/api/alumnos'), async (req, res
       }
     });
 
-    logger.info({ alumnoId: id }, '✅ Alumno inactivado');
+    logger.info({ alumnoId: id }, '[OK] Alumno inactivado');
     res.json({ success: true, message: 'Alumno inactivado' });
   } catch (error) {
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al inactivar alumno');
@@ -293,7 +293,7 @@ router.post('/:id/foto', upload.single('foto'), async (req, res) => {
       data: { foto_path: result.secure_url }
     });
 
-    logger.info({ alumnoId: id, url: result.secure_url }, '✅ Foto de alumno actualizada');
+    logger.info({ alumnoId: id, url: result.secure_url }, '[OK] Foto de alumno actualizada');
     res.json({ success: true, url: result.secure_url });
   } catch (error) {
     logger.error({ err: error, alumnoId: req.params.id }, '❌ Error subiendo foto');

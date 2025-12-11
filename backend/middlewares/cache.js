@@ -40,11 +40,11 @@ class CacheManager {
     // Verificar expiración
     if (Date.now() > item.expiry) {
       this.cache.delete(key);
-      logger.debug({ key }, '🗑️ Cache expirado y eliminado');
+      logger.debug({ key }, '[CACHE] Cache expirado y eliminado');
       return null;
     }
 
-    logger.debug({ key, age: Date.now() - item.timestamp }, '✅ Cache hit');
+    logger.debug({ key, age: Date.now() - item.timestamp }, '[CACHE] Cache hit');
     return item.data;
   }
 
@@ -58,7 +58,7 @@ class CacheManager {
       expiry: Date.now() + ttl
     };
     this.cache.set(key, item);
-    logger.debug({ key, ttl, size: this.cache.size }, '💾 Valor guardado en cache');
+    logger.debug({ key, ttl, size: this.cache.size }, '[CACHE] Valor guardado en cache');
   }
 
   /**
@@ -72,7 +72,7 @@ class CacheManager {
         count++;
       }
     }
-    logger.info({ pattern, count }, '🗑️ Cache invalidado por patrón');
+    logger.info({ pattern, count }, '[CACHE] Cache invalidado por patrón');
     return count;
   }
 
@@ -82,7 +82,7 @@ class CacheManager {
   clear() {
     const size = this.cache.size;
     this.cache.clear();
-    logger.info({ size }, '🗑️ Cache completamente limpiado');
+    logger.info({ size }, '[CACHE] Cache completamente limpiado');
   }
 
   /**
@@ -123,7 +123,7 @@ class CacheManager {
 
     const cleaned = before - this.cache.size;
     if (cleaned > 0) {
-      logger.debug({ cleaned, remaining: this.cache.size }, '🧹 Limpieza automática de cache');
+      logger.debug({ cleaned, remaining: this.cache.size }, '[CLEANUP] Limpieza automática de cache');
     }
   }
 }

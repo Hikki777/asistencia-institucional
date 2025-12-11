@@ -33,11 +33,11 @@ const requestLogger = (req, res, next) => {
     if (res.statusCode >= 500) {
       logger.error(logData, `❌ ${req.method} ${req.url} - ${res.statusCode}`);
     } else if (res.statusCode >= 400) {
-      logger.warn(logData, `⚠️ ${req.method} ${req.url} - ${res.statusCode}`);
+      logger.warn(logData, `[WARNING] ${req.method} ${req.url} - ${res.statusCode}`);
     } else if (res.statusCode >= 300) {
-      logger.info(logData, `🔄 ${req.method} ${req.url} - ${res.statusCode}`);
+      logger.info(logData, `[HTTP] ${req.method} ${req.url} - ${res.statusCode}`);
     } else {
-      logger.info(logData, `✅ ${req.method} ${req.url} - ${res.statusCode}`);
+      logger.info(logData, `[OK] ${req.method} ${req.url} - ${res.statusCode}`);
     }
 
     return res.send(data);
@@ -50,7 +50,7 @@ const requestLogger = (req, res, next) => {
     url: req.url,
     body: req.method !== 'GET' ? sanitizeBody(req.body) : undefined,
     query: req.query
-  }, `📥 Incoming ${req.method} request`);
+  }, `[REQUEST] Incoming ${req.method} request`);
 
   next();
 };

@@ -18,7 +18,7 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
   try {
     const { alumno_id, personal_id, tipo_evento, origen, dispositivo, observaciones, timestamp } = req.body;
 
-    logger.info({ alumno_id, personal_id, tipo_evento, origen }, '📥 Backend recibió registro de asistencia');
+    logger.info({ alumno_id, personal_id, tipo_evento, origen }, '[REQUEST] Backend recibió registro de asistencia');
 
     // Validar que al menos uno de los IDs esté presente y tenga valor
     const hasAlumnoId = alumno_id !== undefined && alumno_id !== null && alumno_id !== '';
@@ -125,7 +125,7 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
       }
     });
 
-    logger.info({ tipo_evento, carnet: persona.carnet, persona_tipo }, `✅ Asistencia registrada: ${tipo_evento}`);
+    logger.info({ tipo_evento, carnet: persona.carnet, persona_tipo }, `[OK] Asistencia registrada: ${tipo_evento}`);
     res.status(201).json(asistencia);
   } catch (error) {
     logger.error({ err: error, body: req.body }, '❌ Error registrando asistencia');
@@ -363,7 +363,7 @@ router.delete('/:id', async (req, res) => {
       where: { id }
     });
 
-    logger.info({ asistenciaId: id }, '✅ Asistencia eliminada');
+    logger.info({ asistenciaId: id }, '[OK] Asistencia eliminada');
     res.json({ success: true, message: 'Asistencia eliminada' });
   } catch (error) {
     logger.error({ err: error, asistenciaId: req.params.id }, '❌ Error eliminando asistencia');

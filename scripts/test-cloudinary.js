@@ -10,24 +10,24 @@ cloudinary.config(config);
 
 async function testConnection() {
   try {
-    console.log('Testing Cloudinary connection...');
+    console.log('[TEST] Testing Cloudinary connection...');
     const result = await cloudinary.api.ping();
-    console.log('✅ Connection successful!', result);
+    console.log('[OK] Connection successful!', result);
     
     // Test upload
-    console.log('Testing upload...');
+    console.log('[TEST] Testing upload...');
     const uploadResult = await cloudinary.uploader.upload('https://cloudinary-res.cloudinary.com/image/upload/cloudinary_logo.png', {
       public_id: 'test_connection_logo',
       tags: ['test']
     });
-    console.log('✅ Upload successful!', uploadResult.secure_url);
+    console.log('[OK] Upload successful!', uploadResult.secure_url);
     
     // Cleanup
     await cloudinary.uploader.destroy('test_connection_logo');
-    console.log('✅ Cleanup successful!');
+    console.log('[OK] Cleanup successful!');
     
   } catch (error) {
-    console.error('❌ Connection failed:', error.message);
+    console.error('[ERROR] Connection failed:', error.message);
     process.exit(1);
   }
 }

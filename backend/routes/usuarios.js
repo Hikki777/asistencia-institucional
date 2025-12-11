@@ -85,7 +85,7 @@ router.post('/', async (req, res) => {
       }
     });
 
-    logger.info({ usuario_id: usuario.id, email }, '✅ Usuario creado exitosamente');
+    logger.info({ usuario_id: usuario.id, email }, '[OK] Usuario creado exitosamente');
     res.status(201).json({ message: 'Usuario creado', usuario });
 
   } catch (error) {
@@ -115,7 +115,7 @@ router.delete('/:id', async (req, res) => {
       where: { id }
     });
 
-    logger.info({ eliminado_id: id, por_admin: req.user.id }, '🗑️ Usuario eliminado');
+    logger.info({ eliminado_id: id, por_admin: req.user.id }, '[DELETE] Usuario eliminado');
     res.json({ success: true, message: 'Usuario eliminado correctamente' });
 
   } catch (error) {

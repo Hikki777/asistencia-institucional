@@ -21,15 +21,15 @@ function question(query) {
 
 async function crearAdmin() {
   try {
-    console.log('\n╔══════════════════════════════════════════════════════════════╗');
-    console.log('║  👤 Crear/Actualizar Usuario Administrador                  ║');
-    console.log('╚══════════════════════════════════════════════════════════════╝\n');
+    console.log('\n================================================================================');
+    console.log('  [ADMIN] Crear/Actualizar Usuario Administrador');
+    console.log('================================================================================\n');
     
     // Pedir email (con default)
-    const email = await question('📧 Email (admin@test.edu): ') || 'admin@test.edu';
+    const email = await question('[INPUT] Email (admin@test.edu): ') || 'admin@test.edu';
     
     // Pedir contraseña (con default)
-    const password = await question('🔐 Contraseña (admin123): ') || 'admin123';
+    const password = await question('[INPUT] Contrasena (admin123): ') || 'admin123';
     
     // Verificar si ya existe
     const existente = await prisma.usuario.findUnique({
@@ -39,8 +39,8 @@ async function crearAdmin() {
     const hash = await bcrypt.hash(password, 10);
 
     if (existente) {
-      console.log(`\n⚠️  Usuario ${email} ya existe`);
-      const actualizar = await question('¿Actualizar contraseña? (S/n): ') || 'S';
+      console.log(`\n[WARN] Usuario ${email} ya existe`);
+      const actualizar = await question('Actualizar contrasena? (S/n): ') || 'S';
       
       if (actualizar.toUpperCase() === 'S') {
         await prisma.usuario.update({
@@ -51,12 +51,12 @@ async function crearAdmin() {
           }
         });
         
-        console.log('\n✅ Contraseña actualizada exitosamente');
+        console.log('\n[OK] Contrasena actualizada exitosamente');
       } else {
-        console.log('\n❌ Operación cancelada');
+        console.log('\n[INFO] Operacion cancelada');
       }
     } else {
-      console.log(`\n📝 Creando usuario ${email}...`);
+      console.log(`\n[INFO] Creando usuario ${email}...`);
       
       const usuario = await prisma.usuario.create({
         data: {
@@ -67,22 +67,22 @@ async function crearAdmin() {
         }
       });
       
-      console.log('✅ Usuario creado exitosamente');
-      console.log(`🆔 ID: ${usuario.id}`);
+      console.log('[OK] Usuario creado exitosamente');
+      console.log(`[ID] ID: ${usuario.id}`);
     }
 
-    console.log('\n╔══════════════════════════════════════════════════════════════╗');
-    console.log('║  🎯 Credenciales de Acceso                                   ║');
-    console.log('╠══════════════════════════════════════════════════════════════╣');
-    console.log(`║  📧 Email:      ${email.padEnd(43)}║`);
-    console.log(`║  🔐 Contraseña: ${password.padEnd(43)}║`);
-    console.log(`║  👤 Rol:        admin${' '.repeat(38)}║`);
-    console.log('╠══════════════════════════════════════════════════════════════╣');
-    console.log('║  🌐 Inicia sesión en: http://localhost:5173                  ║');
-    console.log('╚══════════════════════════════════════════════════════════════╝\n');
+    console.log('\n================================================================================');
+    console.log('  [CREDENTIALS] Credenciales de Acceso');
+    console.log('================================================================================');
+    console.log(`  [EMAIL] Email:      ${email}`);
+    console.log(`  [PASS] Contrasena: ${password}`);
+    console.log(`  [ROLE] Rol:        admin`);
+    console.log('================================================================================');
+    console.log('  [LOGIN] Inicia sesion en: http://localhost:5173');
+    console.log('================================================================================\n');
     
   } catch (error) {
-    console.error('\n❌ Error:', error.message);
+    console.error('\n[ERROR] Error:', error.message);
   } finally {
     rl.close();
     await prisma.$disconnect();

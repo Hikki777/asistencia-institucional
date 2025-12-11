@@ -106,7 +106,7 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!docente) {
-      logger.warn({ docenteId: req.params.id }, '⚠️ Docente no encontrado');
+      logger.warn({ docenteId: req.params.id }, '[WARNING] Docente no encontrado');
       return res.status(404).json({ error: 'Docente no encontrado' });
     }
 
@@ -164,12 +164,12 @@ const qrService = require('../services/qrService');
     // Generar QR automáticamente
     try {
         await qrService.generarQrParaPersona('personal', docente.id);
-        logger.info({ docenteId: docente.id }, '✅ QR generado automáticamente');
+        logger.info({ docenteId: docente.id }, '[OK] QR generado automáticamente');
     } catch (qrError) {
-        logger.error({ err: qrError, docenteId: docente.id }, '⚠️ Falló generación automática de QR');
+        logger.error({ err: qrError, docenteId: docente.id }, '[WARNING] Falló generación automática de QR');
     }
 
-    logger.info({ docenteId: docente.id, carnet, nombres, apellidos }, '✅ Docente creado');
+    logger.info({ docenteId: docente.id, carnet, nombres, apellidos }, '[OK] Docente creado');
     res.status(201).json({ docente });
   } catch (error) {
     logger.error({ err: error, body: req.body }, '❌ Error al crear docente');
@@ -222,7 +222,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
       }
     });
 
-    logger.info({ docenteId: id, campos: Object.keys(req.body) }, '✅ Docente actualizado');
+    logger.info({ docenteId: id, campos: Object.keys(req.body) }, '[OK] Docente actualizado');
     res.json({ docente: docenteActualizado });
   } catch (error) {
     logger.error({ err: error, docenteId: req.params.id }, '❌ Error al actualizar docente');
@@ -255,7 +255,7 @@ router.delete('/:id', invalidateCacheMiddleware('/api/docentes'), async (req, re
       where: { id: parseInt(id) }
     });
 
-    logger.info({ docenteId: id, nombres: docente.nombres, apellidos: docente.apellidos }, '✅ Docente eliminado');
+    logger.info({ docenteId: id, nombres: docente.nombres, apellidos: docente.apellidos }, '[OK] Docente eliminado');
     res.json({ message: 'Docente eliminado correctamente' });
   } catch (error) {
     logger.error({ err: error, docenteId: req.params.id }, '❌ Error al eliminar docente');

@@ -126,7 +126,7 @@ router.post('/generar', async (req, res) => {
       }
     });
 
-    logger.info({ persona_tipo, carnet: persona.carnet, qrId: codigoQr.id }, `✅ QR generado: ${persona_tipo}/${persona.carnet}`);
+    logger.info({ persona_tipo, carnet: persona.carnet, qrId: codigoQr.id }, `[OK] QR generado: ${persona_tipo}/${persona.carnet}`);
 
     res.status(201).json({
       success: true,
@@ -181,7 +181,7 @@ router.get('/:id/png', async (req, res) => {
     }
 
     // PNG falta: intentar regenerar
-    logger.warn({ qrId: id }, `⚠️ PNG faltante para QR ${id}, regenerando en Cloudinary...`);
+    logger.warn({ qrId: id }, `[WARNING] PNG faltante para QR ${id}, regenerando en Cloudinary...`);
 
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
     if (!institucion || !institucion.logo_base64) {
@@ -243,7 +243,7 @@ router.get('/:id/png', async (req, res) => {
       }
     });
 
-    logger.info({ qrId: codigoQr.id, persona_tipo: codigoQr.persona_tipo, carnet }, '✅ QR regenerado y servido (Cloudinary)');
+    logger.info({ qrId: codigoQr.id, persona_tipo: codigoQr.persona_tipo, carnet }, '[OK] QR regenerado y servido (Cloudinary)');
 
     res.redirect(qrUrl);
   } catch (error) {

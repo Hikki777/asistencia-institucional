@@ -1,6 +1,6 @@
 # Sistema de Registro Institucional - Estado del Proyecto
 
-**Fecha:** 12 de noviembre de 2025  
+**Fecha:** 10 de diciembre de 2025  
 **Versión:** 1.0.0  
 **Estado:** ✅ Operativo
 
@@ -8,7 +8,7 @@
 
 ## 🎯 Resumen del Sistema
 
-Sistema completo de control de asistencias con códigos QR, gestión de alumnos y personal, dashboard en tiempo real y reportes. Incluye auto-reparación, backups automáticos y diagnósticos.
+Sistema completo de control de asistencias con códigos QR, gestión de alumnos y personal, dashboard en tiempo real y reportes.
 
 ---
 
@@ -19,8 +19,7 @@ Sistema completo de control de asistencias con códigos QR, gestión de alumnos 
 - ✅ Gestión de alumnos y personal (CRUD)
 - ✅ Sistema de asistencias (entrada/salida, QR/manual)
 - ✅ Generación de códigos QR con logo institucional
-- ✅ Diagnósticos automáticos y reparación de QRs
-- ✅ Backups automáticos programados
+
 - ✅ Sistema de logs con Pino (JSON estructurado)
 - ✅ Rate limiting y caché en memoria
 - ✅ Endpoint de métricas del sistema
@@ -33,7 +32,7 @@ Sistema completo de control de asistencias con códigos QR, gestión de alumnos 
 - ✅ Panel de personal (docentes/administrativos)
 - ✅ Panel de asistencias con escáner QR (html5-qrcode)
 - ✅ Panel de configuración institucional
-- ✅ Panel de diagnósticos y reparación
+
 - ✅ Panel de reportes (Excel y PDF)
 - ✅ **Panel de métricas visual con gráficos en tiempo real** 🆕
 - ✅ Gráficos interactivos con Recharts
@@ -56,6 +55,8 @@ Sistema completo de control de asistencias con códigos QR, gestión de alumnos 
 - ✅ Logs rotados y configurables
 - ✅ Health check endpoint
 - ✅ ESLint y Prettier configurados en backend
+- ✅ Soporte dual: SQLite (Local) y PostgreSQL (Cloud)
+- ✅ Carga de imágenes optimizada con Cloudinary
 - ✅ Pruebas de integración con Jest y Supertest
 
 ---
@@ -90,6 +91,12 @@ Sistema completo de control de asistencias con códigos QR, gestión de alumnos 
 - Rate limiter excluye correctamente `/api/health`
 - Dotenv carga siempre `backend/.env` con `__dirname`
 
+### 6. Configuración e Infraestructura
+- **Panel de Configuración**: Interfaz gráfica para ajustes institucionales.
+- **Wizard de Inicio**: Flujo guiado para configuración inicial.
+- **Admin Mejorado**: Gestión de roles y usuarios administrativos.
+- **Soporte Cloud**: Configuración lista para PostgreSQL y Cloudinary.
+
 ---
 
 ## 📂 Estructura del Proyecto
@@ -110,20 +117,20 @@ Sistema de Registro Institucional/
 │   │   ├── requestLogger.js
 │   │   └── validation.js
 │   ├── routes/
+│   │   ├── admin.js
 │   │   ├── alumnos.js
 │   │   ├── asistencias.js
 │   │   ├── auth.js
 │   │   ├── docentes.js
+│   │   ├── excusas.js
 │   │   ├── institucion.js
 │   │   ├── metrics.js          ← Nuevo
 │   │   ├── qr.js
-│   │   ├── repair.js
-│   │   └── reportes.js
+│   │   ├── reportes.js
+│   │   └── usuarios.js
 │   ├── services/
-│   │   ├── backupService.js
-│   │   ├── diagnosticsService.js
+│   │   ├── cloudinaryService.js
 │   │   ├── qrService.js
-│   │   ├── repairService.js
 │   │   ├── reportService.js
 │   │   └── tokenService.js
 │   ├── utils/
@@ -150,10 +157,8 @@ Sistema de Registro Institucional/
 │   │   │   ├── AsistenciasPanel.jsx  ← Mejorado (cliente unificado)
 │   │   │   ├── ConfiguracionPanel.jsx
 │   │   │   ├── Dashboard.jsx         ← Mejorado (banner offline + acceso métricas)
-│   │   │   ├── DiagnosticsPanel.jsx
 │   │   │   ├── MetricsPanel.jsx      ← Nuevo (gráficos Recharts)
 │   │   │   ├── PersonalPanel.jsx
-│   │   │   ├── RepairPanel.jsx
 │   │   │   └── ReportesPanel.jsx
 │   │   ├── pages/
 │   │   │   └── LoginPage.jsx
@@ -169,8 +174,7 @@ Sistema de Registro Institucional/
 │   ├── install-hack-nerd-font.ps1
 │   ├── install-hack-nerd-font-macos.sh
 │   └── install-hack-nerd-font-linux.sh
-├── uploads/                    ← Fotos, logos, QRs
-├── backups/                    ← Backups automáticos
+├── uploads/                    ← Fotos, logos, QRs (local) / Cloudinary (cloud)
 ├── logs/                       ← Logs del backend
 ├── start-auto.ps1
 ├── stop-all.ps1
@@ -257,10 +261,6 @@ npm run test:watch
 - `GET /api/asistencias/hoy` - Asistencias del día
 - `GET /api/asistencias/stats` - Estadísticas por días
 
-### Diagnósticos y Reparación
-- `GET /api/diagnostics/qrs` - Ejecutar diagnóstico
-- `POST /api/repair/qrs/regenerate` - Regenerar QRs faltantes
-- `POST /api/repair/logo/regenerate` - Regenerar logo
 
 ### Métricas
 - `GET /api/metrics` - Métricas del sistema
@@ -330,7 +330,6 @@ npm run test:watch
 3. **Administración**
    - Panel de usuarios con roles (admin/operador/visualizador)
    - Logs de auditoría visibles en UI
-   - Gestión de backups desde UI
 
 ### Mediano Plazo (1-2 meses)
 4. **Integración**

@@ -12,7 +12,7 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
     secure: true
   });
 } else {
-  logger.warn('⚠️ Cloudinary no configurado. Las subidas fallarán.');
+  logger.warn('[WARNING] Cloudinary no configurado. Las subidas fallarán.');
 }
 
 /**

@@ -127,7 +127,7 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), (req, res, next) =>
   }
 }, validarCrearDocente, async (req, res) => {
   try {
-    const { carnet, nombres, apellidos, sexo, cargo, jornada } = req.body;
+    const { carnet, nombres, apellidos, sexo, cargo, jornada, grado_guia } = req.body;
 
     // Validar campos requeridos
     if (!carnet || !nombres || !apellidos) {
@@ -157,6 +157,7 @@ const qrService = require('../services/qrService');
         sexo: sexo || null,
         cargo: cargo || 'Docente',
         jornada: jornada || null,
+        grado_guia: (cargo === 'Docente' && grado_guia) ? grado_guia : null,
         foto_path
       }
     });
@@ -188,7 +189,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
 }, validarActualizarDocente, async (req, res) => {
   try {
     const { id } = req.params;
-    const { carnet, nombres, apellidos, sexo, cargo, jornada, estado } = req.body;
+    const { carnet, nombres, apellidos, sexo, cargo, jornada, estado, grado_guia } = req.body;
 
     const docente = await prisma.personal.findUnique({
       where: { id: parseInt(id) }
@@ -218,6 +219,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
         cargo: cargo || docente.cargo,
         jornada: jornada !== undefined ? jornada : docente.jornada,
         estado: estado || docente.estado,
+        grado_guia: (cargo === 'Docente' || docente.cargo === 'Docente') && grado_guia !== undefined ? grado_guia : (cargo !== 'Docente' ? null : docente.grado_guia),
         foto_path
       }
     });

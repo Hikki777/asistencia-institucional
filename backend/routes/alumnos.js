@@ -42,6 +42,7 @@ router.get('/', async (req, res) => {
         apellidos: true,
         sexo: true,
         grado: true,
+        carrera: true,
         especialidad: true,
         jornada: true,
         estado: true,
@@ -109,7 +110,7 @@ router.get('/:id', validarId, async (req, res) => {
  */
 router.post('/', invalidateCacheMiddleware('/api/alumnos'), validarCrearAlumno, async (req, res) => {
   try {
-    const { carnet, nombres, apellidos, sexo, grado, jornada } = req.body;
+    const { carnet, nombres, apellidos, sexo, grado, carrera, jornada } = req.body;
 
     if (!carnet || !nombres || !apellidos || !grado) {
       return res.status(400).json({
@@ -134,6 +135,7 @@ const qrService = require('../services/qrService');
         apellidos,
         sexo: sexo || null,
         grado,
+        carrera: req.body.carrera || null,
         especialidad: req.body.especialidad || null,
         jornada: jornada || 'Matutina',
         estado: 'activo'
@@ -145,6 +147,7 @@ const qrService = require('../services/qrService');
         apellidos: true,
         sexo: true,
         grado: true,
+        carrera: true,
         especialidad: true,
         jornada: true,
         estado: true,
@@ -186,7 +189,7 @@ const qrService = require('../services/qrService');
  */
 router.put('/:id', invalidateCacheMiddleware('/api/alumnos'), validarActualizarAlumno, async (req, res) => {
   try {
-    const { nombres, apellidos, sexo, grado, especialidad, jornada, estado } = req.body;
+    const { nombres, apellidos, sexo, grado, carrera, especialidad, jornada, estado } = req.body;
     const id = parseInt(req.params.id);
 
     const alumno = await prisma.alumno.update({
@@ -196,6 +199,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/alumnos'), validarActualizarA
         ...(apellidos && { apellidos }),
         ...(sexo && { sexo }),
         ...(grado && { grado }),
+        ...(carrera !== undefined && { carrera }),
         ...(especialidad !== undefined && { especialidad }),
         ...(jornada && { jornada }),
         ...(estado && { estado })
@@ -207,6 +211,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/alumnos'), validarActualizarA
         apellidos: true,
         sexo: true,
         grado: true,
+        carrera: true,
         especialidad: true,
         jornada: true,
         estado: true,

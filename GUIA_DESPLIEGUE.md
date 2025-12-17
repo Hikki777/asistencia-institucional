@@ -70,24 +70,44 @@ Necesario para guardar las fotos de alumnos y personal en la nube.
     - `VITE_API_URL`: (La URL de tu backend en Render, ej: `https://mi-backend.onrender.com/api`)
 5. **Desplegar**.
 
-### Opción B: Firebase Hosting
-1. Asegurarse de tener `firebase-tools` instalado.
-2. Ejecutar `firebase login` en tu terminal.
-3. Ejecutar `firebase init hosting` en la raíz.
-    - Seleccionar `frontend-react/dist` como directorio público.
-    - Configurar como Single Page App (Yes).
-4. Construir el frontend con la URL del backend de producción:
-    Linux/Mac:
-    ```bash
-    export VITE_API_URL=https://tu-backend.onrender.com/api
-    npm run build:frontend
-    ```
-    Windows (PowerShell):
-    ```powershell
-    $env:VITE_API_URL="https://tu-backend.onrender.com/api"
-    npm run build:frontend
-    ```
-5. Desplegar: `firebase deploy`.
+### Opción B: Firebase Hosting (✅ IMPLEMENTADO)
+
+**URLs de Producción:**
+- Frontend: https://sistema-asistencias-30769.web.app
+- Backend API: https://asistencia-institucional-production.up.railway.app/api
+
+**Pasos para Deploy:**
+
+1. Asegurarse de tener `firebase-tools` instalado:
+   ```bash
+   npm install -g firebase-tools
+   ```
+
+2. Iniciar sesión en Firebase (solo la primera vez):
+   ```bash
+   firebase login
+   ```
+
+3. Construir el frontend con la URL del backend de producción:
+   
+   **Windows (PowerShell):**
+   ```powershell
+   $env:VITE_API_URL="https://asistencia-institucional-production.up.railway.app/api"
+   npm run build:frontend
+   ```
+   
+   **Linux/Mac:**
+   ```bash
+   export VITE_API_URL=https://asistencia-institucional-production.up.railway.app/api
+   npm run build:frontend
+   ```
+
+4. Desplegar a Firebase:
+   ```bash
+   firebase deploy --only hosting
+   ```
+
+5. Verificar que el sitio esté accesible en: https://sistema-asistencias-30769.web.app
 
 ---
 

@@ -37,11 +37,15 @@ export default function PersonalPanel() {
     apellidos: '',
     sexo: '',
     cargo: 'Docente',
-    jornada: ''
+    jornada: '',
+    grado_guia: ''
   });
+
+  const [posiblesGrados, setPosiblesGrados] = useState([]);
 
   useEffect(() => {
     fetchPersonal();
+    generarGrados();
   }, []);
 
   const fetchPersonal = async () => {
@@ -56,6 +60,15 @@ export default function PersonalPanel() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generarGrados = () => {
+    const grados = [
+      '1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria',
+      '1ro Básico', '2do Básico', '3ro Básico',
+      '4to Diversificado', '5to Diversificado', '6to Diversificado'
+    ];
+    setPosiblesGrados(grados);
   };
 
   const handleSubmit = async (e) => {
@@ -114,7 +127,8 @@ export default function PersonalPanel() {
       apellidos: miembro.apellidos,
       sexo: miembro.sexo || '',
       cargo: miembro.cargo || 'Docente',
-      jornada: miembro.jornada || ''
+      jornada: miembro.jornada || '',
+      grado_guia: miembro.grado_guia || ''
     });
     setShowModal(true);
   };
@@ -462,31 +476,31 @@ export default function PersonalPanel() {
       {/* Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-xl p-6 sm:p-8 max-w-md w-full shadow-2xl my-8"
+              className="bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 max-w-lg w-full shadow-2xl my-8 border border-gray-200 dark:border-gray-700"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-800">
-                  {editingPersonal ? 'Editar miembro' : 'Nuevo miembro'}
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                  {editingPersonal ? 'Editar Personal' : 'Nuevo Personal'}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
                 >
                   <X size={24} />
                 </button>
               </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div className="flex flex-col items-center mb-4">
-                  <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden mb-2 border-2 border-dashed border-slate-400 relative">
+                  <div className="relative w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-400 dark:border-gray-500 mb-2 hover:border-success dark:hover:border-success-light transition-colors">
                     {formData.preview ? (
                       <img src={formData.preview} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
-                      <User size={40} className="text-slate-400" />
+                      <User size={40} className="text-gray-400 dark:text-gray-500" />
                     )}
                     <input
                       type="file"
@@ -504,28 +518,28 @@ export default function PersonalPanel() {
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
                   </div>
-                  <span className="text-sm text-slate-500">Toca para subir foto</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Toca para subir foto</span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Carnet *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Carnet *</label>
                   <input
                     type="text"
                     required
                     value={formData.carnet}
                     onChange={(e) => setFormData({ ...formData, carnet: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-success focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                     placeholder="D001"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cargo *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cargo *</label>
                   <select
                     required
                     value={formData.cargo}
                     onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-success focus:border-transparent text-gray-900 dark:text-gray-100"
                   >
                     <option value="">-</option>
                     <option value="Docente">Docente</option>
@@ -541,34 +555,34 @@ export default function PersonalPanel() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombres *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombres *</label>
                   <input
                     type="text"
                     required
                     value={formData.nombres}
                     onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-success focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellidos *</label>
                   <input
                     type="text"
                     required
                     value={formData.apellidos}
                     onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-success focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sexo</label>
                   <select
                     value={formData.sexo}
                     onChange={(e) => setFormData({ ...formData, sexo: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-success focus:border-transparent text-gray-900 dark:text-gray-100"
                   >
                     <option value="">-</option>
                     <option value="M">M</option>
@@ -576,11 +590,11 @@ export default function PersonalPanel() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jornada</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jornada</label>
                   <select
                     value={formData.jornada}
                     onChange={(e) => setFormData({ ...formData, jornada: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-success focus:border-transparent text-gray-900 dark:text-gray-100"
                   >
                     <option value="">-</option>
                     <option value="Matutina">Matutina</option>
@@ -594,17 +608,36 @@ export default function PersonalPanel() {
                 </div>
               </div>
 
+              {/* Campo Docente Guía - solo visible si cargo es Docente */}
+              {formData.cargo === 'Docente' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Docente Guía
+                  </label>
+                  <select
+                    value={formData.grado_guia}
+                    onChange={(e) => setFormData({ ...formData, grado_guia: e.target.value })}
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-success focus:border-transparent text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">-</option>
+                    {posiblesGrados.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2.5 rounded-lg transition"
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-2.5 rounded-lg transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg transition"
+                  className="flex-1 bg-success hover:bg-success-dark dark:bg-success-light dark:hover:bg-success text-white font-bold py-2.5 rounded-lg transition"
                 >
                   {editingPersonal ? 'Actualizar' : 'Crear'}
                 </button>

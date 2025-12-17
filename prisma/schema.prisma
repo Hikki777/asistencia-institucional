@@ -41,6 +41,7 @@ model Alumno {
   apellidos      String
   sexo           String? // "M" o "F"
   grado          String // "1ro", "2do", etc.
+  carrera        String? // "Bachillerato en Computación", "Perito Contador", etc.
   especialidad   String? // "Bachillerato en Computación", "Bachillerato en Salud", etc.
   jornada        String? // "Matutina", "Vespertina"
   estado         String   @default("activo") // "activo" o "inactivo"
@@ -66,6 +67,7 @@ model Personal {
   sexo           String?
   cargo          String? // "Director", "Directora", "Docente", "Secretaria", "Secretario", "Operativo", "Auxiliar"
   jornada        String?
+  grado_guia     String? // Grado asignado si es docente guía
   estado         String   @default("activo")
   foto_path      String?
   creado_en      DateTime @default(now())

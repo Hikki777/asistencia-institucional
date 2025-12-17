@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, BookOpen, Sun, CheckCircle, XCircle } from 'lucide-react';
+import { GraduationCap, Plus, Edit, Trash2, Download, Search, Filter, X, User, QrCode, BookOpen, Sun, CheckCircle, XCircle, Briefcase } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { alumnosAPI, qrAPI, institucionAPI } from '../api/endpoints';
 import { TableSkeleton } from './LoadingSpinner';
@@ -18,6 +18,7 @@ export default function AlumnosPanel() {
   const [filterGrado, setFilterGrado] = useState('');
   const [filterJornada, setFilterJornada] = useState('');
   const [filterEstado, setFilterEstado] = useState('');
+  const [filterCarrera, setFilterCarrera] = useState('');
   const [institucion, setInstitucion] = useState(null);
   const [posiblesGrados, setPosiblesGrados] = useState([]);
 
@@ -26,6 +27,7 @@ export default function AlumnosPanel() {
     nombres: '',
     apellidos: '',
     grado: '',
+    carrera: '',
     especialidad: '',
     jornada: '',
     sexo: '',
@@ -182,11 +184,13 @@ export default function AlumnosPanel() {
     const matchGrado = !filterGrado || a.grado === filterGrado;
     const matchJornada = !filterJornada || a.jornada === filterJornada;
     const matchEstado = !filterEstado || a.estado === filterEstado;
-    return matchSearch && matchGrado && matchJornada && matchEstado;
+    const matchCarrera = !filterCarrera || (a.carrera && a.carrera.toLowerCase().includes(filterCarrera.toLowerCase()));
+    return matchSearch && matchGrado && matchJornada && matchEstado && matchCarrera;
   });
 
   const gradosUnicos = [...new Set(alumnos.map(a => a.grado))].sort();
   const jornadasUnicas = [...new Set(alumnos.map(a => a.jornada).filter(Boolean))];
+  const carrerasUnicas = [...new Set(alumnos.map(a => a.carrera).filter(Boolean))].sort();
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -220,7 +224,7 @@ export default function AlumnosPanel() {
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-gray-900/50 p-4 border border-gray-200 dark:border-gray-700"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div className="col-span-1 sm:col-span-2 lg:col-span-1">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Search size={16} />
@@ -279,6 +283,22 @@ export default function AlumnosPanel() {
               <option value="">Todos</option>
               <option value="activo">Activo</option>
               <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <Briefcase size={16} />
+              Carrera
+            </label>
+            <select
+              value={filterCarrera}
+              onChange={(e) => setFilterCarrera(e.target.value)}
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+            >
+              <option value="">Todas</option>
+              {carrerasUnicas.map((carrera) => (
+                <option key={carrera} value={carrera}>{carrera}</option>
+              ))}
             </select>
           </div>
           <div className="flex items-end">
@@ -484,31 +504,31 @@ export default function AlumnosPanel() {
       {/* Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-xl p-6 sm:p-8 max-w-md w-full shadow-2xl my-8"
+              className="bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 max-w-lg w-full shadow-2xl my-8 border border-gray-200 dark:border-gray-700"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-800">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                   {editingAlumno ? 'Editar Alumno' : 'Nuevo Alumno'}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
                 >
                   <X size={24} />
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                <div className="flex flex-col items-center mb-4">
-                  <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden mb-2 border-2 border-dashed border-slate-400 relative">
+                  <div className="relative w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-400 dark:border-gray-500 mb-2 hover:border-primary-500 dark:hover:border-primary-400 transition-colors">
                     {formData.preview ? (
                       <img src={formData.preview} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
-                      <User size={40} className="text-slate-400" />
+                      <User size={40} className="text-gray-400 dark:text-gray-500" />
                     )}
                     <input
                       type="file"
@@ -526,102 +546,130 @@ export default function AlumnosPanel() {
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
                   </div>
-                  <span className="text-sm text-slate-500">Toca para subir foto</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Toca para subir foto</span>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Carnet *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Carnet *</label>
                   <input
                     type="text"
                     required
                     value={formData.carnet}
                     onChange={(e) => setFormData({ ...formData, carnet: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                     placeholder="A001"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombres *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grado *</label>
+                   <select
+                    required
+                    value={formData.grado}
+                    onChange={(e) => setFormData({ ...formData, grado: e.target.value })}
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">-</option>
+                    {posiblesGrados.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombres *</label>
                   <input
                     type="text"
                     required
                     value={formData.nombres}
                     onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellidos *</label>
                   <input
                     type="text"
                     required
                     value={formData.apellidos}
                     onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Grado *</label>
-                     <select
-                      required
-                      value={formData.grado}
-                      onChange={(e) => setFormData({ ...formData, grado: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">-</option>
-                      {posiblesGrados.map((g) => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
-                    <select
-                      value={formData.sexo}
-                      onChange={(e) => setFormData({ ...formData, sexo: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">-</option>
-                      <option value="M">M</option>
-                      <option value="F">F</option>
-                    </select>
-                  </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sexo</label>
+                  <select
+                    value={formData.sexo}
+                    onChange={(e) => setFormData({ ...formData, sexo: e.target.value })}
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">-</option>
+                    <option value="M">M</option>
+                    <option value="F">F</option>
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
-                  <input
-                    type="text"
-                    value={formData.especialidad}
-                    onChange={(e) => setFormData({ ...formData, especialidad: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Bachillerato en Computación"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jornada</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jornada</label>
                   <select
                     value={formData.jornada}
                     onChange={(e) => setFormData({ ...formData, jornada: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="">-</option>
                     <option value="Matutina">Matutina</option>
                     <option value="Vespertina">Vespertina</option>
                     <option value="Nocturna">Nocturna</option>
+                    <option value="Semipresencial">Semipresencial</option>
+                    <option value="Virtual">Virtual</option>
+                    <option value="Fin de Semana (Sábado)">Fin de Semana (Sábado)</option>
+                    <option value="Fin de Semana (Domingo)">Fin de Semana (Domingo)</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Campos condicionales - solo para Diversificado */}
+              {formData.grado.includes('Diversificado') && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Carrera</label>
+                    <input
+                      type="text"
+                      value={formData.carrera}
+                      onChange={(e) => setFormData({ ...formData, carrera: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                      placeholder="Bachillerato en Computación"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Especialidad</label>
+                    <input
+                      type="text"
+                      value={formData.especialidad}
+                      onChange={(e) => setFormData({ ...formData, especialidad: e.target.value })}
+                      className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                      placeholder="Dibujo Técnico"
+                    />
+                  </div>
+                </>
+              )}
+
                 <div className="flex gap-3 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2.5 rounded-lg transition"
+                    className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-2.5 rounded-lg transition"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition"
+                    className="flex-1 bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-bold py-2.5 rounded-lg transition"
                   >
                     {editingAlumno ? 'Actualizar' : 'Crear'}
                   </button>

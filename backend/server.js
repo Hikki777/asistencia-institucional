@@ -252,6 +252,7 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
 
 const excusasRoutes = require('./routes/excusas');
 const migracionRoutes = require('./routes/migracion');
+const dashboardRoutes = require('./routes/dashboard');
 
 app.use('/api/qr', qrRoutes);
 app.use('/api/usuarios', usuariosRoutes);
@@ -265,6 +266,7 @@ app.use('/api/metrics', metricsRoutes);
 app.use('/api/excusas', excusasRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/migracion', migracionRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 
 

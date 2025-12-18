@@ -72,3 +72,8 @@ export const excusasAPI = {
   update: (id, data) => client.put(`/excusas/${id}`, data),
   delete: (id) => client.delete(`/excusas/${id}`)
 };
+
+export const dashboardAPI = {
+  stats: () => client.get('/dashboard/stats'),
+  topGrados: () => client.get('/dashboard/top-grados')
+};

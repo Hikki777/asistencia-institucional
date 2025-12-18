@@ -14,6 +14,9 @@ import {
   Line,
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -27,6 +30,7 @@ import {
   asistenciasAPI,
   docentesAPI,
   institucionAPI,
+  dashboardAPI,
 } from "../api/endpoints";
 import toast, { Toaster } from "react-hot-toast";
 import offlineQueueService from "../services/offlineQueue";
@@ -41,6 +45,7 @@ export default function Dashboard() {
   });
   const [institucion, setInstitucion] = useState(null);
   const [asistenciasStats, setAsistenciasStats] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState(null);
   const [loading, setLoading] = useState(true);
   
   // Estado de red local y cola
@@ -51,9 +56,11 @@ export default function Dashboard() {
     fetchInstitucion();
     fetchStats();
     fetchAsistenciasStats();
+    fetchDashboardStats();
     const interval = setInterval(() => {
       fetchStats();
       fetchAsistenciasStats();
+      fetchDashboardStats();
     }, 60000); // Actualizar cada minuto
     return () => clearInterval(interval);
   }, []);
@@ -129,6 +136,16 @@ export default function Dashboard() {
       console.error("Error fetching stats:", error);
       toast.error("Error al cargar estadísticas del sistema");
       setStats((prev) => ({ ...prev, status: "error" }));
+    }
+  };
+
+  const fetchDashboardStats = async () => {
+    try {
+      const response = await dashboardAPI.stats();
+      setDashboardStats(response.data);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      // No mostrar error al usuario, solo log
     }
   };
 
@@ -398,6 +415,112 @@ export default function Dashboard() {
                 <Bar dataKey="salidas" fill="#f59e0b" name="Salidas" />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Nuevos Gráficos - Fase 2 */}
+      {dashboardStats && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          {/* Gráfico: Alumnos por Nivel Académico */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Alumnos por Nivel Académico
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Primaria', value: dashboardStats.porNivel.primaria, color: '#3b82f6' },
+                    { name: 'Básicos', value: dashboardStats.porNivel.basicos, color: '#10b981' },
+                    { name: 'Diversificado', value: dashboardStats.porNivel.diversificado, color: '#f59e0b' },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {[
+                    { name: 'Primaria', value: dashboardStats.porNivel.primaria, color: '#3b82f6' },
+                    { name: 'Básicos', value: dashboardStats.porNivel.basicos, color: '#10b981' },
+                    { name: 'Diversificado', value: dashboardStats.porNivel.diversificado, color: '#f59e0b' },
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              <p>• Primaria: {dashboardStats.porNivel.primaria} alumnos</p>
+              <p>• Básicos: {dashboardStats.porNivel.basicos} alumnos</p>
+              <p>• Diversificado: {dashboardStats.porNivel.diversificado} alumnos</p>
+            </div>
+          </div>
+
+          {/* Gráfico: Alumnos por Grado */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Alumnos por Grado
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart
+                data={Object.entries(dashboardStats.porGrado).map(([grado, count]) => ({
+                  grado,
+                  alumnos: count
+                }))}
+                layout="vertical"
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="grado" type="category" width={80} />
+                <Tooltip />
+                <Bar dataKey="alumnos" fill="#3b82f6" name="Alumnos" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Gráfico: Distribución por Sexo */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Distribución por Sexo
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Masculino', value: dashboardStats.porSexo.masculino, color: '#3b82f6' },
+                    { name: 'Femenino', value: dashboardStats.porSexo.femenino, color: '#ec4899' },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  innerRadius={60}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {[
+                    { name: 'Masculino', value: dashboardStats.porSexo.masculino, color: '#3b82f6' },
+                    { name: 'Femenino', value: dashboardStats.porSexo.femenino, color: '#ec4899' },
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              <p>• Masculino: {dashboardStats.porSexo.masculino} alumnos</p>
+              <p>• Femenino: {dashboardStats.porSexo.femenino} alumnos</p>
+              <p className="font-semibold mt-2">Total: {dashboardStats.totales.activos} activos</p>
+            </div>
           </div>
         </div>
       )}

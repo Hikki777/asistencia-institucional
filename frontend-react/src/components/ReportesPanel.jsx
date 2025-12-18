@@ -171,7 +171,7 @@ export default function ReportesPanel() {
               type="date"
               value={filtros.fechaInicio}
               onChange={(e) => setFiltros({ ...filtros, fechaInicio: e.target.value })}
-              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+              className="w-full bg-white dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
             />
           </div>
 

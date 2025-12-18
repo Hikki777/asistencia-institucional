@@ -55,7 +55,8 @@
   border: 1px solid var(--border-color, #ddd);
   border-radius: 6px;
   font-size: 0.9rem;
-  background: white;
+  background: var(--bg-secondary, white);
+  color: var(--text-primary, #1a1a1a);
 }
 
 /* Tabla */

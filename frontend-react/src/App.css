@@ -28,3 +28,20 @@ html, body, #root {
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Dark mode for time and date pickers */
+.dark input[type="time"]::-webkit-calendar-picker-indicator,
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.dark input[type="time"]::-webkit-datetime-edit,
+.dark input[type="date"]::-webkit-datetime-edit {
+  color: #f3f4f6;
+}
+
+.dark input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+.dark input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: #f3f4f6;
+}

@@ -376,16 +376,17 @@ export default function MetricsPanel() {
       </div>
 
       {/* Info box */}
-      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4 rounded-lg">
         <div className="flex items-start gap-3">
-          <CheckCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
-          <div className="text-sm text-blue-800 dark:text-blue-100">
+          <CheckCircle className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={20} />
+          <div className="text-sm text-blue-900 dark:text-blue-100">
             <p className="font-semibold mb-1">ℹ️ Información de Métricas</p>
-            <ul className="space-y-1 ml-4 list-disc">
+            <ul className="space-y-1 ml-4 list-disc text-blue-800 dark:text-blue-200">
               <li>Las métricas se resetean al reiniciar el servidor</li>
               <li>Hit rate de caché: % de requests servidos desde caché</li>
               <li>Solo administradores pueden resetear las métricas</li>
               <li>Auto-refresh actualiza cada {refreshInterval} segundos</li>
+              <li>El servidor corre en Linux (Railway) aunque desarrolles en Windows</li>
             </ul>
           </div>
         </div>

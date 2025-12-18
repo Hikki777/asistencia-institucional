@@ -19,7 +19,7 @@ router.get('/stats', async (req, res) => {
       select: {
         id: true,
         grado: true,
-        nivel: true,
+        nivel_actual: true,
         sexo: true,
         activo: true,
       }
@@ -27,9 +27,9 @@ router.get('/stats', async (req, res) => {
 
     // Estadísticas por nivel académico
     const porNivel = {
-      primaria: alumnos.filter(a => a.nivel === 'Primaria' && a.activo).length,
-      basicos: alumnos.filter(a => a.nivel === 'Básicos' && a.activo).length,
-      diversificado: alumnos.filter(a => a.nivel === 'Diversificado' && a.activo).length,
+      primaria: alumnos.filter(a => a.nivel_actual === 'Primaria' && a.activo).length,
+      basicos: alumnos.filter(a => a.nivel_actual === 'Básicos' && a.activo).length,
+      diversificado: alumnos.filter(a => a.nivel_actual === 'Diversificado' && a.activo).length,
     };
 
     // Estadísticas por grado

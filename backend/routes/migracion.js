@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const migracionService = require('../services/migracionService');
 const { logger } = require('../utils/logger');
-const { authenticateToken, requireRole } = require('../middlewares/auth');
+const { verifyJWT, verifyAdmin } = require('../middlewares/auth');
 
 // Todas las rutas requieren autenticación y rol de administrador
-router.use(authenticateToken);
-router.use(requireRole('admin'));
+router.use(verifyJWT);
+router.use(verifyAdmin);
 
 /**
  * GET /api/migracion/preview

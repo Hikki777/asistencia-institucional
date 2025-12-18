@@ -6,7 +6,7 @@ const { authenticateToken, requireRole } = require('../middlewares/auth');
 
 // Todas las rutas requieren autenticación y rol de administrador
 router.use(authenticateToken);
-router.use(requireRole(['admin']));
+router.use(requireRole('admin'));
 
 /**
  * GET /api/migracion/preview

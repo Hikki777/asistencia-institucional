@@ -273,7 +273,7 @@ router.delete('/:id', invalidateCacheMiddleware('/api/alumnos'), async (req, res
 
 /**
  * POST /api/alumnos/:id/foto
- * Subir foto de perfil a Cloudinary
+ * Subir foto de perfil a Cloudinary con compresión
  */
 router.post('/:id/foto', upload.single('foto'), async (req, res) => {
   try {
@@ -287,10 +287,13 @@ router.post('/:id/foto', upload.single('foto'), async (req, res) => {
       return res.status(404).json({ error: 'Alumno no encontrado' });
     }
 
+    // Comprimir imagen antes de subir
+    const { compressProfilePhoto } = require('../services/imageService');
+    const compressedBuffer = await compressProfilePhoto(req.file.buffer);
+
     // Subir a Cloudinary
-    // Usamos el carnet como public_id para mantener consistencia
     const publicId = `alumno_${alumno.carnet}`;
-    const result = await uploadBuffer(req.file.buffer, 'alumnos', publicId);
+    const result = await uploadBuffer(compressedBuffer, 'alumnos', publicId);
 
     // Actualizar BD con la URL segura
     const updated = await prisma.alumno.update({
@@ -305,5 +308,6 @@ router.post('/:id/foto', upload.single('foto'), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 module.exports = router;

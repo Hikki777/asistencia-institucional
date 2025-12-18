@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const { 
   validarCrearDocente, 
   validarActualizarDocente, 
@@ -11,36 +9,13 @@ const {
 } = require('../middlewares/validation');
 const { logger } = require('../utils/logger');
 const { cacheMiddleware, invalidateCacheMiddleware } = require('../middlewares/cache');
+const { uploadBuffer } = require('../services/cloudinaryService');
+const { compressProfilePhoto } = require('../services/imageService');
 
-// Configurar multer para subida de fotos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, '../../uploads/fotos');
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const filename = `docente-${Date.now()}${ext}`;
-    cb(null, filename);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png/;
-    const ext = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mime = allowedTypes.test(file.mimetype);
-    if (ext && mime) {
-      cb(null, true);
-    } else {
-      cb(new Error('Solo se permiten imágenes (jpeg, jpg, png)'));
-    }
-  }
+// Configurar multer para memoria (no guardar en disco)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
 // GET /api/docentes - Listar todos los docentes con paginación cursor (sin caché temporalmente)
@@ -143,7 +118,14 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), (req, res, next) =>
       return res.status(400).json({ error: 'Ya existe un docente con ese carnet' });
     }
 
-    const foto_path = req.file ? `uploads/fotos/${req.file.filename}` : null;
+    // Subir foto a Cloudinary si existe
+    let foto_url = null;
+    if (req.file) {
+      const compressedBuffer = await compressProfilePhoto(req.file.buffer);
+      const publicId = `personal_${carnet}`;
+      const result = await uploadBuffer(compressedBuffer, 'personal', publicId);
+      foto_url = result.secure_url;
+    }
 
 const qrService = require('../services/qrService');
 
@@ -158,7 +140,7 @@ const qrService = require('../services/qrService');
         cargo: cargo || 'Docente',
         jornada: jornada || null,
         grado_guia: (cargo === 'Docente' && grado_guia) ? grado_guia : null,
-        foto_path
+        foto_path: foto_url
       }
     });
 
@@ -199,15 +181,14 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
       return res.status(404).json({ error: 'Docente no encontrado' });
     }
 
-    // Si hay nueva foto, eliminar la anterior
-    if (req.file && docente.foto_path) {
-      const oldPath = path.join(__dirname, '../../', docente.foto_path);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
+    // Subir nueva foto a Cloudinary si existe
+    let foto_url = docente.foto_path;
+    if (req.file) {
+      const compressedBuffer = await compressProfilePhoto(req.file.buffer);
+      const publicId = `personal_${docente.carnet}`;
+      const result = await uploadBuffer(compressedBuffer, 'personal', publicId);
+      foto_url = result.secure_url;
     }
-
-    const foto_path = req.file ? `uploads/fotos/${req.file.filename}` : docente.foto_path;
 
     const docenteActualizado = await prisma.personal.update({
       where: { id: parseInt(id) },
@@ -220,7 +201,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
         jornada: jornada !== undefined ? jornada : docente.jornada,
         estado: estado || docente.estado,
         grado_guia: (cargo === 'Docente' || docente.cargo === 'Docente') && grado_guia !== undefined ? grado_guia : (cargo !== 'Docente' ? null : docente.grado_guia),
-        foto_path
+        foto_path: foto_url
       }
     });
 
@@ -245,13 +226,8 @@ router.delete('/:id', invalidateCacheMiddleware('/api/docentes'), async (req, re
       return res.status(404).json({ error: 'Docente no encontrado' });
     }
 
-    // Eliminar foto si existe
-    if (docente.foto_path) {
-      const fotoPath = path.join(__dirname, '../../', docente.foto_path);
-      if (fs.existsSync(fotoPath)) {
-        fs.unlinkSync(fotoPath);
-      }
-    }
+    // Nota: Las fotos en Cloudinary se mantienen para historial
+    // Si deseas eliminarlas, usa cloudinaryService.deleteImage(publicId)
 
     await prisma.personal.delete({
       where: { id: parseInt(id) }

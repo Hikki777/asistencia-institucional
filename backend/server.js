@@ -251,6 +251,8 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
 // ============ RUTAS ESPECÍFICAS MONTADAS ============
 
 const excusasRoutes = require('./routes/excusas');
+const migracionRoutes = require('./routes/migracion');
+
 app.use('/api/qr', qrRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/alumnos', alumnosRoutes);
@@ -262,6 +264,7 @@ app.use('/api/institucion', institucionRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/excusas', excusasRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/migracion', migracionRoutes);
 
 
 

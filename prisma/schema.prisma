@@ -44,7 +44,15 @@ model Alumno {
   carrera        String? // "Bachillerato en Computación", "Perito Contador", etc.
   especialidad   String? // "Bachillerato en Computación", "Bachillerato en Salud", etc.
   jornada        String? // "Matutina", "Vespertina"
-  estado         String   @default("activo") // "activo" o "inactivo"
+  estado         String   @default("activo") // "activo", "graduado", "retirado"
+  
+  // Campos para ciclo de vida académico
+  anio_ingreso       Int?      // Año de ingreso a la institución
+  anio_graduacion    Int?      // Año de graduación (si aplica)
+  nivel_actual       String?   // "Primaria", "Básicos", "Diversificado"
+  motivo_baja        String?   // "graduado", "retirado", "transferido"
+  fecha_baja         DateTime? // Fecha de baja
+  
   foto_path      String? // Ruta relativa a foto
   creado_en      DateTime @default(now())
   actualizado_en DateTime @updatedAt
@@ -53,8 +61,11 @@ model Alumno {
   codigos_qr  CodigoQr[]   @relation("alumno_qr")
   asistencias Asistencia[] @relation("alumno_asistencia")
   excusas     Excusa[]     @relation("alumno_excusa")
+  historial   HistorialAcademico[]
 
   @@index([estado])
+  @@index([grado])
+  @@index([nivel_actual])
   @@map("alumnos")
 }
 
@@ -177,6 +188,25 @@ model Excusa {
   @@index([fecha])
   @@map("excusas")
 }
+
+// Historial Académico de Alumnos
+model HistorialAcademico {
+  id             Int      @id @default(autoincrement())
+  alumno_id      Int
+  anio_escolar   Int      // 2024, 2025, etc.
+  grado_cursado  String   // "1ro Primaria", "3ro Básico", etc.
+  nivel          String   // "Primaria", "Básicos", "Diversificado"
+  carrera        String?  // Si aplica (Diversificado)
+  promovido      Boolean  @default(true) // true = aprobó, false = repitió
+  observaciones  String?  // Notas adicionales
+  creado_en      DateTime @default(now())
+  
+  alumno Alumno @relation(fields: [alumno_id], references: [id], onDelete: Cascade)
+  
+  @@index([alumno_id, anio_escolar])
+  @@map("historial_academico")
+}
+
 model DiagnosticResult {
   id           Int       @id @default(autoincrement())
   tipo         String // "missing_qr", "missing_logo", "corrupted_file"

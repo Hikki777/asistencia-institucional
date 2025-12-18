@@ -163,14 +163,16 @@ export default function MetricsPanel() {
           </button>
 
           {/* Reset button (admin only) */}
-          <button
-            onClick={handleReset}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
-            title="Solo administradores"
-          >
-            <Trash2 size={16} />
-            Reset
-          </button>
+          {localStorage.getItem('user_role') === 'admin' && (
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+              title="Solo administradores"
+            >
+              <Trash2 size={16} />
+              Reset
+            </button>
+          )}
         </div>
       </motion.div>
 
@@ -417,13 +419,35 @@ export default function MetricsPanel() {
 }
 
 function MetricCard({ icon, title, value, subtitle, color }) {
+  // Map de colores explícitos para Tailwind
+  const colorClasses = {
+    green: {
+      bg: 'bg-green-100 dark:bg-green-900/20',
+      text: 'text-green-600 dark:text-green-400'
+    },
+    blue: {
+      bg: 'bg-blue-100 dark:bg-blue-900/20',
+      text: 'text-blue-600 dark:text-blue-400'
+    },
+    purple: {
+      bg: 'bg-purple-100 dark:bg-purple-900/20',
+      text: 'text-purple-600 dark:text-purple-400'
+    },
+    orange: {
+      bg: 'bg-orange-100 dark:bg-orange-900/20',
+      text: 'text-orange-600 dark:text-orange-400'
+    }
+  };
+
+  const colors = colorClasses[color] || colorClasses.blue;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       className="bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-gray-900/50 p-6 border border-gray-100 dark:border-gray-700"
     >
-      <div className={`bg-${color}-100 dark:bg-${color}-900/20 text-${color}-600 dark:text-${color}-400 w-12 h-12 rounded-lg flex items-center justify-center mb-3`}>
+      <div className={`${colors.bg} ${colors.text} w-12 h-12 rounded-lg flex items-center justify-center mb-3`}>
         {icon}
       </div>
       <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{title}</p>

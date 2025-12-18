@@ -394,24 +394,59 @@ const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserMod
 // --- SUBCOMPONENT: Sistema Settings ---
 const SistemaSettings = () => {
   const [confirmReset, setConfirmReset] = useState(false);
+  const [resetCode, setResetCode] = useState('');
   const [resetting, setResetting] = useState(false);
+  const [systemInfo, setSystemInfo] = useState(null);
+
+  useEffect(() => {
+    fetchSystemInfo();
+  }, []);
+
+  const fetchSystemInfo = async () => {
+    try {
+      const response = await client.get('/metrics');
+      setSystemInfo(response.data);
+    } catch (error) {
+      console.error('Error fetching system info:', error);
+    }
+  };
 
   const handleFactoryReset = async () => {
-    if (!confirmReset) return;
+    // Validar código de confirmación
+    const expectedCode = 'RESET-' + new Date().getFullYear();
+    if (resetCode !== expectedCode) {
+      toast.error(`Código incorrecto. Debe ser: ${expectedCode}`);
+      return;
+    }
     
-    // Doble confirmación
-    const text = prompt("Esta acción BORRARÁ TODOS LOS DATOS (Alumnos, Personal, Asistencias). Para confirmar escribe: CONFIRMAR");
-    if (text !== "CONFIRMAR") return;
+    // Triple confirmación
+    const finalConfirm = window.confirm(
+      '⚠️ ÚLTIMA ADVERTENCIA ⚠️\n\n' +
+      'Esto eliminará PERMANENTEMENTE:\n' +
+      '- Todos los alumnos\n' +
+      '- Todo el personal\n' +
+      '- Todas las asistencias\n' +
+      '- Todos los códigos QR\n\n' +
+      '¿Estás ABSOLUTAMENTE seguro?'
+    );
+    
+    if (!finalConfirm) {
+      setConfirmReset(false);
+      setResetCode('');
+      return;
+    }
 
     setResetting(true);
     try {
       await client.post('/admin/reset-factory');
       toast.success('Sistema restablecido correctamente. Recargando...');
-      setTimeout(() => window.location.reload(), 2000);
+      setTimeout(() => {
+        localStorage.clear();
+        window.location.href = '/setup';
+      }, 2000);
     } catch (error) {
       console.error(error);
       toast.error('Error al resetear: ' + (error.response?.data?.error || error.message));
-    } finally {
       setResetting(false);
     }
   };
@@ -421,54 +456,121 @@ const SistemaSettings = () => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-8"
+      className="space-y-6"
     >
-      <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <Server size={24} className="text-gray-600 dark:text-gray-300" />
-          Mantenimiento del Sistema
+      {/* Información del Sistema */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+          <Server size={24} className="text-blue-600" />
+          Información del Sistema
         </h3>
-        <p className="text-sm text-gray-500 mt-1">Opciones avanzadas y zonas de peligro.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Versión</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-gray-100">HikariOpen v1.0.1</p>
+          </div>
+          
+          {systemInfo && (
+            <>
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Uptime</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  {Math.floor(systemInfo.uptime.hours)}h {Math.floor((systemInfo.uptime.hours % 1) * 60)}m
+                </p>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Base de Datos</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  {systemInfo.database.alumnos + systemInfo.database.personal} registros
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {systemInfo.database.alumnos} alumnos, {systemInfo.database.personal} personal
+                </p>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Memoria Usada</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  {systemInfo.system.memoryUsage.rss}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4 rounded">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            <strong>ℹ️ Información:</strong> El sistema está funcionando correctamente. 
+            La base de datos está conectada a Supabase (PostgreSQL).
+          </p>
+        </div>
       </div>
 
-      <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
-        <h4 className="text-red-700 dark:text-red-400 font-bold flex items-center gap-2 mb-2">
-          <AlertOctagon size={24} />
-          Zona de Peligro: Restablecimiento de Fábrica
-        </h4>
-        <p className="text-sm text-red-600 dark:text-red-300 mb-6 max-w-2xl">
-          Esta acción eliminará permanentemente todos los registros de asistencias, datos de alumnos y personal docente. 
-          La configuración institucional y los usuarios administradores se mantendrán. 
-          <span className="font-bold underline ml-1">Esta acción no se puede deshacer.</span>
-        </p>
+      {/* Factory Reset */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <h4 className="text-red-700 dark:text-red-400 font-bold flex items-center gap-2 mb-2">
+            <AlertOctagon size={24} />
+            Zona de Peligro: Restablecimiento de Fábrica
+          </h4>
+          <p className="text-sm text-red-600 dark:text-red-300 mb-6 max-w-2xl">
+            Esta acción eliminará permanentemente todos los registros de asistencias, datos de alumnos y personal docente. 
+            La configuración institucional y los usuarios administradores se mantendrán. 
+            <span className="font-bold underline ml-1">Esta acción no se puede deshacer.</span>
+          </p>
 
-        {!confirmReset ? (
-          <button
-            onClick={() => setConfirmReset(true)}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors flex items-center gap-2"
-          >
-            <RotateCcw size={18} />
-            Iniciar Proceso de Reset
-          </button>
-        ) : (
-          <div className="flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
+          {!confirmReset ? (
             <button
-              onClick={() => setConfirmReset(false)}
-              className="text-gray-600 dark:text-gray-300 hover:underline text-sm"
-              disabled={resetting}
+              onClick={() => setConfirmReset(true)}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors flex items-center gap-2"
             >
-              Cancelar
+              <RotateCcw size={18} />
+              Iniciar Proceso de Reset
             </button>
-            <button
-              onClick={handleFactoryReset}
-              disabled={resetting}
-              className="bg-red-700 hover:bg-red-800 text-white font-bold py-2.5 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20"
-            >
-              <AlertOctagon size={18} />
-              {resetting ? 'Reseteando...' : 'CONFIRMAR BORRADO TOTAL'}
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+              <div>
+                <label className="block text-sm font-medium text-red-700 dark:text-red-400 mb-2">
+                  Código de Confirmación
+                </label>
+                <input
+                  type="text"
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value)}
+                  placeholder={`Escribe: RESET-${new Date().getFullYear()}`}
+                  className="w-full max-w-md px-4 py-2 border-2 border-red-300 dark:border-red-700 rounded-lg focus:ring-2 focus:ring-red-500 dark:bg-gray-900 dark:text-white"
+                  disabled={resetting}
+                />
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                  Escribe <code className="bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">RESET-{new Date().getFullYear()}</code> para confirmar
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    setConfirmReset(false);
+                    setResetCode('');
+                  }}
+                  className="text-gray-600 dark:text-gray-300 hover:underline text-sm"
+                  disabled={resetting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleFactoryReset}
+                  disabled={resetting || resetCode !== `RESET-${new Date().getFullYear()}`}
+                  className="bg-red-700 hover:bg-red-800 text-white font-bold py-2.5 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <AlertOctagon size={18} />
+                  {resetting ? 'Reseteando...' : 'CONFIRMAR BORRADO TOTAL'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

@@ -16,7 +16,7 @@ export default function SetupWizard({ onComplete }) {
     horario_salida: '13:00',
     margen_puntualidad_min: 5,
     direccion: '',
-    pais: 'Guatemala', // Default
+    pais: 'Guatemala', // Fixed to Guatemala
     departamento: '',
     municipio: '',
     email: '',
@@ -31,43 +31,6 @@ export default function SetupWizard({ onComplete }) {
     admin_cargo: '',
     admin_jornada: ''
   });
-
-  // Configuración de Países y sus divisiones administrativas
-  const COUNTRIES = {
-    'Argentina': { division: 'Provincia', municipio: 'Partido/Departamento', phone: '+54 9 11 1234 5678' },
-    'Bolivia': { division: 'Departamento', municipio: 'Municipio', phone: '+591 7123 4567' },
-    'Chile': { division: 'Región', municipio: 'Comuna', phone: '+56 9 1234 5678' },
-    'Colombia': { division: 'Departamento', municipio: 'Municipio', phone: '+57 300 123 4567' },
-    'Costa Rica': { division: 'Provincia', municipio: 'Cantón', phone: '+506 8123 4567' },
-    'Cuba': { division: 'Provincia', municipio: 'Municipio', phone: '+53 5 123 4567' },
-    'Ecuador': { division: 'Provincia', municipio: 'Cantón', phone: '+593 99 123 4567' },
-    'El Salvador': { division: 'Departamento', municipio: 'Municipio', phone: '+503 7123 4567' },
-    'España': { division: 'Provincia', municipio: 'Municipio', phone: '+34 612 34 56 78' },
-    'Estados Unidos': { division: 'Estado', municipio: 'Condado', phone: '+1 (555) 123-4567' },
-    'Guatemala': { division: 'Departamento', municipio: 'Municipio', phone: '+502 5555 5555' },
-    'Honduras': { division: 'Departamento', municipio: 'Municipio', phone: '+504 9123 4567' },
-    'México': { division: 'Estado', municipio: 'Municipio/Alcaldía', phone: '+52 55 1234 5678' },
-    'Nicaragua': { division: 'Departamento', municipio: 'Municipio', phone: '+505 8123 4567' },
-    'Panamá': { division: 'Provincia', municipio: 'Distrito', phone: '+507 6123 4567' },
-    'Paraguay': { division: 'Departamento', municipio: 'Distrito', phone: '+595 981 123 456' },
-    'Perú': { division: 'Departamento', municipio: 'Provincia', phone: '+51 912 345 678' },
-    'República Dominicana': { division: 'Provincia', municipio: 'Municipio', phone: '+1 809 123 4567' },
-    'Uruguay': { division: 'Departamento', municipio: 'Municipio', phone: '+598 99 123 456' },
-    'Venezuela': { division: 'Estado', municipio: 'Municipio', phone: '+58 412 123 4567' },
-    'Otro': { division: 'Estado / Provincia', municipio: 'Municipio', phone: '+00 123 456 789' }
-  };
-
-  const getDepartamentoLabel = () => {
-    return COUNTRIES[formData.pais]?.division || 'Estado / Provincia';
-  };
-
-  const getMunicipioLabel = () => {
-    return COUNTRIES[formData.pais]?.municipio || 'Municipio';
-  };
-
-  const getPhonePlaceholder = () => {
-    return COUNTRIES[formData.pais]?.phone || '+00 123 456 789';
-  };
 
   const [logoPreview, setLogoPreview] = useState('');
 
@@ -348,25 +311,10 @@ export default function SetupWizard({ onComplete }) {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
-                      <div className="relative">
-                        <Globe className="absolute left-3 top-3 text-gray-400" size={18} />
-                        <select
-                          name="pais"
-                          value={formData.pais}
-                          onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white dark:bg-gray-800"
-                        >
-                          {Object.keys(COUNTRIES).map(country => (
-                            <option key={country} value={country}>{country}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{getDepartamentoLabel()}</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Departamento</label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -375,12 +323,12 @@ export default function SetupWizard({ onComplete }) {
                           value={formData.departamento}
                           onChange={handleChange}
                           className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder={`Ingrese ${getDepartamentoLabel()}`}
+                          placeholder="Ej: Guatemala"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{getMunicipioLabel()}</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Municipio</label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -389,7 +337,7 @@ export default function SetupWizard({ onComplete }) {
                           value={formData.municipio}
                           onChange={handleChange}
                           className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder={`Ingrese ${getMunicipioLabel()}`}
+                          placeholder="Ej: Guatemala"
                         />
                       </div>
                     </div>
@@ -420,7 +368,7 @@ export default function SetupWizard({ onComplete }) {
                           value={formData.telefono}
                           onChange={handleChange}
                           className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder={getPhonePlaceholder()}
+                          placeholder="+502 5555 5555"
                         />
                       </div>
                     </div>
@@ -691,7 +639,7 @@ export default function SetupWizard({ onComplete }) {
                       )}
                       <div className="flex justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Ubicación:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{formData.pais} - {formData.departamento} - {formData.municipio}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">Guatemala - {formData.departamento} - {formData.municipio}</span>
                       </div>
                       {formData.email && (
                         <div className="flex justify-between">

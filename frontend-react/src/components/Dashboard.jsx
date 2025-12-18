@@ -60,18 +60,23 @@ export default function Dashboard() {
 
   // Monitor de red y cola offline
   useEffect(() => {
-    const updateStatus = () => {
+    const updateStatus = async () => {
       setIsNetworkOnline(navigator.onLine);
-      setPendingSync(offlineQueueService.getPendingCount());
+      const count = await offlineQueueService.getPendingCount();
+      setPendingSync(count);
     };
 
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
     
-    // Intervalo para verificar la cola (por si se sincroniza en otro tab o en fondo)
-    const queueInterval = setInterval(() => {
-        setPendingSync(offlineQueueService.getPendingCount());
+    // Intervalo para verificar la cola
+    const queueInterval = setInterval(async () => {
+      const count = await offlineQueueService.getPendingCount();
+      setPendingSync(count);
     }, 2000);
+
+    // Actualizar al montar
+    updateStatus();
 
     return () => {
       window.removeEventListener('online', updateStatus);

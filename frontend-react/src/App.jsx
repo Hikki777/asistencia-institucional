@@ -65,33 +65,108 @@ function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Manejo de conexión y sincronización
+  // Manejo de conexión y sincronización con retry logic
   useEffect(() => {
     const handleOnline = async () => {
       toast.success('Conexión restaurada. Sincronizando...', { id: 'online-toast' });
       
-      const queue = offlineQueueService.getQueue();
-      if (queue.length === 0) return;
-
+      // Sincronizar peticiones normales
+      const queue = await offlineQueueService.getQueue();
       let processed = 0;
+      let failed = 0;
+      
       for (const item of queue) {
         try {
-          // Re-enviar peticiones
+          await offlineQueueService.updateRequestStatus(item.id, 'syncing');
+          
           await client({
             method: item.method,
             url: item.url,
             data: item.data
           });
-          offlineQueueService.removeFromQueue(item.id);
+          
+          await offlineQueueService.removeFromQueue(item.id);
           processed++;
         } catch (error) {
           console.error('Error sincronizando item:', item, error);
-          // Si falla, se queda en la cola para el próximo intento
+          
+          // Retry logic con backoff exponencial
+          const maxRetries = 3;
+          const newRetries = (item.retries || 0) + 1;
+          
+          if (newRetries >= maxRetries) {
+            await offlineQueueService.updateRequestStatus(item.id, 'failed', newRetries);
+            failed++;
+          } else {
+            await offlineQueueService.updateRequestStatus(item.id, 'pending', newRetries);
+            // Reintentar después de un delay exponencial
+            setTimeout(() => {
+              if (navigator.onLine) handleOnline();
+            }, Math.pow(2, newRetries) * 1000); // 2s, 4s, 8s
+          }
         }
       }
       
-      if (processed > 0) {
-        toast.success(`Se sincronizaron ${processed} registros pendientes.`);
+      // Sincronizar fotos pendientes
+      const photosQueue = await offlineQueueService.getPhotosQueue();
+      let photosProcessed = 0;
+      let photosFailed = 0;
+      
+      for (const photo of photosQueue) {
+        try {
+          await offlineQueueService.updatePhotoStatus(photo.id, 'syncing');
+          
+          // Convertir Base64 a Blob
+          const blob = await fetch(photo.base64).then(r => r.blob());
+          const file = new File([blob], photo.fileName, { type: photo.fileType });
+          
+          // Crear FormData
+          const formData = new FormData();
+          formData.append('foto', file);
+          
+          // Subir foto
+          const endpoint = photo.personType === 'alumno' 
+            ? `/alumnos/${photo.personId}/foto`
+            : `/docentes/${photo.personId}/foto`;
+            
+          await client.post(endpoint, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          
+          await offlineQueueService.removePhotoFromQueue(photo.id);
+          photosProcessed++;
+        } catch (error) {
+          console.error('Error sincronizando foto:', photo, error);
+          
+          // Retry logic
+          const maxRetries = 3;
+          const newRetries = (photo.retries || 0) + 1;
+          
+          if (newRetries >= maxRetries) {
+            await offlineQueueService.updatePhotoStatus(photo.id, 'failed', newRetries);
+            photosFailed++;
+          } else {
+            await offlineQueueService.updatePhotoStatus(photo.id, 'pending', newRetries);
+            setTimeout(() => {
+              if (navigator.onLine) handleOnline();
+            }, Math.pow(2, newRetries) * 1000);
+          }
+        }
+      }
+      
+      // Mostrar resultados
+      if (processed > 0 || photosProcessed > 0) {
+        const message = [];
+        if (processed > 0) message.push(`${processed} registros`);
+        if (photosProcessed > 0) message.push(`${photosProcessed} fotos`);
+        toast.success(`✅ Sincronizados: ${message.join(' y ')}`);
+      }
+      
+      if (failed > 0 || photosFailed > 0) {
+        const failMessage = [];
+        if (failed > 0) failMessage.push(`${failed} registros`);
+        if (photosFailed > 0) failMessage.push(`${photosFailed} fotos`);
+        toast.error(`⚠️ Falló sincronización: ${failMessage.join(' y ')}. Se reintentará.`);
       }
     };
 

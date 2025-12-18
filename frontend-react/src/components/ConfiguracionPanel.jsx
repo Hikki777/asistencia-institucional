@@ -84,7 +84,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
             required
             value={formData.nombre}
             onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-            className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Ej: Colegio San José"
           />
         </div>
@@ -97,7 +97,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
             type="text"
             value={formData.direccion}
             onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-            className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5"
+            className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             placeholder="Calle, número, colonia, ciudad"
           />
         </div>
@@ -109,7 +109,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
           <div>
@@ -118,7 +118,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
               type="tel"
               value={formData.telefono}
               onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
           <div>
@@ -127,7 +127,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
               type="text"
               value={formData.pais}
               onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
           <div>
@@ -136,7 +136,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
               type="text"
               value={formData.departamento}
               onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
         </div>
@@ -159,7 +159,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
               type="file"
               accept="image/png,image/jpeg,image/jpg"
               onChange={handleLogoChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300 dark:hover:file:bg-blue-900/50"
             />
             <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
               <AlertCircle size={12} />
@@ -183,7 +183,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
               required
               value={formData.horario_inicio}
               onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100"
             />
           </div>
           <div>
@@ -193,7 +193,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
               required
               value={formData.horario_salida}
               onChange={(e) => setFormData({ ...formData, horario_salida: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100"
             />
           </div>
           <div>
@@ -204,7 +204,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
               max="60"
               value={formData.margen_puntualidad_min}
               onChange={(e) => setFormData({ ...formData, margen_puntualidad_min: parseInt(e.target.value) })}
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>

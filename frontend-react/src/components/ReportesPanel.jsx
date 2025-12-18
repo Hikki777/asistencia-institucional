@@ -141,19 +141,19 @@ export default function ReportesPanel() {
             </button>
             <button
               onClick={() => establecerRangoRapido(15)}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition"
+              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200 rounded-lg text-sm transition"
             >
               Últimos 15 días
             </button>
             <button
               onClick={() => establecerRangoRapido(30)}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition"
+              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200 rounded-lg text-sm transition"
             >
               Último mes
             </button>
             <button
               onClick={() => establecerRangoRapido(90)}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition"
+              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200 rounded-lg text-sm transition"
             >
               Últimos 3 meses
             </button>
@@ -177,7 +177,7 @@ export default function ReportesPanel() {
 
           {/* Fecha Fin */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Calendar className="inline w-4 h-4 mr-1" />
               Fecha Fin
             </label>
@@ -185,20 +185,20 @@ export default function ReportesPanel() {
               type="date"
               value={filtros.fechaFin}
               onChange={(e) => setFiltros({ ...filtros, fechaFin: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* Tipo de Persona */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Users className="inline w-4 h-4 mr-1" />
               Tipo de Persona
             </label>
             <select
               value={filtros.personaTipo}
               onChange={(e) => setFiltros({ ...filtros, personaTipo: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todos</option>
               <option value="alumno">Alumnos</option>
@@ -208,14 +208,14 @@ export default function ReportesPanel() {
 
           {/* Grado */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <TrendingUp className="inline w-4 h-4 mr-1" />
               Grado
             </label>
             <select
               value={filtros.grado}
               onChange={(e) => setFiltros({ ...filtros, grado: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todos</option>
               {grados.map(grado => (
@@ -226,14 +226,14 @@ export default function ReportesPanel() {
 
           {/* Tipo de Evento */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Clock className="inline w-4 h-4 mr-1" />
               Tipo de Evento
             </label>
             <select
               value={filtros.tipoEvento}
               onChange={(e) => setFiltros({ ...filtros, tipoEvento: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todos</option>
               <option value="entrada">Entradas</option>

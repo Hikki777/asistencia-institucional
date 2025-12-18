@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Save, Upload, Building2, Clock, AlertCircle, Users, Trash2, Plus, X, Server, AlertOctagon, RotateCcw } from 'lucide-react';
+import { Settings, Save, Upload, Building2, Clock, AlertCircle, Users, Trash2, Plus, X, Server, AlertOctagon, RotateCcw, LogIn, LogOut, Timer } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -177,7 +177,10 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Entrada</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+              <LogIn size={16} className="text-green-600 dark:text-green-400" />
+              Entrada
+            </label>
             <input
               type="time"
               required
@@ -187,7 +190,10 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Salida</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+              <LogOut size={16} className="text-orange-600 dark:text-orange-400" />
+              Salida
+            </label>
             <input
               type="time"
               required
@@ -197,7 +203,10 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tolerancia (min)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+              <Timer size={16} className="text-blue-600 dark:text-blue-400" />
+              Tolerancia (min)
+            </label>
             <input
               type="number"
               min="0"

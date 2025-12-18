@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { FileText, Download, Calendar, Filter, FileSpreadsheet, Users, TrendingUp, Clock } from 'lucide-react';
 import client from '../api/client';
 import { generatePDF, generateExcel } from '../utils/reportGenerator';
@@ -307,26 +308,28 @@ export default function ReportesPanel() {
         )}
       </div>
 
-      {/* Información */}
-      <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
+      {/* Info Box */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-lg"
+      >
         <div className="flex">
           <div className="flex-shrink-0">
-            <FileText className="h-5 w-5 text-blue-600" />
+            <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">Información sobre reportes</h3>
-            <div className="mt-2 text-sm text-blue-700 dark:text-blue-200">
+            <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">Información sobre reportes</h3>
+            <div className="mt-2 text-sm text-blue-800 dark:text-blue-200">
               <ul className="list-disc list-inside space-y-1">
                 <li><strong>PDF:</strong> Formato profesional con datos institucionales, filtros aplicados, estadísticas completas y tabla detallada</li>
                 <li><strong>Excel:</strong> Dos hojas: "Información" (datos institucionales + resumen) y "Asistencias" (datos detallados)</li>
-                <li>Ambos formatos incluyen: nombre de institución, dirección, teléfono y fecha de generación</li>
-                <li>Estadísticas: Total, entradas, salidas, puntuales, tardíos, por QR y manuales</li>
-                <li>Los filtros aplicados se muestran claramente en ambos reportes</li>
+                <li><strong>Filtros:</strong> Alumnos, grados, niveles, estado de asistencia, rango de fechas, y fecha de generación</li>
               </ul>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

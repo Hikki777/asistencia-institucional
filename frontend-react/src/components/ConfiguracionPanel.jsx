@@ -411,6 +411,25 @@ const SistemaSettings = () => {
     }
   };
 
+  // Detectar SO del cliente
+  const getClientOS = () => {
+    const userAgent = window.navigator.userAgent;
+    
+    if (userAgent.indexOf('Win') !== -1) {
+      if (userAgent.indexOf('Windows NT 10.0') !== -1) return 'Windows 10/11';
+      if (userAgent.indexOf('Windows NT 6.3') !== -1) return 'Windows 8.1';
+      if (userAgent.indexOf('Windows NT 6.2') !== -1) return 'Windows 8';
+      if (userAgent.indexOf('Windows NT 6.1') !== -1) return 'Windows 7';
+      return 'Windows';
+    }
+    if (userAgent.indexOf('Mac') !== -1) return 'macOS';
+    if (userAgent.indexOf('Linux') !== -1 && userAgent.indexOf('Android') === -1) return 'Linux';
+    if (userAgent.indexOf('Android') !== -1) return 'Android';
+    if (userAgent.indexOf('iPhone') !== -1 || userAgent.indexOf('iPad') !== -1) return 'iOS';
+    
+    return 'Desconocido';
+  };
+
   const handleFactoryReset = async () => {
     // Validar código de confirmación
     const expectedCode = 'RESET-' + new Date().getFullYear();
@@ -470,6 +489,12 @@ const SistemaSettings = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Versión</p>
             <p className="text-xl font-bold text-gray-900 dark:text-gray-100">HikariOpen v1.0.1</p>
           </div>
+
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Tu Dispositivo</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{getClientOS()}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Sistema operativo del cliente</p>
+          </div>
           
           {systemInfo && (
             <>
@@ -488,6 +513,14 @@ const SistemaSettings = () => {
                 <p className="text-xs text-gray-500 mt-1">
                   {systemInfo.database.alumnos} alumnos, {systemInfo.database.personal} personal
                 </p>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Plataforma Servidor</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  {systemInfo.system.platform}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Railway (Linux)</p>
               </div>
               
               <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
@@ -540,11 +573,11 @@ const SistemaSettings = () => {
                   value={resetCode}
                   onChange={(e) => setResetCode(e.target.value)}
                   placeholder={`Escribe: RESET-${new Date().getFullYear()}`}
-                  className="w-full max-w-md px-4 py-2 border-2 border-red-300 dark:border-red-700 rounded-lg focus:ring-2 focus:ring-red-500 dark:bg-gray-900 dark:text-white"
+                  className="w-full max-w-md px-4 py-2 border-2 border-red-300 dark:border-red-700 rounded-lg focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   disabled={resetting}
                 />
                 <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                  Escribe <code className="bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">RESET-{new Date().getFullYear()}</code> para confirmar
+                  Escribe <code className="bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded text-red-800 dark:text-red-200">RESET-{new Date().getFullYear()}</code> para confirmar
                 </p>
               </div>
 

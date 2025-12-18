@@ -103,7 +103,7 @@ npm run admin            # Crear usuario admin (emergencia)
 Este proyecto es **Software Libre** bajo licencia **GNU GPLv3**.
 Las Pull Requests son bienvenidas.
 
-**Autor**: [Kevin Gabriel Pérez García (@Hikki777)](https://github.com/Hikki777)
+**Autor**: [Kevin Pérez (@Hikki777)](https://github.com/Hikki777)
 
 ---
 

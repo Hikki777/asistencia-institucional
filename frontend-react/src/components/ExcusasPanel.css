@@ -460,25 +460,28 @@
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .excusas-panel {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --bg-hover: #3a3a3a;
-    --text-primary: #e5e5e5;
-    --text-secondary: #a0a0a0;
-    --border-color: #404040;
-  }
+/* Dark Mode Support - Using Tailwind's dark class */
+:global(.dark) .excusas-panel {
+  --bg-primary: #1f2937;
+  --bg-secondary: #374151;
+  --bg-hover: #4b5563;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --border-color: #4b5563;
+}
 
-  .modal-content,
-  .table-container,
-  .filtro-group select,
-  .filtro-group input,
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-  }
+:global(.dark) .modal-content,
+:global(.dark) .table-container,
+:global(.dark) .filtro-group select,
+:global(.dark) .filtro-group input,
+:global(.dark) .form-group input,
+:global(.dark) .form-group select,
+:global(.dark) .form-group textarea {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+:global(.dark) .excusas-table tbody tr:hover {
+  background: var(--bg-hover);
 }

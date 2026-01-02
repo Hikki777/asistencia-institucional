@@ -11,7 +11,7 @@ function createWindow() {
     height: 800,
     minWidth: 1024,
     minHeight: 768,
-    title: "HikariOpen",
+    title: "Sistema de Gestión Institucional",
     icon: path.join(__dirname, "..", "frontend-react", "public", "logo.png"),
     webPreferences: {
       nodeIntegration: false,

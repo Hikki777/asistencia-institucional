@@ -174,7 +174,7 @@ async function main() {
   const command = process.argv[2] || 'help';
   
   if (!commands[command]) {
-    console.error(`\n❌ Comando desconocido: ${command}`);
+    console.error(`\n[ERROR] Comando desconocido: ${command}`);
     commands.help();
     process.exit(1);
   }
@@ -184,7 +184,7 @@ async function main() {
     await prisma.$disconnect();
     process.exit(0);
   } catch (error) {
-    console.error('\n❌ Error:', error.message);
+    console.error('\n[ERROR] Error:', error.message);
     console.error(error.stack);
     await prisma.$disconnect();
     process.exit(1);

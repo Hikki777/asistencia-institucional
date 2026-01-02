@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Reiniciar backend para activar ruta de excusas",
+			"type": "shell",
+			"command": "pwsh ./stop-all.ps1; pwsh ./start-auto.ps1",
+			"args": [],
+			"isBackground": false
+		},
+		{
+			"label": "Reiniciar backend para activar GET de excusas",
+			"type": "shell",
+			"command": "pwsh ./stop-all.ps1; pwsh ./start-auto.ps1",
+			"args": [],
+			"isBackground": false
+		}
+	]
+}

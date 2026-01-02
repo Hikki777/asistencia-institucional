@@ -35,7 +35,7 @@ router.post('/login', loginLimiter, validarLogin, async (req, res) => {
       user: { id: user.id, email: user.email, rol: user.rol }
     });
   } catch (err) {
-    logger.error({ err, email: req.body.email }, '❌ Error en login');
+    logger.error({ err, email: req.body.email }, '[ERROR] Error en login');
     return res.status(500).json({ error: 'Error iniciando sesión' });
   }
 });
@@ -53,7 +53,7 @@ router.get('/me', verifyJWT, async (req, res) => {
     }
     return res.json(user);
   } catch (err) {
-    logger.error({ err, userId: req.user?.id }, '❌ Error obteniendo perfil de usuario');
+    logger.error({ err, userId: req.user?.id }, '[ERROR] Error obteniendo perfil de usuario');
     return res.status(500).json({ error: 'Error obteniendo perfil' });
   }
 });

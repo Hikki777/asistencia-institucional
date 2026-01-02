@@ -26,6 +26,22 @@
       "anonymous": "always",
       "named": "never",
       "asyncArrow": "always"
-    }]
-  }
+    }],
+    "no-irregular-whitespace": ["error", { "skipStrings": false, "skipComments": false }],
+    "no-control-regex": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.js"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "Literal[value=/[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{26FF}\\u{2700}-\\u{27BF}]/u]",
+            "message": "No usar emojis en el código. Usa alternativas ASCII como [OK], [ERROR], [WARN], etc. para compatibilidad con terminales que no soportan UTF-8."
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -9,7 +9,7 @@ const {
 } = require('../middlewares/validation');
 const { logger } = require('../utils/logger');
 const { cacheMiddleware, invalidateCacheMiddleware } = require('../middlewares/cache');
-const { uploadBuffer } = require('../services/cloudinaryService');
+const { uploadBuffer } = require('../services/imageService');
 const { compressProfilePhoto } = require('../services/imageService');
 
 // Configurar multer para memoria (no guardar en disco)
@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error({ err: error, query: req.query }, '❌ Error al listar docentes');
+    logger.error({ err: error, query: req.query }, '[ERROR] Error al listar docentes');
     res.status(500).json({ error: error.message });
   }
 });
@@ -87,7 +87,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({ docente });
   } catch (error) {
-    logger.error({ err: error, docenteId: req.params.id }, '❌ Error al obtener docente');
+    logger.error({ err: error, docenteId: req.params.id }, '[ERROR] Error al obtener docente');
     res.status(500).json({ error: error.message });
   }
 });
@@ -118,7 +118,7 @@ router.post('/', invalidateCacheMiddleware('/api/docentes'), (req, res, next) =>
       return res.status(400).json({ error: 'Ya existe un docente con ese carnet' });
     }
 
-    // Subir foto a Cloudinary si existe
+    // Subir foto si existe
     let foto_url = null;
     if (req.file) {
       const compressedBuffer = await compressProfilePhoto(req.file.buffer);
@@ -155,7 +155,7 @@ const qrService = require('../services/qrService');
     logger.info({ docenteId: docente.id, carnet, nombres, apellidos }, '[OK] Docente creado');
     res.status(201).json({ docente });
   } catch (error) {
-    logger.error({ err: error, body: req.body }, '❌ Error al crear docente');
+    logger.error({ err: error, body: req.body }, '[ERROR] Error al crear docente');
     res.status(500).json({ error: error.message });
   }
 });
@@ -181,7 +181,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
       return res.status(404).json({ error: 'Docente no encontrado' });
     }
 
-    // Subir nueva foto a Cloudinary si existe
+    // Subir nueva foto si existe
     let foto_url = docente.foto_path;
     if (req.file) {
       const compressedBuffer = await compressProfilePhoto(req.file.buffer);
@@ -208,7 +208,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/docentes'), (req, res, next) 
     logger.info({ docenteId: id, campos: Object.keys(req.body) }, '[OK] Docente actualizado');
     res.json({ docente: docenteActualizado });
   } catch (error) {
-    logger.error({ err: error, docenteId: req.params.id }, '❌ Error al actualizar docente');
+    logger.error({ err: error, docenteId: req.params.id }, '[ERROR] Error al actualizar docente');
     res.status(500).json({ error: error.message });
   }
 });
@@ -226,8 +226,7 @@ router.delete('/:id', invalidateCacheMiddleware('/api/docentes'), async (req, re
       return res.status(404).json({ error: 'Docente no encontrado' });
     }
 
-    // Nota: Las fotos en Cloudinary se mantienen para historial
-    // Si deseas eliminarlas, usa cloudinaryService.deleteImage(publicId)
+    // Nota: Las fotos se mantienen en almacenamiento para historial
 
     await prisma.personal.delete({
       where: { id: parseInt(id) }
@@ -236,7 +235,7 @@ router.delete('/:id', invalidateCacheMiddleware('/api/docentes'), async (req, re
     logger.info({ docenteId: id, nombres: docente.nombres, apellidos: docente.apellidos }, '[OK] Docente eliminado');
     res.json({ message: 'Docente eliminado correctamente' });
   } catch (error) {
-    logger.error({ err: error, docenteId: req.params.id }, '❌ Error al eliminar docente');
+    logger.error({ err: error, docenteId: req.params.id }, '[ERROR] Error al eliminar docente');
     res.status(500).json({ error: error.message });
   }
 });

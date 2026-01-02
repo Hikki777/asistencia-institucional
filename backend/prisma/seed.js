@@ -159,14 +159,14 @@ async function main() {
       }
     }
 
-    console.log('\n✅ Seed completado exitosamente');
+    console.log('\n[OK] Seed completado exitosamente');
     console.log('\n📝 Instrucciones próximas:');
     console.log('  1. npm run dev          (iniciar servidor)');
     console.log('  2. npm run prisma:studio  (ver datos)');
     console.log('  3. node test.js         (ejecutar pruebas)');
 
   } catch (error) {
-    console.error('❌ Error en seed:', error.message);
+    console.error('[ERROR] Error en seed:', error.message);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

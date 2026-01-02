@@ -1,101 +1,72 @@
 # Sistema de Registro Institucional - Estado del Proyecto
 
-**Fecha:** 10 de diciembre de 2025  
-**Versión:** 1.0.0  
-**Estado:** ✅ Operativo
+**Fecha:** 02 de enero de 2026
+**Versión:** 1.0.0 (Release Candidate)
+**Estado:** ✅ Estable y Operativo (Ready for Production)
 
 ---
 
 ## 🎯 Resumen del Sistema
 
-Sistema completo de control de asistencias con códigos QR, gestión de alumnos y personal, dashboard en tiempo real y reportes.
+Sistema integral de gestión institucional diseñado para controlar asistencias mediante códigos QR, administrar expedientes de alumnos y personal, gestionar justificaciones de ausencias, y proveer métricas en tiempo real. Construido sobre stack moderno (Node.js, React, Electron) con enfoque en estabilidad, rendimiento y facilidad de despliegue.
 
 ---
 
-## ✅ Funcionalidades Implementadas
+## ✅ Funcionalidades Implementadas (v1.0.0)
 
-### Backend (Node.js + Express + Prisma)
-- ✅ API RESTful completa con autenticación JWT
-- ✅ Gestión de alumnos y personal (CRUD)
-- ✅ Sistema de asistencias (entrada/salida, QR/manual)
-- ✅ Generación de códigos QR con logo institucional
+### 🖥️ Plataforma y Core
+- **Aplicación de Escritorio:** Empaquetado con Electron v39 para Windows.
+- **Setup Wizard:** Asistente de instalación inicial para configuración sin conocimientos técnicos.
+- **Update System:** Sistema robusto de actualizaciones automáticas (`npm run update`) con Rollback integrado (`npm run rollback`).
+- **Seguridad Reforzada:** Headers HTTP seguros, rate limiting, saneamiento de inputs, y protección contra inyección de scripts.
+- **Offline First:** Banner de reconexión y cola de sincronización para operaciones críticas.
 
-- ✅ Sistema de logs con Pino (JSON estructurado)
-- ✅ Rate limiting y caché en memoria
-- ✅ Endpoint de métricas del sistema
-- ✅ Validación de datos con express-validator
-- ✅ Middleware de auditoría
+### 👥 Gestión de Usuarios
+- **Alumnos:** Expediente completo, generación de carnet con QR, historial de asistencias.
+- **Personal:** Gestión de docentes y administrativos con roles diferenciados.
+- **Control de Acceso (RBAC):** Roles de Administrador (acceso total) y Operador (acceso limitado a toma de asistencia).
 
-### Frontend (React + Vite + Tailwind)
-- ✅ Dashboard con estadísticas en tiempo real
-- ✅ Panel de alumnos con filtros y búsqueda
-- ✅ Panel de personal (docentes/administrativos)
-- ✅ Panel de asistencias con escáner QR (html5-qrcode)
-- ✅ Panel de configuración institucional
+### ⏱️ Control de Asistencias
+- **Scanner QR:** Lectura rápida mediante cámara web o lector físico.
+- **Registro Manual:** Opción de respaldo para entrada manual.
+- **Validación de Horarios:** Detección automática de retardos según configuración institucional.
+- **Justificaciones (Excusas):** Módulo completo para gestionar ausencias médicas/familiares con flujo de aprobación.
 
-- ✅ Panel de reportes (Excel y PDF)
-- ✅ **Panel de métricas visual con gráficos en tiempo real** 🆕
-- ✅ Gráficos interactivos con Recharts
-- ✅ Toasts y notificaciones con react-hot-toast
-- ✅ Animaciones con Framer Motion
-- ✅ Banner de reconexión cuando backend está offline
-- ✅ Manejo de sesiones expiradas con aviso amigable
+### 📊 Análisis y Reportes
+- **Dashboard en Tiempo Real:** Gráficos de asistencia diaria, puntualidad y ausentismo.
+- **Métricas Avanzadas:** Análisis de tendencias semanales/mensuales.
+- **Reportes Exportables:** Generación de Excel (.xlsx) y PDF para listados y estadísticas.
 
-### Base de Datos (SQLite + Prisma ORM)
-- ✅ Modelo unificado: Alumno, Personal, Asistencia, CodigoQr, Usuario, Institucion
-- ✅ Relaciones robustas con cascade y soft deletes
-- ✅ Índices para rendimiento
-- ✅ Migrations versionadas
-- ✅ Seed script con datos de prueba
-
-### Infraestructura
-- ✅ Scripts de inicio automático multiplataforma (PowerShell)
-- ✅ Instalación de fuentes Hack Nerd Font (Windows/macOS/Linux)
-- ✅ Configuración de ambiente con dotenv
-- ✅ Logs rotados y configurables
-- ✅ Health check endpoint
-- ✅ ESLint y Prettier configurados en backend
-- ✅ Soporte dual: SQLite (Local) y PostgreSQL (Cloud)
-- ✅ Carga de imágenes optimizada con Cloudinary
-- ✅ Pruebas de integración con Jest y Supertest
+### 🔒 Infraestructura
+- **Base de Datos:** SQLite local optimizada con WAL mode para rendimiento.
+- **Backups Automáticos:** Sistema de respaldo cifrado (AES-256) de base de datos y archivos multimedia.
+- **Logs Estructurados:** Sistema de logging (Pino) sin caracteres corruptos y rotación diaria.
+- **Prevención de Errores:** Validación estricta de código (ESLint) y prevención de emojis problemáticos.
 
 ---
 
-## 🔧 Mejoras Recientes (Última Iteración)
+## 🔧 Cambios Recientes (Actualización v1.0)
 
-### 1. Banner de Reconexión en Dashboard
-- Banner persistente cuando el backend está offline
-- Botón "Reintentar" para recargar stats manualmente
-- Diseño con alertas amarillas y icono de advertencia
+### 1. Sistema de Actualización y Rollback
+- Implementación de scripts CLI para facilitar el mantenimiento.
+- **Update:** `npm run update` automatiza backup -> pull -> migraciones -> verficación.
+- **Rollback:** `npm run rollback` permite volver a cualquier versión previa ante fallos.
+- **Gestor de Migraciones:** Sistema incremental para cambios en base de datos.
 
-### 2. Configuración de ESLint/Prettier Backend
-- `.eslintrc.json` con reglas recomendadas para Node.js
-- `.prettierrc.json` con formato consistente
-- `.eslintignore` para excluir node_modules, logs, uploads
+### 2. Estabilidad de Electron
+- Solución definitiva a bloqueos de inicio mediante aumento de memoria (1GB heap).
+- Corrección de corrupción de logs en terminales Windows (codificación UTF-8 forzada).
+- Renovación de UI en Setup Wizard y paneles principales.
 
-### 3. Pruebas de Integración
-- Suite completa para `/api/asistencias`:
-  - POST con alumno/personal
-  - GET /hoy con stats
-  - GET / con paginación y filtros
-  - GET /stats con días configurables
-- Validación de JWT, errores 400/401 y respuestas esperadas
+### 3. Módulo de Justificaciones
+- Activación del módulo de Excusas para gestión de ausencias.
+- Integración completa con el expediente del alumno/personal.
+- Corrección de bugs visuales y de importación.
 
-### 4. Endpoint de Métricas
-- `GET /api/metrics`: uptime, requests totales, top endpoints, stats de BD, caché, memoria
-- `POST /api/metrics/reset`: reseteo manual (solo admin)
-- Contadores en memoria para observabilidad básica
-
-### 5. Correcciones de Middleware
-- Caché ahora usa `baseUrl + path` para claves precisas
-- Rate limiter excluye correctamente `/api/health`
-- Dotenv carga siempre `backend/.env` con `__dirname`
-
-### 6. Configuración e Infraestructura
-- **Panel de Configuración**: Interfaz gráfica para ajustes institucionales.
-- **Wizard de Inicio**: Flujo guiado para configuración inicial.
-- **Admin Mejorado**: Gestión de roles y usuarios administrativos.
-- **Soporte Cloud**: Configuración lista para PostgreSQL y Cloudinary.
+### 4. Setup Wizard
+- Flujo guiado para primera instalación.
+- Configuración de institución y admin inicial.
+- Validación de conexión y verificación de entorno.
 
 ---
 
@@ -104,293 +75,64 @@ Sistema completo de control de asistencias con códigos QR, gestión de alumnos 
 ```
 Sistema de Registro Institucional/
 ├── backend/
-│   ├── .env
-│   ├── .eslintrc.json          ← Nuevo
-│   ├── .prettierrc.json        ← Nuevo
-│   ├── .eslintignore           ← Nuevo
-│   ├── server.js
-│   ├── prismaClient.js
-│   ├── middlewares/
-│   │   ├── auth.js
-│   │   ├── cache.js            ← Mejorado
-│   │   ├── rateLimiter.js      ← Mejorado
-│   │   ├── requestLogger.js
-│   │   └── validation.js
-│   ├── routes/
-│   │   ├── admin.js
-│   │   ├── alumnos.js
-│   │   ├── asistencias.js
-│   │   ├── auth.js
-│   │   ├── docentes.js
-│   │   ├── excusas.js
-│   │   ├── institucion.js
-│   │   ├── metrics.js          ← Nuevo
-│   │   ├── qr.js
-│   │   ├── reportes.js
-│   │   └── usuarios.js
-│   ├── services/
-│   │   ├── cloudinaryService.js
-│   │   ├── qrService.js
-│   │   ├── reportService.js
-│   │   └── tokenService.js
-│   ├── utils/
-│   │   └── logger.js
-│   ├── jobs/
-│   │   └── scheduler.js
-│   ├── prisma/
-│   │   ├── schema.prisma
-│   │   ├── seed.js
-│   │   └── migrations/
-│   └── __tests__/
-│       ├── alumnos.test.js
-│       ├── asistencias-integration.test.js  ← Nuevo
-│       ├── auth.test.js
-│       ├── health.test.js
-│       └── validation.test.js
-├── frontend-react/
+│   ├── config/              ← Configuración y control de versiones
+│   ├── migrations/          ← Scripts de migración de BD
+│   ├── routes/              ← API Endpoints (Auth, Alumnos, Asistencias, Excusas...)
+│   ├── services/            ← Lógica de negocio (QR, Reportes, Backup)
+│   ├── prisma/              ← Esquema de BD y migraciones
+│   └── server.js            ← Punto de entrada
+├── frontend/
 │   ├── src/
-│   │   ├── api/
-│   │   │   ├── client.js       ← Mejorado (interceptores)
-│   │   │   └── endpoints.js
-│   │   ├── components/
-│   │   │   ├── AlumnosPanel.jsx
-│   │   │   ├── AsistenciasPanel.jsx  ← Mejorado (cliente unificado)
-│   │   │   ├── ConfiguracionPanel.jsx
-│   │   │   ├── Dashboard.jsx         ← Mejorado (banner offline + acceso métricas)
-│   │   │   ├── MetricsPanel.jsx      ← Nuevo (gráficos Recharts)
-│   │   │   ├── PersonalPanel.jsx
-│   │   │   └── ReportesPanel.jsx
-│   │   ├── pages/
-│   │   │   └── LoginPage.jsx
-│   │   └── App.jsx               ← Mejorado (ruta /metricas)
-│   ├── vite.config.js
-│   └── tailwind.config.js
-├── prisma/
-│   ├── schema.prisma
-│   ├── dev.db                  ← Base de datos activa
-│   └── migrations/
-├── scripts/
-│   ├── install-fonts.js
-│   ├── install-hack-nerd-font.ps1
-│   ├── install-hack-nerd-font-macos.sh
-│   └── install-hack-nerd-font-linux.sh
-├── uploads/                    ← Fotos, logos, QRs (local) / Cloudinary (cloud)
-├── logs/                       ← Logs del backend
-├── start-auto.ps1
-├── stop-all.ps1
-└── package.json
+│   │   ├── api/             ← Cliente Axios y puntos finales
+│   │   ├── components/      ← Paneles (Alumnos, Personal, Config, Excusas...)
+│   │   ├── pages/           ← Login, SetupWizard
+│   │   └── App.jsx          ← Router principal
+├── electron/                ← Configuración de la ventana nativa
+├── scripts/                 ← Herramientas CLI (Update, Backup, Start, Validate)
+├── backups/                 ← (Ignorado) Archivos .bak generados
+├── uploads/                 ← (Ignorado) Fotos y logos almacenados
+└── package.json             ← Dependencias y scripts
 ```
 
 ---
 
-## 🚀 Cómo Iniciar el Sistema
+## 🚀 Guía de Scripts
 
-### Opción 1: Script Automático (Recomendado)
-```powershell
-.\start-auto.ps1
-```
-
-### Opción 2: Manual
-```powershell
-# Terminal 1 - Backend
-npm run dev
-
-# Terminal 2 - Frontend
-cd frontend-react
-npm run dev
-```
-
-### Opción 3: Desarrollo Individual
-```powershell
-npm run dev:backend   # Solo backend
-npm run dev:frontend  # Solo frontend
-```
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Inicia Backend y Frontend en modo desarrollo |
+| `npm run start` | Inicia el servidor en modo producción |
+| `npm run electron` | Lanza la aplicación de escritorio |
+| `npm run update` | **Actualiza el sistema** (Backup + Pull + Migrate) |
+| `npm run rollback` | **Restaura una versión anterior** desde backup |
+| `npm run validate:all` | Valida código y busca emojis prohibidos |
+| `npm test` | Ejecuta pruebas unitarias e integración |
 
 ---
 
-## 🧪 Ejecutar Pruebas
+## 📋 Próximos Pasos (Roadmap v2.0)
 
-```powershell
-# Todas las pruebas
-npm test
+El proyecto entra ahora en fase de estabilidad. Las siguientes funcionalidades están planificadas para la versión 2.0:
 
-# Solo integración
-npm run test:integration
+1.  **Gestión de Horarios (CNB Guatemala):**
+    - Asignación de cargas académicas (periodos, materias).
+    - Detección de conflictos de horario.
+    - Soporte para mallas curriculares complejas.
 
-# Watch mode
-npm run test:watch
-```
+2.  **Portal de Padres:**
+    - Acceso web para consulta de notas y asistencia.
 
----
+3.  **Notificaciones Push:**
+    - Alertas en tiempo real a móviles.
 
-## 📊 Acceso al Sistema
-
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:5000/api
-- **Health Check:** http://localhost:5000/api/health
-- **Métricas:** http://localhost:5000/api/metrics (requiere JWT)
-- **Prisma Studio:** `npm run prisma:studio`
-
-### Credenciales por Defecto
-- **Email:** admin@test.edu
-- **Contraseña:** admin123
+4.  **Escalabilidad Cloud:**
+    - Migración opcional a PostgreSQL para despliegues multi-sede.
 
 ---
 
-## 📈 Endpoints Principales
+## 📞 Soporte y Mantenimiento
 
-### Autenticación
-- `POST /api/auth/login` - Iniciar sesión
-- `GET /api/auth/me` - Perfil del usuario
-
-### Alumnos
-- `GET /api/alumnos` - Listar alumnos
-- `POST /api/alumnos` - Crear alumno
-- `PUT /api/alumnos/:id` - Actualizar alumno
-- `DELETE /api/alumnos/:id` - Eliminar alumno
-
-### Personal (Docentes)
-- `GET /api/docentes` - Listar personal
-- `POST /api/docentes` - Crear personal
-- `PUT /api/docentes/:id` - Actualizar personal
-- `DELETE /api/docentes/:id` - Eliminar personal
-
-### Asistencias
-- `POST /api/asistencias` - Registrar asistencia
-- `GET /api/asistencias` - Listar asistencias (paginado)
-- `GET /api/asistencias/hoy` - Asistencias del día
-- `GET /api/asistencias/stats` - Estadísticas por días
-
-
-### Métricas
-- `GET /api/metrics` - Métricas del sistema
-- `POST /api/metrics/reset` - Resetear métricas (admin)
-
----
-
-## 🔐 Seguridad Implementada
-
-- ✅ JWT con expiración de 8 horas
-- ✅ Bcrypt para hash de contraseñas (salt rounds: 10)
-- ✅ Rate limiting en todos los endpoints
-- ✅ Helmet para headers HTTP seguros
-- ✅ CORS configurado con whitelist
-- ✅ Validación de entrada con express-validator
-- ✅ Sanitización de logs (sin passwords en logs)
-- ✅ HMAC para tokens de QR firmados
-
----
-
-## 🎨 Tecnologías Utilizadas
-
-### Backend
-- Node.js 18+
-- Express 4.x
-- Prisma ORM 5.x
-- SQLite 3
-- JWT (jsonwebtoken)
-- Bcrypt
-- Pino (logging)
-- QRCode
-- Sharp (procesamiento imágenes)
-- ExcelJS + PDFKit (reportes)
-
-### Frontend
-- React 18
-- Vite 5
-- Tailwind CSS 3
-- Axios
-- Recharts (gráficos)
-- Framer Motion (animaciones)
-- React Hot Toast (notificaciones)
-- Html5-qrcode (escáner QR)
-- Lucide React (iconos)
-
-### Herramientas
-- ESLint + Prettier
-- Jest + Supertest (tests)
-- Nodemon (hot reload)
-- Prisma Studio (GUI BD)
-
----
-
-## 📋 Próximos Pasos Sugeridos
-
-### Corto Plazo (1-2 semanas)
-1. **Reportes Avanzados**
-   - Exportar QRs en PDF masivo
-   - Reportes de puntualidad por alumno
-   - Dashboard de tendencias mensuales
-
-2. **Mejoras UX**
-   - Modo oscuro en frontend
-   - PWA para uso offline
-   - Notificaciones push
-
-3. **Administración**
-   - Panel de usuarios con roles (admin/operador/visualizador)
-   - Logs de auditoría visibles en UI
-
-### Mediano Plazo (1-2 meses)
-4. **Integración**
-   - API REST documentada con Swagger/OpenAPI
-   - Webhooks para eventos (nueva asistencia, etc.)
-   - Importación masiva desde Excel
-
-5. **Escalabilidad**
-   - Migrar a PostgreSQL (opcional)
-   - Redis para caché distribuido
-   - Dockerización completa
-
-6. **Analytics**
-   - Dashboard de métricas avanzadas
-   - Exportación de métricas a Prometheus/Grafana
-   - Alertas por correo (ausencias, problemas)
-
-### Largo Plazo (3+ meses)
-7. **Móvil**
-   - App nativa con React Native
-   - Escaneo de QR optimizado para cámaras móviles
-
-8. **Avanzado**
-   - Reconocimiento facial como alternativa a QR
-   - Machine Learning para predicción de ausencias
-   - Multi-institución (multi-tenant)
-
----
-
-## 🐛 Problemas Conocidos y Soluciones
-
-### ✅ Resueltos
-- ~~Backend no cargaba .env desde raíz~~ → Dotenv ahora usa `__dirname`
-- ~~Panel de asistencias 500~~ → Cliente unificado + validación token
-- ~~Dashboard mostraba "Docentes"~~ → Ahora muestra "Personal"
-- ~~Caché no invalidaba /hoy~~ → Clave ahora usa baseUrl + path
-- ~~Health check limitado por rate limiter~~ → Excluido del limiter
-
-### Pendientes (Menores)
-- Webfonts WOFF2 opcionales para tipografía sin instalación OS
-- Retry exponencial en frontend para requests fallidos
-- Vista de logs en tiempo real en DiagnosticsPanel
-
----
-
-## 🤝 Contribuir
-
-Para contribuir al proyecto:
-1. Ejecutar `npm run test` antes de commit
-2. Seguir guías de ESLint/Prettier configuradas
-3. Actualizar este README si añades funcionalidad mayor
-4. Documentar endpoints nuevos en comentarios JSDoc
-
----
-
-## 📞 Soporte
-
-**Desarrollador:** Sistema de Registro Institucional  
-**Repositorio:** https://github.com/Hikki777/asistencia-institucional  
-**Licencia:** MIT
-
----
-
-**Última actualización:** 12 de noviembre de 2025
+Para reportar problemas o solicitar ayuda:
+1.  Verificar logs en carpeta `logs/`.
+2.  Ejecutar `npm run validate:all` para salud del código.
+3.  Contactar al equipo de desarrollo.

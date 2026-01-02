@@ -1,78 +1,124 @@
-# Dependencies
+# ============================================
+# NODE MODULES Y DEPENDENCIAS
+# ============================================
 node_modules/
-frontend-react/node_modules/
-
-# Environment Variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Database
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
-prisma/dev.db
-backend/prisma/dev.db
-backend/prisma/test.db
-
-# Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
+pnpm-debug.log*
+.pnpm-store/
 
-# Build outputs
+# ============================================
+# VARIABLES DE ENTORNO Y SECRETOS
+# ============================================
+.env
+.env.local
+.env.*.local
+
+# ============================================
+# BASE DE DATOS
+# ============================================
+prisma/dev.db
+prisma/dev.db-journal
+prisma/test.db
+prisma/test.db-journal
+*.db
+*.db-journal
+
+# ============================================
+# LOGS
+# ============================================
+logs/
+*.log
+combined.log
+error.log
+
+# ============================================
+# ARCHIVOS SUBIDOS (UPLOADS)
+# ============================================
+uploads/alumnos/*
+uploads/docentes/*
+uploads/qrs/*
+uploads/logos/*
+uploads/documentos/*
+!uploads/.gitkeep
+!uploads/alumnos/.gitkeep
+!uploads/docentes/.gitkeep
+!uploads/qrs/.gitkeep
+!uploads/logos/.gitkeep
+!uploads/documentos/.gitkeep
+
+# ============================================
+# BUILD Y DISTRIBUCIÓN
+# ============================================
 dist/
 build/
-frontend-react/dist/
-frontend-react/build/
+frontend/dist/
+frontend/build/
+.next/
+out/
 
-# Uploads (comentar si quieres subir archivos)
-uploads/qrs/*
-uploads/fotos/*
-!uploads/qrs/.gitkeep
-!uploads/fotos/.gitkeep
-# uploads/logos/* - Logo institucional se sube normalmente
+# ============================================
+# COVERAGE Y TESTS
+# ============================================
+coverage/
+.nyc_output/
+*.lcov
 
-# Backups (comentar si quieres subir backups)
-backups/*
-!backups/.gitkeep
+# ============================================
+# CACHE
+# ============================================
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
 
-# IDE & Editors
-.vscode/
+# ============================================
+# SISTEMA OPERATIVO
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# EDITORES E IDEs
+# ============================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
+.project
+.classpath
+.settings/
 
-# OS Files
-Thumbs.db
-desktop.ini
-
-# Testing
-coverage/
-.nyc_output/
-*.test.db
-jest-results.json
-
-# Temporary files
+# ============================================
+# TEMPORAL
+# ============================================
+tmp/
+temp/
 *.tmp
-*.temp
-.cache/
+*.bak
+*.backup
 
-# Next.js
-.next/
-out/
+# ============================================
+# ELECTRON (SI SE USA)
+# ============================================
+electron/dist/
+electron/build/
 
-# Lock files (opcional)
-# package-lock.json
-# yarn.lock
+# ============================================
+# PRISMA
+# ============================================
+
+# ============================================
+# DATOS LOCALES Y BACKUPS
+# ============================================
+backups/
+release/
+.DS_Store
 

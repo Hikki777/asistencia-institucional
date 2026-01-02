@@ -17,9 +17,7 @@ const DB_PATH = (isProduction && resourcesPath)
   : path.join(__dirname, '../prisma/dev.db');
 
 // Frontend estático (para servir desde Express en prod)
-const FRONTEND_DIR = (isProduction && resourcesPath)
-  ? path.join(resourcesPath, 'app.asar/frontend-react/dist') // Electron empaqueta source en app.asar
-  : path.join(__dirname, '../../frontend-react/dist');
+const FRONTEND_DIR = path.join(__dirname, '../../frontend/dist');
 
 module.exports = {
   UPLOADS_DIR,

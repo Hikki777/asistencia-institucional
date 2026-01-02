@@ -8,7 +8,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 // CORRECCIÓN AUTOMÁTICA: Si el usuario pegó "DATABASE_URL=..." en el valor
 if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('DATABASE_URL=')) {
   process.env.DATABASE_URL = process.env.DATABASE_URL.replace('DATABASE_URL=', '');
-  console.log('[WARNING] Se corrigió automáticamente la variable DATABASE_URL malformada');
+  console.log('[WARN] Se corrigió automáticamente la variable DATABASE_URL malformada');
 }
 
 // Importar logger PRIMERO
@@ -39,7 +39,7 @@ const checkEnv = () => {
   const required = ['JWT_SECRET', 'HMAC_SECRET'];
   const missing = required.filter(v => !process.env[v]);
   if (missing.length > 0) {
-    logger.fatal({ missing }, '❌ Faltan variables de entorno críticas');
+    logger.fatal({ missing }, '[ERROR] Faltan variables de entorno críticas');
     process.exit(1);
   }
   logger.info({ variables: required }, '[OK] Variables de entorno verificadas');
@@ -149,7 +149,7 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res, next) => {
   // Si existe el frontend, express.static lo servirá antes.
   // Si no, respondemos esto para evitar 404 y que Railway no mate el servicio.
-  res.send('Backend de Sistema de Asistencia Institucional - Funcionando [OK]');
+  res.send('Backend de Sistema de Asistencia Institucional - Funcionando [READY]');
 });
 
 // ============ RUTAS DE INICIALIZACIÓN ============
@@ -251,9 +251,6 @@ app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res
 // ============ RUTAS ESPECÍFICAS MONTADAS ============
 
 const excusasRoutes = require('./routes/excusas');
-const migracionRoutes = require('./routes/migracion');
-const dashboardRoutes = require('./routes/dashboard');
-
 app.use('/api/qr', qrRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/alumnos', alumnosRoutes);
@@ -265,8 +262,6 @@ app.use('/api/institucion', institucionRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/excusas', excusasRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/migracion', migracionRoutes);
-app.use('/api/dashboard', dashboardRoutes);
 
 
 
@@ -292,7 +287,7 @@ app.use((err, req, res, next) => {
 async function iniciar() {
   try {
     // Conectar BD
-    logger.info('[DATABASE] Probando conexión a base de datos...');
+    logger.info('[DB] Probando conexion a base de datos...');
     
     // DEBUG: Verificar formato de URL (sin revelar credenciales)
     const dbUrl = process.env.DATABASE_URL || '';

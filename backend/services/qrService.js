@@ -5,7 +5,7 @@ const axios = require('axios');
 const fs = require('fs-extra');
 const { logger } = require('../utils/logger');
 const { UPLOADS_DIR } = require('../utils/paths');
-const cloudinaryService = require('./cloudinaryService');
+const imageService = require('./imageService');
 const prisma = require('../prismaClient');
 const tokenService = require('./tokenService');
 
@@ -23,7 +23,7 @@ async function obtenerImagenBuffer(fuente) {
       return Buffer.from(base64Data, 'base64');
     }
     
-    // 2. URL (Cloudinary / Web)
+    // 2. URL (Web/Local)
     if (fuente.startsWith('http')) {
       const response = await axios.get(fuente, { responseType: 'arraybuffer' });
       return Buffer.from(response.data);
@@ -44,7 +44,7 @@ async function obtenerImagenBuffer(fuente) {
 }
 
 /**
- * Generar QR con logo centrado y subir a Cloudinary
+ * Generar QR con logo centrado y subir al almacenamiento
  */
 async function generarQrConLogo(token, logoFuente, filename, size = 600) {
   try {
@@ -82,14 +82,14 @@ async function generarQrConLogo(token, logoFuente, filename, size = 600) {
         .toBuffer();
     }
 
-    // Subir a Cloudinary
+    // Subir imagen
     const publicId = path.parse(filename).name;
-    const result = await cloudinaryService.uploadBuffer(finalBuffer, 'qrs', publicId);
+    const result = await imageService.uploadBuffer(finalBuffer, 'qrs', publicId);
 
-    logger.debug({ url: result.secure_url }, '[OK] QR generado y subido a Cloudinary');
+    logger.debug({ url: result.secure_url }, '[OK] QR generado y subido');
     return result.secure_url;
   } catch (error) {
-    logger.error({ err: error, filename }, '❌ Error generando QR con Cloudinary');
+    logger.error({ err: error, filename }, '[ERROR] Error generando QR');
     return null;
   }
 }
@@ -149,7 +149,7 @@ async function generarQrParaPersona(tipo, id) {
     return qrUrl;
 
   } catch (error) {
-    logger.error({ err: error, tipo, id }, '❌ Error en generarQrParaPersona');
+    logger.error({ err: error, tipo, id }, '[ERROR] Error en generarQrParaPersona');
     return null; // No fallar la creación de persona si falla el QR
   }
 }
@@ -171,7 +171,7 @@ function obtenerRutasQr(personaTipo, carnet) {
 }
 
 /**
- * Guardar logo institucional (Base64 -> Cloudinary)
+ * Guardar logo institucional (Base64 → Almacenamiento)
  */
 async function guardarLogo(base64Data, filename = 'logo.png') {
   try {
@@ -180,12 +180,12 @@ async function guardarLogo(base64Data, filename = 'logo.png') {
 
     const publicId = path.parse(filename).name;
     // Subir a carpeta 'logos'
-    const result = await cloudinaryService.uploadBuffer(buffer, 'logos', publicId);
+    const result = await imageService.uploadBuffer(buffer, 'logos', publicId);
     
-    logger.info({ url: result.secure_url }, '[OK] Logo subido a Cloudinary');
+    logger.info({ url: result.secure_url }, '[OK] Logo subido');
     return result.secure_url;
   } catch (error) {
-    logger.error({ err: error }, '❌ Error guardando logo');
+    logger.error({ err: error }, '[ERROR] Error guardando logo');
     return null;
   }
 }

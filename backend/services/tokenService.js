@@ -60,7 +60,7 @@ function validarToken(tokenB64) {
       valido: true
     };
   } catch (error) {
-    logger.error({ err: error }, '❌ Error validando token');
+    logger.error({ err: error }, '[ERROR] Error validando token');
     return null;
   }
 }
@@ -81,7 +81,7 @@ function decodificarToken(tokenB64) {
       ts: parseInt(ts, 10)
     };
   } catch (error) {
-    logger.error({ err: error }, '❌ Error decodificando token');
+    logger.error({ err: error }, '[ERROR] Error decodificando token');
     return null;
   }
 }

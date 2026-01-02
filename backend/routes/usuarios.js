@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
 
     res.json({ usuarios });
   } catch (error) {
-    logger.error({ err: error }, '❌ Error obteniendo usuarios');
+    logger.error({ err: error }, '[ERROR] Error obteniendo usuarios');
     res.status(500).json({ error: 'Error al obtener usuarios' });
   }
 });
@@ -89,7 +89,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ message: 'Usuario creado', usuario });
 
   } catch (error) {
-    logger.error({ err: error }, '❌ Error creando usuario');
+    logger.error({ err: error }, '[ERROR] Error creando usuario');
     res.status(500).json({ error: error.message });
   }
 });
@@ -119,7 +119,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ success: true, message: 'Usuario eliminado correctamente' });
 
   } catch (error) {
-    logger.error({ err: error }, '❌ Error eliminando usuario');
+    logger.error({ err: error }, '[ERROR] Error eliminando usuario');
     res.status(500).json({ error: error.message });
   }
 });

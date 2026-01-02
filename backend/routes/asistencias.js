@@ -25,14 +25,14 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
     const hasPersonalId = personal_id !== undefined && personal_id !== null && personal_id !== '';
 
     if (!hasAlumnoId && !hasPersonalId) {
-      logger.error({ alumno_id, personal_id }, '❌ ERROR: No hay alumno_id ni personal_id válidos');
+      logger.error({ alumno_id, personal_id }, '[ERROR] ERROR: No hay alumno_id ni personal_id válidos');
       return res.status(400).json({
         error: 'NUEVO ERROR: Debe proporcionar alumno_id o personal_id'
       });
     }
 
     if (!tipo_evento) {
-      logger.error({ tipo_evento }, '❌ ERROR: No hay tipo_evento');
+      logger.error({ tipo_evento }, '[ERROR] ERROR: No hay tipo_evento');
       return res.status(400).json({
         error: 'NUEVO ERROR: Falta tipo_evento'
       });
@@ -128,7 +128,7 @@ router.post('/', invalidateCacheMiddleware('/api/asistencias'), async (req, res)
     logger.info({ tipo_evento, carnet: persona.carnet, persona_tipo }, `[OK] Asistencia registrada: ${tipo_evento}`);
     res.status(201).json(asistencia);
   } catch (error) {
-    logger.error({ err: error, body: req.body }, '❌ Error registrando asistencia');
+    logger.error({ err: error, body: req.body }, '[ERROR] Error registrando asistencia');
     res.status(500).json({ error: error.message });
   }
 });
@@ -226,7 +226,7 @@ router.get('/', cacheMiddleware('list'), async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error({ err: error, query: req.query }, '❌ Error listando asistencias');
+    logger.error({ err: error, query: req.query }, '[ERROR] Error listando asistencias');
     res.status(500).json({ error: error.message });
   }
 });
@@ -297,7 +297,7 @@ router.get('/hoy', async (req, res) => {
         stack: error?.stack?.split('\n').slice(0, 3).join(' | ')
       },
       user: req.user || null
-    }, '❌ Error obteniendo asistencias de hoy');
+    }, '[ERROR] Error obteniendo asistencias de hoy');
     res.status(500).json({ error: error?.message || 'Error interno al obtener asistencias de hoy' });
   }
 });
@@ -346,7 +346,7 @@ router.get('/stats', cacheMiddleware('stats'), async (req, res) => {
       porDia
     });
   } catch (error) {
-    logger.error({ err: error, dias: req.query.dias }, '❌ Error obteniendo estadísticas');
+    logger.error({ err: error, dias: req.query.dias }, '[ERROR] Error obteniendo estadísticas');
     res.status(500).json({ error: error.message });
   }
 });
@@ -366,7 +366,7 @@ router.delete('/:id', async (req, res) => {
     logger.info({ asistenciaId: id }, '[OK] Asistencia eliminada');
     res.json({ success: true, message: 'Asistencia eliminada' });
   } catch (error) {
-    logger.error({ err: error, asistenciaId: req.params.id }, '❌ Error eliminando asistencia');
+    logger.error({ err: error, asistenciaId: req.params.id }, '[ERROR] Error eliminando asistencia');
     res.status(500).json({ error: error.message });
   }
 });

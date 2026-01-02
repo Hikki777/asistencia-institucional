@@ -82,13 +82,13 @@ router.post('/generar', async (req, res) => {
       codigoQr = await prisma.codigoQr.create({ data: createData });
     }
 
-    // Generar rutas (Mantenemos para compatibilidad de nombre, pero usamos Cloudinary)
+    // Generar rutas
     const { filename } = qrService.obtenerRutasQr(
       persona_tipo,
       persona.carnet
     );
 
-    // Generar PNG con logo y subir a Cloudinary
+    // Generar PNG con logo
     const qrUrl = await qrService.generarQrConLogo(
       codigoQr.token,
       institucion.logo_base64,
@@ -133,7 +133,7 @@ router.post('/generar', async (req, res) => {
       codigo_qr: {
         id: codigoQr.id,
         token: codigoQr.token.substring(0, 30) + '...',
-        png_url: qrUrl, // Devolvemos la URL directa de Cloudinary
+        png_url: qrUrl, // Devolvemos la URL directa
         persona: {
           tipo: persona_tipo,
           nombre: `${persona.nombres} ${persona.apellidos}`,
@@ -142,7 +142,7 @@ router.post('/generar', async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error({ err: error, body: req.body }, '❌ Error generando QR');
+    logger.error({ err: error, body: req.body }, '[ERROR] Error generando QR');
     res.status(500).json({ error: error.message });
   }
 });
@@ -167,7 +167,7 @@ router.get('/:id/png', async (req, res) => {
       return res.status(404).json({ error: 'QR no encontrado' });
     }
 
-    // Si es una URL de Cloudinary (empieza con http), redirigir
+    // Si es una URL (empieza con http), redirigir
     if (codigoQr.png_path && codigoQr.png_path.startsWith('http')) {
       return res.redirect(codigoQr.png_path);
     }
@@ -181,7 +181,7 @@ router.get('/:id/png', async (req, res) => {
     }
 
     // PNG falta: intentar regenerar
-    logger.warn({ qrId: id }, `[WARNING] PNG faltante para QR ${id}, regenerando en Cloudinary...`);
+    logger.warn({ qrId: id }, `[WARNING] PNG faltante para QR ${id}, regenerando...`);
 
     const institucion = await prisma.institucion.findUnique({ where: { id: 1 } });
     if (!institucion || !institucion.logo_base64) {
@@ -243,11 +243,11 @@ router.get('/:id/png', async (req, res) => {
       }
     });
 
-    logger.info({ qrId: codigoQr.id, persona_tipo: codigoQr.persona_tipo, carnet }, '[OK] QR regenerado y servido (Cloudinary)');
+    logger.info({ qrId: codigoQr.id, persona_tipo: codigoQr.persona_tipo, carnet }, '[OK] QR regenerado y servido');
 
     res.redirect(qrUrl);
   } catch (error) {
-    logger.error({ err: error, qrId: req.params.id }, '❌ Error sirviendo/regenerando QR PNG');
+    logger.error({ err: error, qrId: req.params.id }, '[ERROR] Error sirviendo/regenerando QR PNG');
     res.status(500).json({ error: error.message });
   }
 });
@@ -282,7 +282,7 @@ router.get('/listar/todos', async (req, res) => {
       }))
     });
   } catch (error) {
-    logger.error({ err: error }, '❌ Error listando QRs');
+    logger.error({ err: error }, '[ERROR] Error listando QRs');
     res.status(500).json({ error: error.message });
   }
 });

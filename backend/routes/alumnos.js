@@ -9,7 +9,7 @@ const {
 const { logger } = require('../utils/logger');
 const { cacheMiddleware, invalidateCacheMiddleware } = require('../middlewares/cache');
 const multer = require('multer');
-const { uploadBuffer } = require('../services/cloudinaryService');
+const { uploadBuffer } = require('../services/imageService');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -73,7 +73,7 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error({ err: error, query: req.query }, '❌ Error al listar alumnos');
+    logger.error({ err: error, query: req.query }, '[ERROR] Error al listar alumnos');
     res.status(500).json({ error: error.message });
   }
 });
@@ -93,13 +93,13 @@ router.get('/:id', validarId, async (req, res) => {
     });
 
     if (!alumno) {
-      logger.warn({ alumnoId: req.params.id }, '⚠️ Alumno no encontrado');
+      logger.warn({ alumnoId: req.params.id }, '[WARN] Alumno no encontrado');
       return res.status(404).json({ error: 'Alumno no encontrado' });
     }
 
     res.json(alumno);
   } catch (error) {
-    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al obtener alumno');
+    logger.error({ err: error, alumnoId: req.params.id }, '[ERROR] Error al obtener alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -172,13 +172,13 @@ const qrService = require('../services/qrService');
         await qrService.generarQrParaPersona('alumno', alumno.id);
         logger.info({ alumnoId: alumno.id }, '[OK] QR generado automáticamente');
     } catch (qrError) {
-        logger.error({ err: qrError, alumnoId: alumno.id }, '⚠️ Falló generación automática de QR');
+        logger.error({ err: qrError, alumnoId: alumno.id }, '[WARN] Falló generación automática de QR');
     }
 
     logger.info({ alumnoId: alumno.id, carnet, nombres, apellidos }, '[OK] Alumno creado');
     res.status(201).json(alumno);
   } catch (error) {
-    logger.error({ err: error, body: req.body }, '❌ Error al crear alumno');
+    logger.error({ err: error, body: req.body }, '[ERROR] Error al crear alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -234,7 +234,7 @@ router.put('/:id', invalidateCacheMiddleware('/api/alumnos'), validarActualizarA
     logger.info({ alumnoId: id, campos: Object.keys(req.body) }, '[OK] Alumno actualizado');
     res.json(alumno);
   } catch (error) {
-    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al actualizar alumno');
+    logger.error({ err: error, alumnoId: req.params.id }, '[ERROR] Error al actualizar alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -265,7 +265,7 @@ router.delete('/:id', invalidateCacheMiddleware('/api/alumnos'), async (req, res
     logger.info({ alumnoId: id }, '[OK] Alumno inactivado');
     res.json({ success: true, message: 'Alumno inactivado' });
   } catch (error) {
-    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error al inactivar alumno');
+    logger.error({ err: error, alumnoId: req.params.id }, '[ERROR] Error al inactivar alumno');
     res.status(500).json({ error: error.message });
   }
 });
@@ -273,7 +273,7 @@ router.delete('/:id', invalidateCacheMiddleware('/api/alumnos'), async (req, res
 
 /**
  * POST /api/alumnos/:id/foto
- * Subir foto de perfil a Cloudinary con compresión
+ * Subir foto de perfil con compresión
  */
 router.post('/:id/foto', upload.single('foto'), async (req, res) => {
   try {
@@ -291,7 +291,7 @@ router.post('/:id/foto', upload.single('foto'), async (req, res) => {
     const { compressProfilePhoto } = require('../services/imageService');
     const compressedBuffer = await compressProfilePhoto(req.file.buffer);
 
-    // Subir a Cloudinary
+    // Subir imagen
     const publicId = `alumno_${alumno.carnet}`;
     const result = await uploadBuffer(compressedBuffer, 'alumnos', publicId);
 
@@ -304,7 +304,7 @@ router.post('/:id/foto', upload.single('foto'), async (req, res) => {
     logger.info({ alumnoId: id, url: result.secure_url }, '[OK] Foto de alumno actualizada');
     res.json({ success: true, url: result.secure_url });
   } catch (error) {
-    logger.error({ err: error, alumnoId: req.params.id }, '❌ Error subiendo foto');
+    logger.error({ err: error, alumnoId: req.params.id }, '[ERROR] Error subiendo foto');
     res.status(500).json({ error: error.message });
   }
 });

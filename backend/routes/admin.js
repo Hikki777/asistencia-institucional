@@ -17,7 +17,22 @@ router.post('/reset-factory', async (req, res) => {
     const { password } = req.body;
     
     // Verificación adicional de seguridad (confirmar contraseña del admin actual)
-    // TODO: Implementar validación de password si es crítico
+    if (!password) {
+      return res.status(400).json({ error: 'Se requiere contraseña para confirmar el reset de fábrica' });
+    }
+
+    // Verificar contraseña del usuario actual
+    const bcrypt = require('bcrypt');
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: req.user.id },
+      select: { hash_pass: true }
+    });
+
+    const passwordValida = await bcrypt.compare(password, usuario.hash_pass);
+    if (!passwordValida) {
+      logger.warn({ user: req.user.id }, '[WARNING] Intento de reset de fábrica con contraseña incorrecta');
+      return res.status(401).json({ error: 'Contraseña incorrecta' });
+    }
 
     logger.warn({ user: req.user.id }, '[WARNING] INICIANDO RESET DE FÁBRICA');
 

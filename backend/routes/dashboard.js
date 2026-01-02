@@ -150,7 +150,7 @@ router.get('/stats', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error obteniendo estadísticas:', error);
+    logger.error({ err: error }, '[ERROR] Error obteniendo estadísticas');
     res.status(500).json({ error: 'Error al obtener estadísticas del dashboard' });
   }
 });

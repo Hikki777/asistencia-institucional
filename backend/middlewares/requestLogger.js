@@ -31,7 +31,7 @@ const requestLogger = (req, res, next) => {
 
     // Loggear según código de estado
     if (res.statusCode >= 500) {
-      logger.error(logData, `❌ ${req.method} ${req.url} - ${res.statusCode}`);
+      logger.error(logData, `[ERROR] ${req.method} ${req.url} - ${res.statusCode}`);
     } else if (res.statusCode >= 400) {
       logger.warn(logData, `[WARNING] ${req.method} ${req.url} - ${res.statusCode}`);
     } else if (res.statusCode >= 300) {

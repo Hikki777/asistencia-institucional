@@ -41,7 +41,7 @@ const filesToProcess = [
   'backend/middlewares/cache.js',
 ];
 
-const projectRoot = __dirname;
+const projectRoot = path.join(__dirname, '..');
 let totalReplacements = 0;
 
 console.log('[SCRIPT] Iniciando reemplazo masivo de emojis...\n');

@@ -28,7 +28,7 @@ router.post('/pdf', reportLimiter, validarGenerarReporte, async (req, res) => {
   } catch (error) {
     logger.error(
       { err: error, msg: error.message, stack: error.stack },
-      '❌ Error generando reporte PDF'
+      '[ERROR] Error generando reporte PDF'
     );
     res.status(500).json({
       error: error.message,
@@ -54,7 +54,7 @@ router.post('/excel', reportLimiter, validarGenerarReporte, async (req, res) => 
   } catch (error) {
     logger.error(
       { err: error, msg: error.message, stack: error.stack },
-      '❌ Error generando reporte Excel'
+      '[ERROR] Error generando reporte Excel'
     );
     res.status(500).json({
       error: error.message,
@@ -80,7 +80,7 @@ router.get('/alumno/:id/pdf', async (req, res) => {
   } catch (error) {
     logger.error(
       { err: error, alumnoId: req.params.id },
-      '❌ Error generando reporte PDF de alumno'
+      '[ERROR] Error generando reporte PDF de alumno'
     );
     res.status(500).json({ error: error.message });
   }
@@ -102,7 +102,7 @@ router.get('/alumno/:id/excel', async (req, res) => {
   } catch (error) {
     logger.error(
       { err: error, alumnoId: req.params.id },
-      '❌ Error generando reporte Excel de alumno'
+      '[ERROR] Error generando reporte Excel de alumno'
     );
     res.status(500).json({ error: error.message });
   }
@@ -123,7 +123,7 @@ router.post('/limpiar', async (req, res) => {
 
     res.json({ success: true, message: 'Archivos temporales limpiados' });
   } catch (error) {
-    logger.error({ err: error, userId: req.user.id }, '❌ Error limpiando archivos temporales');
+    logger.error({ err: error, userId: req.user.id }, '[ERROR] Error limpiando archivos temporales');
     res.status(500).json({ error: error.message });
   }
 });

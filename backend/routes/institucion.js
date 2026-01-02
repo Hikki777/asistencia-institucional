@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
 const { logger } = require('../utils/logger');
-// Importar servicio QR al inicio para detectar errores de carga (Sharp/Cloudinary)
+// Importar servicio QR al inicio para detectar errores de carga
 const qrService = require('../services/qrService');
 
 // GET /api/institucion - Obtener datos de la institución
@@ -87,7 +87,7 @@ router.post('/init', async (req, res) => {
         municipio,
         email,
         telefono,
-        logo_path: logoUrl, // Guardar URL de Cloudinary
+        logo_path: logoUrl, // Guardar URL del logo
         inicializado: true
       },
       create: {
@@ -150,7 +150,7 @@ router.put('/', async (req, res) => {
     // Guardar logo si se proporciona
     let logoUrl = null;
     if (logo_base64) {
-      // Usamos qrService (que ahora usa Cloudinary) para guardar el logo
+      // Usar qrService para guardar el logo
       logoUrl = await qrService.guardarLogo(logo_base64, 'logo.png');
     }
 

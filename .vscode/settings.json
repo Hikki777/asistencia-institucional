@@ -1,0 +1,14 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+  // Desactivar validación de CSS nativa para evitar falsos positivos con Tailwind
+  "css.validate": false,
+  // Silenciar avisos de markdownlint para documentación existente
+  "markdownlint.config": {
+    "MD022": false,
+    "MD031": false,
+    "MD032": false,
+    "MD040": false
+  }
+}

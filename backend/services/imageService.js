@@ -18,7 +18,7 @@ const uploadBuffer = async (buffer, folder, filename) => {
     // Asegurar extensión .png
     const finalFilename = filename.endsWith('.png') ? filename : `${filename}.png`;
     const filepath = path.join(folderPath, finalFilename);
-    const relativePath = `/uploads/${folder}/${finalFilename}`;
+    const relativePath = `${folder}/${finalFilename}`;
     
     await fs.writeFile(filepath, buffer);
     logger.debug({ filepath }, '[FILE] Archivo guardado localmente');

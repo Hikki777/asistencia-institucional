@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs-extra');
+const { UPLOADS_DIR } = require('../utils/paths');
 const prisma = require('../prismaClient');
 const qrService = require('../services/qrService');
 const tokenService = require('../services/tokenService');
@@ -174,7 +175,7 @@ router.get('/:id/png', async (req, res) => {
 
     // Si es ruta local (legado), intentar servirla
     if (codigoQr.png_path) {
-      const pngPath = path.join(__dirname, '../../uploads', codigoQr.png_path);
+      const pngPath = path.join(UPLOADS_DIR, codigoQr.png_path);
       if (await fs.pathExists(pngPath)) {
         return res.sendFile(pngPath);
       }

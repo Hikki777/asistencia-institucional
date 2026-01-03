@@ -5,10 +5,18 @@ const path = require('path');
 const fs = require('fs-extra');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-// CORRECCIÓN AUTOMÁTICA: Si el usuario pegó "DATABASE_URL=..." en el valor
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('DATABASE_URL=')) {
-  process.env.DATABASE_URL = process.env.DATABASE_URL.replace('DATABASE_URL=', '');
-  console.log('[WARN] Se corrigió automáticamente la variable DATABASE_URL malformada');
+// CORRECCIÓN AUTOMÁTICA DE RUTA DE BD (Absolute Path Fix)
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('file:')) {
+  // Si es una ruta relativa de SQLite (ej: file:./prisma/dev.db), convertirla a absoluta
+  const dbPathRelative = process.env.DATABASE_URL.replace('file:', '').trim();
+  if (dbPathRelative.startsWith('./') || dbPathRelative.startsWith('../')) {
+    // Asumimos que la ruta es relativa a la RAÍZ del proyecto (donde está package.json)
+    // __dirname es backend/, así que la raíz es path.join(__dirname, '..')
+    const projectRoot = path.join(__dirname, '..');
+    const absoluteDbPath = path.resolve(projectRoot, dbPathRelative);
+    process.env.DATABASE_URL = `file:${absoluteDbPath}`;
+    console.log(`[DB] Ruta de base de datos corregida a absoluta: ${process.env.DATABASE_URL}`);
+  }
 }
 
 // Importar logger PRIMERO
@@ -49,6 +57,12 @@ checkEnv();
 
 // Configurar handlers globales de errores
 setupGlobalErrorHandlers();
+
+console.log('='.repeat(50));
+console.log('  [DEBUG] SERVER CONFIGURATION');
+console.log('  UPLOADS_DIR:', UPLOADS_DIR);
+console.log('  DATABASE_URL:', process.env.DATABASE_URL);
+console.log('='.repeat(50));
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -104,9 +118,17 @@ app.use('/api', apiLimiter);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Detectar errores de JSON malformado (body-parser)
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    logger.error({ err }, '[JSON ERROR] JSON malformado recibido');
+    return res.status(400).json({ error: 'JSON inválido o malformado' });
+  }
+  next(err);
+});
+
 // Servir archivos estáticos (QR, logos, fotos)
-// Servir archivos estáticos (QR, logos, fotos) - REMOVIDO: Se usa Cloudinary
-// app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Servir frontend HTML
 app.use(express.static(FRONTEND_DIR));
@@ -153,100 +175,7 @@ app.get('/', (req, res, next) => {
 });
 
 // ============ RUTAS DE INICIALIZACIÓN ============
-
-// Importar validaciones para institución
-const { validarInicializarInstitucion, validarActualizarInstitucion } = require('./middlewares/validation');
-
-// Inicializar institución (primera ejecución)
-app.post('/api/institucion/init', validarInicializarInstitucion, async (req, res) => {
-  try {
-    const { nombre, horario_inicio, horario_salida, margen_puntualidad_min, logo_base64, admin_email, admin_password, direccion, email, telefono } = req.body;
-
-    if (!nombre || !logo_base64 || !admin_email || !admin_password) {
-      return res.status(400).json({
-        error: 'Faltan parámetros requeridos: nombre, logo_base64, admin_email, admin_password'
-      });
-    }
-
-    // Verificar si ya está inicializado
-    const existing = await prisma.institucion.findUnique({ where: { id: 1 } }).catch(() => null);
-    if (existing && existing.inicializado) {
-      return res.status(400).json({ error: 'La institución ya está inicializada' });
-    }
-
-    // Guardar logo
-    const logoResult = await qrService.guardarLogo(logo_base64, 'logo.png');
-    if (!logoResult) {
-      return res.status(500).json({ error: 'Error guardando logo' });
-    }
-
-    // Crear o actualizar institución
-    const institucion = await prisma.institucion.upsert({
-      where: { id: 1 },
-      create: {
-        id: 1,
-        nombre,
-        logo_base64,
-        logo_path: logoResult.relativePath,
-        horario_inicio: horario_inicio || '07:00',
-        horario_salida: horario_salida || '13:00',
-        margen_puntualidad_min: margen_puntualidad_min || 5,
-        direccion,
-        email,
-        telefono,
-        inicializado: true
-      },
-      update: {
-        nombre,
-        logo_base64,
-        logo_path: logoResult.relativePath,
-        horario_inicio: horario_inicio || '07:00',
-        horario_salida: horario_salida || '13:00',
-        margen_puntualidad_min: margen_puntualidad_min || 5,
-        direccion,
-        email,
-        telefono,
-        inicializado: true
-      }
-    });
-
-    // Crear admin inicial
-    const bcrypt = require('bcrypt');
-    const hash = await bcrypt.hash(admin_password, 10);
-    
-    const admin = await prisma.usuario.create({
-      data: {
-        email: admin_email,
-        hash_pass: hash,
-        rol: 'admin',
-        activo: true
-      },
-      select: { id: true, email: true, rol: true }
-    });
-
-    // Registrar en auditoria
-    await prisma.auditoria.create({
-      data: {
-        entidad: 'Institucion',
-        entidad_id: 1,
-        usuario_id: admin.id,
-        accion: 'crear',
-        detalle: JSON.stringify({ tipo: 'initialization', nombre })
-      }
-    });
-
-    logger.info({ institucion: nombre, adminEmail: admin.email }, '[OK] Institucion inicializada exitosamente');
-    return res.status(201).json({
-      success: true,
-      institucion,
-      admin: { email: admin.email, rol: admin.rol },
-      message: 'Institución y admin creados exitosamente'
-    });
-  } catch (error) {
-    logger.error({ err: error, body: req.body }, '[ERROR] Error al inicializar institucion');
-    res.status(500).json({ error: error.message });
-  }
-});
+// (Las rutas de institución se manejan en routes/institucion.js)
 
 // ============ RUTAS ESPECÍFICAS MONTADAS ============
 
@@ -287,6 +216,7 @@ app.use((err, req, res, next) => {
 async function iniciar() {
   try {
     // Conectar BD
+    console.log('\n\n🔍 --- DEBUG MODE: BACKEND RELOADED SUCCESSFULLY --- 🔍\n');
     logger.info('[DB] Probando conexion a base de datos...');
     
     // DEBUG: Verificar formato de URL (sin revelar credenciales)

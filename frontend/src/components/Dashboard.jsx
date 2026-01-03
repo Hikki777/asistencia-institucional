@@ -180,9 +180,11 @@ export default function Dashboard() {
                     src={
                       institucion.logo_path.startsWith("http")
                         ? institucion.logo_path
-                        : `${import.meta.env.VITE_API_URL}/uploads/${
-                            institucion.logo_path
-                          }?t=${Date.now()}`
+                        : (() => {
+                            const api = localStorage.getItem('api_url') || import.meta.env.VITE_API_URL || '';
+                            const base = api.startsWith('http') ? api.replace(/\/api$/, '').replace(/\/$/, '') : '';
+                            return `${base}/uploads/${institucion.logo_path}?t=${Date.now()}`;
+                          })()
                     }
                     alt="Logo institucional"
                     className="w-24 h-24 object-contain"

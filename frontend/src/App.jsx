@@ -18,7 +18,7 @@ import SetupWizard from './components/SetupWizard';
 import LoginPage from './pages/LoginPage';
 import client from './api/client';
 import offlineQueueService from './services/offlineQueue';
-import toast from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 import './App.css';
 
 function App() {
@@ -213,15 +213,24 @@ function App() {
     return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 dark:text-white">Cargando sistema...</div>;
   }
 
+  const getBaseUrl = () => {
+    const api = localStorage.getItem('api_url') || import.meta.env.VITE_API_URL || '';
+    if (api.startsWith('http')) {
+      return api.replace(/\/api$/, '').replace(/\/$/, '');
+    }
+    return ''; // Relative path
+  };
+
   const logoUrl = institucion?.logo_path?.startsWith('http') 
     ? institucion.logo_path 
     : institucion?.logo_path 
-      ? `${import.meta.env.VITE_API_URL}/uploads/${institucion.logo_path}` 
+      ? `${getBaseUrl()}/uploads/${institucion.logo_path}` 
       : null;
 
   return (
     <ErrorBoundary fallbackMessage="Ha ocurrido un error en la aplicación. Por favor, recarga la página.">
       <Router>
+        <Toaster position="top-right" />
         <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
           {isLoggedIn && (
           <aside
@@ -232,10 +241,14 @@ function App() {
           <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex items-center h-16 overflow-hidden">
             <div className="flex items-center gap-4 min-w-max">
               <div className="w-8 flex justify-center flex-shrink-0">
-                 <img src="/logo.png" alt="HikariOpen Logo" className="w-8 h-8 object-contain" />
+                  <img 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    className="w-8 h-8 object-contain" 
+                  />
               </div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                <h1 className="text-xl font-bold text-blue-600 dark:bg-clip-text dark:text-transparent dark:bg-gradient-to-r dark:from-blue-400 dark:to-emerald-400">
+                <h1 className="text-xl font-bold text-blue-600 dark:bg-clip-text dark:text-transparent dark:bg-gradient-to-r dark:from-blue-400 dark:to-emerald-400 truncate max-w-[150px]">
                   HikariOpen
                 </h1>
               </div>
@@ -294,9 +307,19 @@ function App() {
           {isLoggedIn && (
           <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2">
-               <img src="/logo.png" alt="HikariOpen Logo" className="w-8 h-8 object-contain" />
-               <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                  HikariOpen
+               <img 
+                 src={
+                   institucion?.logo_path?.startsWith('http') 
+                     ? institucion.logo_path 
+                     : institucion?.logo_path 
+                       ? `${import.meta.env.VITE_API_URL}/uploads/${institucion.logo_path}` 
+                       : "/logo.png"
+                 } 
+                 alt="Logo" 
+                 className="w-8 h-8 object-contain" 
+               />
+               <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 truncate max-w-[200px]">
+                  {institucion?.nombre || "HikariOpen"}
                </h1>
             </div>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-slate-300 hover:text-white">

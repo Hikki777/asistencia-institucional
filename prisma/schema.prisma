@@ -142,6 +142,7 @@ model Usuario {
   email          String   @unique
   nombres        String?  // Nuevo: Nombre del usuario
   apellidos      String?  // Nuevo: Apellido del usuario
+  foto_path      String?  // Nuevo: Ruta a la foto de perfil
   cargo          String?  // Nuevo: Cargo (Director, Secretaria, etc.)
   jornada        String?  // Nuevo: Jornada laboral
   rol            String   @default("operador") // "admin", "operador"

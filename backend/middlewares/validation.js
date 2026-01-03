@@ -1,11 +1,19 @@
 const { body, param, query, validationResult } = require('express-validator');
 
+const { logger } = require('../utils/logger');
+
 /**
  * Middleware para procesar errores de validación
  */
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    // LOGGEAR ERRORES DE VALIDACIÓN PARA DEBUGGING
+    logger.warn({ 
+      validationErrors: errors.array(),
+      body: req.body 
+    }, '[VALIDATION ERROR] Petición rechazada por validación');
+
     return res.status(400).json({ 
       error: 'Errores de validación',
       detalles: errors.array() 
@@ -13,6 +21,8 @@ const handleValidationErrors = (req, res, next) => {
   }
   next();
 };
+
+exports.handleValidationErrors = handleValidationErrors;
 
 /**
  * Validaciones para Alumnos
@@ -309,7 +319,7 @@ exports.validarInicializarInstitucion = [
     .isLength({ min: 3, max: 200 }).withMessage('El nombre debe tener entre 3 y 200 caracteres'),
   
   body('logo_base64')
-    .notEmpty().withMessage('El logo es requerido')
+    .optional()
     .matches(/^data:image\/(png|jpeg|jpg);base64,/).withMessage('Logo debe ser base64 válido (PNG/JPEG)'),
   
   body('admin_email')

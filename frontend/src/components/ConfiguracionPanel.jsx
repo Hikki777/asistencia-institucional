@@ -1,11 +1,12 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Save, Upload, Building2, Clock, AlertCircle, Users, Trash2, Plus, X, Server, AlertOctagon, RotateCcw, LogIn, LogOut, Timer, Download, FileArchive } from 'lucide-react';
+import { Settings, Save, Upload, Building2, Clock, AlertCircle, Users, Trash2, Plus, X, Server, AlertOctagon, RotateCcw, LogIn, LogOut, Timer, Download, FileArchive, Camera } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = localStorage.getItem('api_url') || import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = API_URL.startsWith('http') ? API_URL.replace(/\/api$/, '').replace(/\/$/, '') : '';
 const client = axios.create({
   baseURL: API_URL,
   headers: {
@@ -156,6 +157,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
           )}
           <div className="flex-1 w-full">
             <input
+              id="logo-upload"
               type="file"
               accept="image/png,image/jpeg,image/jpg"
               onChange={handleLogoChange}
@@ -234,13 +236,39 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
 );
 
 // --- SUBCOMPONENT: Usuario Settings ---
-const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserModal, newUser, setNewUser, handleCreateUser, handleDeleteUser, fetchUsuarios }) => (
+const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserModal, newUser, setNewUser, handleCreateUser, handleDeleteUser, fetchUsuarios, handlePhotoUpload }) => {
+  const fileInputRef = React.useRef(null);
+  const [uploadingUserId, setUploadingUserId] = React.useState(null);
+
+  const onCameraClick = (userId) => {
+    setUploadingUserId(userId);
+    fileInputRef.current.click();
+  };
+
+  const onFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && uploadingUserId) {
+      handlePhotoUpload(uploadingUserId, file);
+    }
+    e.target.value = ''; // Reset
+  };
+
+  return (
   <motion.div
     initial={{ opacity: 0, x: 20 }}
     animate={{ opacity: 1, x: 0 }}
     exit={{ opacity: 0, x: -20 }}
     className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-6"
   >
+    {/* Hidden File Input */}
+    <input 
+      type="file" 
+      ref={fileInputRef} 
+      className="hidden" 
+      accept="image/*"
+      onChange={onFileChange} 
+    />
+
     <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-4">
       <div>
         <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
@@ -274,8 +302,28 @@ const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserMod
             usuarios.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                 <td className="px-4 py-3">
-                  <div className="font-medium text-gray-900 dark:text-gray-100">{user.nombres} {user.apellidos}</div>
-                  <div className="text-xs text-gray-500">{user.email}</div>
+                  <div className="flex items-center gap-3">
+                    <div className="relative group/avatar cursor-pointer" onClick={() => onCameraClick(user.id)}>
+                      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-300 dark:border-gray-600">
+                        {user.foto_path ? (
+                          <img 
+                            src={`${BASE_URL}/uploads/${user.foto_path}?t=${Date.now()}`} 
+                            alt="Avatar" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-gray-500 font-bold text-xs">{user.nombres?.[0]}{user.apellidos?.[0]}</span>
+                        )}
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                         <Camera size={16} className="text-white" />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{user.nombres} {user.apellidos}</div>
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -366,6 +414,38 @@ const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserMod
                 />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Cargo</label>
+                <select
+                  value={newUser.cargo}
+                  onChange={e => setNewUser({...newUser, cargo: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                  <option value="">Seleccione...</option>
+                  <option value="Director">Director(a)</option>
+                  <option value="Subdirector">Subdirector(a)</option>
+                  <option value="Secretaria">Secretaria</option>
+                  <option value="Docente">Docente</option>
+                  <option value="Auxiliar">Auxiliar</option>
+                  <option value="Administrador">Administrador</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Jornada</label>
+                <select
+                  value={newUser.jornada}
+                  onChange={e => setNewUser({...newUser, jornada: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                  <option value="">Seleccione...</option>
+                  <option value="Matutina">Matutina</option>
+                  <option value="Vespertina">Vespertina</option>
+                  <option value="Doble">Doble</option>
+                  <option value="Intermedia">Intermedia</option>
+                </select>
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1 dark:text-gray-300">Rol</label>
               <select
@@ -398,7 +478,8 @@ const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserMod
       </div>
     )}
   </motion.div>
-);
+  );
+};
 
 // --- SUBCOMPONENT: Sistema Settings ---
 const SistemaSettings = ({ currentUser }) => {
@@ -922,6 +1003,7 @@ export default function ConfiguracionPanel() {
     nombres: '',
     apellidos: '',
     cargo: '',
+    jornada: '', // Added jornada
     rol: 'operador'
   });
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -959,7 +1041,7 @@ export default function ConfiguracionPanel() {
       await client.post('/usuarios', newUser);
       toast.success('Usuario creado exitosamente');
       setShowUserModal(false);
-      setNewUser({ email: '', password: '', nombres: '', apellidos: '', cargo: '', rol: 'operador' });
+      setNewUser({ email: '', password: '', nombres: '', apellidos: '', cargo: '', jornada: '', rol: 'operador' });
       fetchUsuarios();
     } catch (error) {
       toast.error('Error al crear usuario: ' + (error.response?.data?.error || error.message));
@@ -974,6 +1056,28 @@ export default function ConfiguracionPanel() {
       fetchUsuarios();
     } catch (error) {
       toast.error('Error al eliminar usuario: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handlePhotoUpload = async (userId, file) => {
+    const formData = new FormData();
+    formData.append('foto', file);
+
+    const toastId = toast.loading('Subiendo foto...');
+    try {
+      await client.post(`/usuarios/${userId}/foto`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success('Foto actualizada', { id: toastId });
+      fetchUsuarios();
+      
+      // Si es el usuario actual, actualizar contexto si es necesario
+      if (currentUser && currentUser.id === userId) {
+        fetchCurrentUser();
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Error subiendo foto', { id: toastId });
     }
   };
 
@@ -997,7 +1101,7 @@ export default function ConfiguracionPanel() {
       if (data.logo_path) {
         const logoUrl = data.logo_path.startsWith('http') 
           ? data.logo_path 
-          : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/${data.logo_path}?t=${Date.now()}`;
+          : `${BASE_URL}/uploads/${data.logo_path}?t=${Date.now()}`;
         setLogoPreview(logoUrl);
       }
     } catch (error) {
@@ -1035,18 +1139,28 @@ export default function ConfiguracionPanel() {
     setSaving(true);
 
     try {
-      const dataToSend = {
-        ...formData,
-        ...(logoBase64 && { logo_base64: logoBase64 })
-      };
-
-      await client.put('/institucion', dataToSend);
-      toast.success('Configuración guardada correctamente');
+      const dataToSend = new FormData();
       
-      if (logoBase64) {
-        setLogoBase64(null);
-        fetchConfig();
+      // Añadir campos de texto
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null && formData[key] !== undefined) {
+          dataToSend.append(key, formData[key]);
+        }
+      });
+
+      // Añadir archivo de logo si existe
+      const fileInput = document.getElementById('logo-upload');
+      if (fileInput && fileInput.files[0]) {
+        dataToSend.append('logo', fileInput.files[0]);
       }
+
+      await client.put('/institucion', dataToSend, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      toast.success('Configuración guardada correctamente');
+      setLogoBase64(null); // Limpiar base64 después de subir
+      fetchConfig(); // Recargar para ver el nuevo logo
     } catch (error) {
       toast.error('Error: ' + (error.response?.data?.error || error.message));
     } finally {
@@ -1105,6 +1219,7 @@ export default function ConfiguracionPanel() {
                 handleCreateUser={handleCreateUser}
                 handleDeleteUser={handleDeleteUser}
                 fetchUsuarios={fetchUsuarios}
+                handlePhotoUpload={handlePhotoUpload}
               />
             )}
             {activeTab === 'sistema' && (

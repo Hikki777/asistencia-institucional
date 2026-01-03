@@ -8,6 +8,7 @@ const CryptoJS = require('crypto-js');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { UPLOADS_DIR, DB_PATH } = require('../utils/paths');
 const prisma = require('../prismaClient');
 const logger = require('../utils/logger');
 
@@ -65,17 +66,15 @@ router.post('/create', authMiddleware, async (req, res) => {
     archive.pipe(output);
     
     // Agregar base de datos
-    const dbPath = path.join(__dirname, '../prisma/dev.db');
-    if (fs.existsSync(dbPath)) {
-      archive.file(dbPath, { name: 'dev.db' });
+    if (fs.existsSync(DB_PATH)) {
+      archive.file(DB_PATH, { name: 'dev.db' });
     } else {
       throw new Error('Base de datos no encontrada');
     }
     
     // Agregar carpeta uploads completa
-    const uploadsPath = path.join(__dirname, '../uploads');
-    if (fs.existsSync(uploadsPath)) {
-      archive.directory(uploadsPath, 'uploads');
+    if (fs.existsSync(UPLOADS_DIR)) {
+      archive.directory(UPLOADS_DIR, 'uploads');
     }
     
     // Agregar metadata
@@ -281,25 +280,20 @@ router.post('/restore', authMiddleware, upload.single('backup'), async (req, res
     
     // 10. Restaurar base de datos
     const restoredDbPath = path.join(extractPath, 'dev.db');
-    const targetDbPath = path.join(__dirname, '../prisma/dev.db');
     
     if (!fs.existsSync(restoredDbPath)) {
       throw new Error('Base de datos no encontrada en el backup');
     }
     
-    fs.copyFileSync(restoredDbPath, targetDbPath);
+    await fs.copy(restoredDbPath, DB_PATH, { overwrite: true });
     logger.info('Base de datos restaurada');
-    
-    // 11. Restaurar uploads
-    const restoredUploadsPath = path.join(extractPath, 'uploads');
-    const targetUploadsPath = path.join(__dirname, '../uploads');
-    
-    if (fs.existsSync(targetUploadsPath)) {
-      fs.rmSync(targetUploadsPath, { recursive: true, force: true });
-    }
-    
-    if (fs.existsSync(restoredUploadsPath)) {
-      fs.cpSync(restoredUploadsPath, targetUploadsPath, { recursive: true });
+    if (fs.existsSync(path.join(extractPath, 'uploads'))) {
+      // Ensure target directory exists and is empty before copying
+      if (fs.existsSync(UPLOADS_DIR)) {
+        await fs.remove(UPLOADS_DIR);
+      }
+      await fs.ensureDir(UPLOADS_DIR);
+      await fs.copy(path.join(extractPath, 'uploads'), UPLOADS_DIR, { overwrite: true });
       logger.info('Archivos multimedia restaurados');
     }
     

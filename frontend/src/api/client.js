@@ -41,8 +41,8 @@ client.interceptors.response.use(
     if (!error.response || error.code === 'ERR_NETWORK') {
       const config = error.config;
       
-      // Solo encolar métodos que modifican datos (POST, PUT, DELETE) y si no es un intento de auth
-      if (['post', 'put', 'delete'].includes(config.method) && !config.url.includes('/auth')) {
+      // Solo encolar métodos que modifican datos (POST, PUT, DELETE) y si no es un intento de auth o init
+      if (['post', 'put', 'delete'].includes(config.method) && !config.url.includes('/auth') && !config.url.includes('/init')) {
         offlineQueueService.addToQueue(config.url, config.method, config.data);
         return Promise.resolve({ data: { success: true, offline: true, message: 'Guardado localmente' } });
       }

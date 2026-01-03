@@ -21,15 +21,19 @@ export default function SetupWizard({ onComplete }) {
     municipio: '',
     email: '',
     telefono: '',
-    logo_path: null,
-    logo_base64: '',
+    // Admin info
+    admin_nombres: '',
+    admin_apellidos: '',
     admin_email: '',
     admin_password: '',
     admin_password_confirm: '',
-    admin_nombres: '',
-    admin_apellidos: '',
     admin_cargo: '',
-    admin_jornada: ''
+    admin_jornada: '',
+    // Logo y Foto (Files)
+    logo_base64: null, // Legacy check for preview
+    logo_file: null,
+    admin_foto_file: null,
+    admin_foto_preview: null
   });
 
   const [logoPreview, setLogoPreview] = useState('');
@@ -42,13 +46,36 @@ export default function SetupWizard({ onComplete }) {
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) { // Max 5MB
+        toast.error('El archivo es muy grande (Max 5MB)');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result);
         setFormData(prev => ({ 
           ...prev, 
-          logo_path: file,
-          logo_base64: reader.result 
+          logo_base64: reader.result, // For preview
+          logo_file: file
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAdminFotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // Max 5MB
+        toast.error('El archivo es muy grande (Max 5MB)');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ 
+          ...prev, 
+          admin_foto_preview: reader.result,
+          admin_foto_file: file
         }));
       };
       reader.readAsDataURL(file);
@@ -87,40 +114,58 @@ export default function SetupWizard({ onComplete }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('handleSubmit called', formData);
     if (formData.admin_password !== formData.admin_password_confirm) {
       toast.error('Las contraseñas no coinciden');
       return;
     }
 
+    if (formData.admin_password.length < 8) {
+      toast.error('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+
     setLoading(true);
     try {
-      await client.post('/institucion/init', {
-        nombre: formData.nombre,
-        horario_inicio: formData.horario_inicio,
-        horario_salida: formData.horario_salida,
-        margen_puntualidad_min: parseInt(formData.margen_puntualidad_min),
-        direccion: formData.direccion,
-        pais: formData.pais,
-        departamento: formData.departamento,
-        municipio: formData.municipio,
-        email: formData.email,
-        telefono: formData.telefono,
-        logo_base64: formData.logo_base64,
-        admin_email: formData.admin_email,
-        admin_password: formData.admin_password,
-        admin_nombres: formData.admin_nombres,
-        admin_apellidos: formData.admin_apellidos,
-        admin_cargo: formData.admin_cargo,
-        admin_jornada: formData.admin_jornada
+      const dataToSend = new FormData();
+      
+      console.log('Packaging data...');
+      // Append fields
+      Object.keys(formData).forEach(key => {
+        // Exclude files, previews, and confirm password
+        const excludedKeys = ['logo_file', 'admin_foto_file', 'admin_foto_preview', 'logo_base64', 'admin_password_confirm', 'margen_puntualidad_min'];
+        if (!excludedKeys.includes(key)) {
+          dataToSend.append(key, formData[key]);
+        }
       });
+
+      // Append margin as integer
+      dataToSend.append('margen_puntualidad_min', parseInt(formData.margen_puntualidad_min || 5));
+
+      // Append files
+      if (formData.logo_file) {
+        console.log('Appending logo...');
+        dataToSend.append('logo', formData.logo_file);
+      }
+      if (formData.admin_foto_file) {
+        console.log('Appending admin photo...');
+        dataToSend.append('admin_foto', formData.admin_foto_file);
+      }
+
+      console.log('Sending request to /institucion/init...');
+      const response = await client.post('/institucion/init', dataToSend, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      console.log('Response received:', response.data);
 
       toast.success('¡Sistema inicializado correctamente!');
       if (onComplete) onComplete();
       navigate('/login');
       
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.error || 'Error al inicializar el sistema');
+      console.error('Submission error:', error);
+      const errorMsg = error.response?.data?.error || error.response?.data?.detalle || error.message || 'Error al inicializar el sistema';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -181,7 +226,7 @@ export default function SetupWizard({ onComplete }) {
           {/* Formulario */}
           <div className="md:w-2/3">
             <div className="p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
               {step === 0 ? 'Modo de Instalación' : 
                step === 1 ? 'Datos de la Institución' : 
                step === 2 ? 'Cuenta de Administrador' : 'Confirmar Configuración'}
@@ -190,22 +235,22 @@ export default function SetupWizard({ onComplete }) {
             {/* PASO 0: Selección de Modo */}
             {step === 0 && (
               <div className="space-y-6">
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                <p className="text-gray-600 text-sm mb-4">
                   Selecciona cómo deseas configurar este equipo:
                 </p>
 
                 {/* Nueva Instalación */}
                 <div 
                   onClick={() => setStep(1)}
-                  className="border-2 border-blue-100 hover:border-blue-500 rounded-xl p-6 cursor-pointer transition-all hover:bg-blue-50 dark:hover:bg-gray-700 group"
+                  className="border-2 border-blue-100 hover:border-blue-500 rounded-xl p-6 cursor-pointer transition-all hover:bg-blue-50 group"
                 >
                   <div className="flex items-center gap-4">
                     <div className="bg-blue-100 p-3 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-colors">
                       <School size={32} />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Nueva Instalación (Servidor)</h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      <h3 className="text-lg font-bold text-gray-900">Nueva Instalación (Servidor)</h3>
+                      <p className="text-gray-600 text-sm">
                         Configura este equipo como el servidor principal. Aquí se guardarán todos los datos.
                       </p>
                     </div>
@@ -214,22 +259,22 @@ export default function SetupWizard({ onComplete }) {
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
+                    <div className="w-full border-t border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">O</span>
+                    <span className="px-2 bg-white text-gray-500">O</span>
                   </div>
                 </div>
 
                 {/* Restaurar desde Backup */}
-                <div className="border-2 border-purple-100 hover:border-purple-500 rounded-xl p-6 transition-all hover:bg-purple-50 dark:hover:bg-gray-700">
+                <div className="border-2 border-purple-100 hover:border-purple-500 rounded-xl p-6 transition-all hover:bg-purple-50">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="bg-purple-100 p-3 rounded-full text-purple-700">
                       <Upload size={32} />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Restaurar desde Backup</h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      <h3 className="text-lg font-bold text-gray-900">Restaurar desde Backup</h3>
+                      <p className="text-gray-600 text-sm">
                         Reinstala el sistema recuperando datos desde un archivo de respaldo (.bak)
                       </p>
                     </div>
@@ -237,7 +282,7 @@ export default function SetupWizard({ onComplete }) {
 
                   <div className="mt-4 space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      <label className="block text-sm font-medium text-gray-900 mb-2">
                         Selecciona el archivo de backup
                       </label>
                       <input
@@ -256,7 +301,7 @@ export default function SetupWizard({ onComplete }) {
                     >
                       Restaurar Sistema
                     </button>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                    <p className="text-xs text-amber-600 text-center">
                       ⚠️ Función en desarrollo - Próximamente disponible
                     </p>
                   </div>
@@ -264,10 +309,10 @@ export default function SetupWizard({ onComplete }) {
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
+                    <div className="w-full border-t border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">O</span>
+                    <span className="px-2 bg-white text-gray-500">O</span>
                   </div>
                 </div>
 
@@ -278,8 +323,8 @@ export default function SetupWizard({ onComplete }) {
                       <Wifi size={32} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Conectar a Existente (Cliente)</h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      <h3 className="text-lg font-bold text-gray-900">Conectar a Existente (Cliente)</h3>
+                      <p className="text-gray-600 text-sm">
                         Conecta este equipo a un servidor local en tu red.
                       </p>
                     </div>
@@ -287,7 +332,7 @@ export default function SetupWizard({ onComplete }) {
 
                   <form onSubmit={handleConnect} className="mt-4 space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">URL del Servidor</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">URL del Servidor</label>
                       <div className="relative">
                         <Server className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -295,7 +340,7 @@ export default function SetupWizard({ onComplete }) {
                           value={serverUrl}
                           onChange={(e) => setServerUrl(e.target.value)}
                           placeholder="http://192.168.1.100:5000"
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900"
                           required
                         />
                       </div>
@@ -337,7 +382,7 @@ export default function SetupWizard({ onComplete }) {
               {step === 1 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Nombre de la Institución</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Nombre de la Institución</label>
                     <div className="relative">
                       <School className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
@@ -345,7 +390,7 @@ export default function SetupWizard({ onComplete }) {
                         name="nombre"
                         value={formData.nombre}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                         placeholder="Ej: Colegio San José"
                         required
                       />
@@ -353,7 +398,7 @@ export default function SetupWizard({ onComplete }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Dirección</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Dirección</label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
@@ -361,7 +406,7 @@ export default function SetupWizard({ onComplete }) {
                         name="direccion"
                         value={formData.direccion}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                         placeholder="Ej: 4ta Calle 10-20 Zona 1"
                       />
                     </div>
@@ -369,7 +414,7 @@ export default function SetupWizard({ onComplete }) {
 
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">País</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">País</label>
                     <div className="relative">
                       <Globe className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
@@ -377,7 +422,7 @@ export default function SetupWizard({ onComplete }) {
                         name="pais"
                         value={formData.pais}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900"
                         placeholder="Guatemala"
                         readOnly
                       />
@@ -387,7 +432,7 @@ export default function SetupWizard({ onComplete }) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Departamento</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Departamento</label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -395,13 +440,13 @@ export default function SetupWizard({ onComplete }) {
                           name="departamento"
                           value={formData.departamento}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                           placeholder="Ej: Guatemala"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Municipio</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Municipio</label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -409,7 +454,7 @@ export default function SetupWizard({ onComplete }) {
                           name="municipio"
                           value={formData.municipio}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                           placeholder="Ej: Guatemala"
                         />
                       </div>
@@ -418,7 +463,7 @@ export default function SetupWizard({ onComplete }) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Email Institucional</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Email Institucional</label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -426,13 +471,13 @@ export default function SetupWizard({ onComplete }) {
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                           placeholder="contacto@colegio.edu"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Teléfono</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Teléfono</label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -440,7 +485,7 @@ export default function SetupWizard({ onComplete }) {
                           name="telefono"
                           value={formData.telefono}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                           placeholder="+502 5555 5555"
                         />
                       </div>
@@ -448,7 +493,7 @@ export default function SetupWizard({ onComplete }) {
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Entrada</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Entrada</label>
                       <div className="relative">
                         <Clock className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -456,13 +501,14 @@ export default function SetupWizard({ onComplete }) {
                           name="horario_inicio"
                           value={formData.horario_inicio}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                          style={{ colorScheme: 'light' }}
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Salida</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Salida</label>
                       <div className="relative">
                         <LogOut className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -470,13 +516,14 @@ export default function SetupWizard({ onComplete }) {
                           name="horario_salida"
                           value={formData.horario_salida}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                          style={{ colorScheme: 'light' }}
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Margen (min)</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Margen (min)</label>
                       <div className="relative">
                         <Clock className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -484,7 +531,7 @@ export default function SetupWizard({ onComplete }) {
                           name="margen_puntualidad_min"
                           value={formData.margen_puntualidad_min}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                           min="0"
                           required
                         />
@@ -493,8 +540,8 @@ export default function SetupWizard({ onComplete }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Logo Institucional</label>
-                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer relative group">
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Logo Institucional</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer relative group">
                       <input
                         type="file"
                         accept="image/*"
@@ -525,14 +572,14 @@ export default function SetupWizard({ onComplete }) {
                     <button
                       type="button"
                       onClick={() => setStep(0)}
-                      className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-900 dark:text-gray-100 font-bold py-3 rounded-lg transition-colors"
+                      className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-3 rounded-lg transition-colors"
                     >
                       Atrás
                     </button>
                     <button
                       type="button"
                       onClick={() => setStep(2)}
-                      disabled={!formData.nombre || !formData.logo_base64}
+                      disabled={!formData.nombre || !formData.logo_file}
                       className="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
                       Siguiente
@@ -546,7 +593,7 @@ export default function SetupWizard({ onComplete }) {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Nombres</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Nombres</label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -554,14 +601,14 @@ export default function SetupWizard({ onComplete }) {
                           name="admin_nombres"
                           value={formData.admin_nombres}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                           placeholder="Juan"
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Apellidos</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Apellidos</label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input
@@ -569,7 +616,7 @@ export default function SetupWizard({ onComplete }) {
                           name="admin_apellidos"
                           value={formData.admin_apellidos}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                           placeholder="Pérez"
                           required
                         />
@@ -579,14 +626,14 @@ export default function SetupWizard({ onComplete }) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Cargo</label>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Cargo</label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 text-gray-400" size={18} />
                         <select
                           name="admin_cargo"
                           value={formData.admin_cargo}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-800"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-900"
                           required
                         >
                           <option value="">Seleccione...</option>
@@ -606,7 +653,7 @@ export default function SetupWizard({ onComplete }) {
                           name="admin_jornada"
                           value={formData.admin_jornada}
                           onChange={handleChange}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-900"
                           required
                         >
                           <option value="">Seleccione...</option>
@@ -620,14 +667,30 @@ export default function SetupWizard({ onComplete }) {
                           <option value="Extendida">Extendida</option>
                         </select>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Selecciona "Extendida" si trabajas en todas las jornadas
-                      </p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Email del Administrador</label>
+                     <label className="block text-sm font-medium text-gray-900 mb-1">Foto de Perfil (Opcional)</label>
+                     <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {formData.admin_foto_preview ? (
+                            <img src={formData.admin_foto_preview} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={24} className="text-gray-400" />
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAdminFotoChange}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Email del Administrador</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
@@ -635,7 +698,7 @@ export default function SetupWizard({ onComplete }) {
                         name="admin_email"
                         value={formData.admin_email}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                         placeholder="admin@colegio.edu"
                         required
                       />
@@ -643,7 +706,7 @@ export default function SetupWizard({ onComplete }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Contraseña</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Contraseña</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
@@ -651,16 +714,17 @@ export default function SetupWizard({ onComplete }) {
                         name="admin_password"
                         value={formData.admin_password}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                         placeholder="••••••••"
                         required
                         minLength={8}
                       />
+                      <p className="text-xs text-gray-500 mt-1">Mínimo 8 caracteres</p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Confirmar Contraseña</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Confirmar Contraseña</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
                       <input
@@ -668,11 +732,12 @@ export default function SetupWizard({ onComplete }) {
                         name="admin_password_confirm"
                         value={formData.admin_password_confirm}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                         placeholder="••••••••"
                         required
                         minLength={8}
                       />
+                      <p className="text-xs text-gray-500 mt-1">Mínimo 8 caracteres</p>
                     </div>
                   </div>
 
@@ -680,7 +745,7 @@ export default function SetupWizard({ onComplete }) {
                     <button
                       type="button"
                       onClick={() => setStep(1)}
-                      className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-900 dark:text-gray-100 font-bold py-3 rounded-lg transition-colors"
+                      className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-3 rounded-lg transition-colors"
                     >
                       Atrás
                     </button>
@@ -702,7 +767,7 @@ export default function SetupWizard({ onComplete }) {
                   {/* Datos Institucionales */}
                   <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                      <h3 className="font-bold text-gray-900 flex items-center gap-2">
                         <School size={20} className="text-blue-600" />
                         Datos Institucionales
                       </h3>
@@ -717,42 +782,42 @@ export default function SetupWizard({ onComplete }) {
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Nombre:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{formData.nombre}</span>
+                        <span className="text-gray-600">Nombre:</span>
+                        <span className="font-medium text-gray-900">{formData.nombre}</span>
                       </div>
                       {formData.direccion && (
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Dirección:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{formData.direccion}</span>
+                          <span className="text-gray-600">Dirección:</span>
+                          <span className="font-medium text-gray-900">{formData.direccion}</span>
                         </div>
                       )}
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Ubicación:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">Guatemala - {formData.departamento} - {formData.municipio}</span>
+                        <span className="text-gray-600">Ubicación:</span>
+                        <span className="font-medium text-gray-900">Guatemala - {formData.departamento} - {formData.municipio}</span>
                       </div>
                       {formData.email && (
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Email:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{formData.email}</span>
+                          <span className="text-gray-600">Email:</span>
+                          <span className="font-medium text-gray-900">{formData.email}</span>
                         </div>
                       )}
                       {formData.telefono && (
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Teléfono:</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{formData.telefono}</span>
+                          <span className="text-gray-600">Teléfono:</span>
+                          <span className="font-medium text-gray-900">{formData.telefono}</span>
                         </div>
                       )}
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Horario:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{formData.horario_inicio} - {formData.horario_salida}</span>
+                        <span className="text-gray-600">Horario:</span>
+                        <span className="font-medium text-gray-900">{formData.horario_inicio} - {formData.horario_salida}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Margen:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{formData.margen_puntualidad_min} min</span>
+                        <span className="text-gray-600">Margen:</span>
+                        <span className="font-medium text-gray-900">{formData.margen_puntualidad_min} min</span>
                       </div>
                       {logoPreview && (
                         <div className="mt-3 pt-3 border-t border-blue-200">
-                          <p className="text-gray-600 dark:text-gray-400 text-xs mb-2">Logo:</p>
+                          <p className="text-gray-600 text-xs mb-2">Logo:</p>
                           <img src={logoPreview} alt="Logo" className="h-16 object-contain" />
                         </div>
                       )}
@@ -762,7 +827,7 @@ export default function SetupWizard({ onComplete }) {
                   {/* Datos del Administrador */}
                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                      <h3 className="font-bold text-gray-900 flex items-center gap-2">
                         <User size={20} className="text-green-600" />
                         Cuenta de Administrador
                       </h3>
@@ -777,20 +842,20 @@ export default function SetupWizard({ onComplete }) {
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Nombre:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{formData.admin_nombres} {formData.admin_apellidos}</span>
+                        <span className="text-gray-600">Nombre:</span>
+                        <span className="font-medium text-gray-900">{formData.admin_nombres} {formData.admin_apellidos}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Cargo:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{formData.admin_cargo} ({formData.admin_jornada})</span>
+                        <span className="text-gray-600">Cargo:</span>
+                        <span className="font-medium text-gray-900">{formData.admin_cargo} ({formData.admin_jornada})</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Email:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{formData.admin_email}</span>
+                        <span className="text-gray-600">Email:</span>
+                        <span className="font-medium text-gray-900">{formData.admin_email}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Contraseña:</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">••••••••</span>
+                        <span className="text-gray-600">Contraseña:</span>
+                        <span className="font-medium text-gray-900">••••••••</span>
                       </div>
                     </div>
                   </div>
@@ -799,7 +864,7 @@ export default function SetupWizard({ onComplete }) {
                     <button
                       type="button"
                       onClick={() => setStep(2)}
-                      className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-900 dark:text-gray-100 font-bold py-3 rounded-lg transition-colors"
+                      className="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-3 rounded-lg transition-colors"
                     >
                       Atrás
                     </button>

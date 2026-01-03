@@ -33,7 +33,7 @@ const scriptPath = path.resolve(targetScript);
 console.log(`[System] Iniciando proceso Node.js con --max-old-space-size=${maxOldSpaceSize}...`);
 
 // Spawn del proceso real
-const child = spawn('node', [`--max-old-space-size=${maxOldSpaceSize}`, scriptPath], {
+const child = spawn('node', [`--max-old-space-size=${maxOldSpaceSize}`, `"${scriptPath}"`], {
   stdio: 'inherit',
   env: process.env,
   shell: true // Necesario para compatibilidad de rutas

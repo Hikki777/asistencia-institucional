@@ -4,6 +4,36 @@ const prisma = require('../prismaClient');
 const bcrypt = require('bcrypt');
 const { verifyJWT } = require('../middlewares/auth');
 const { logger } = require('../utils/logger');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs-extra');
+const { UPLOADS_DIR } = require('../utils/paths');
+
+// Configuración de Multer
+const storage = multer.diskStorage({
+  destination: async function (req, file, cb) {
+    const dir = path.join(UPLOADS_DIR, 'usuarios');
+    await fs.ensureDir(dir);
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    // user-ID-timestamp.ext
+    const ext = path.extname(file.originalname);
+    cb(null, `user-${req.params.id}-${Date.now()}${ext}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten imágenes'));
+    }
+  }
+});
 
 // Aplicar middleware de autenticación a todas las rutas
 router.use(verifyJWT);
@@ -121,6 +151,41 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     logger.error({ err: error }, '[ERROR] Error eliminando usuario');
     res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/usuarios/:id/foto
+ * Subir foto de perfil
+ */
+router.post('/:id/foto', upload.single('foto'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    
+    // Verificar permisos: Admin o el mismo usuario
+    if (req.user.rol !== 'admin' && req.user.id !== id) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ninguna imagen' });
+    }
+
+    const relativePath = `usuarios/${req.file.filename}`;
+
+    // Actualizar usuario
+    const usuario = await prisma.usuario.update({
+      where: { id },
+      data: { foto_path: relativePath },
+      select: { id: true, email: true, foto_path: true }
+    });
+
+    logger.info({ usuario_id: id }, '[OK] Foto de perfil actualizada');
+    res.json({ message: 'Foto actualizada', usuario });
+
+  } catch (error) {
+    logger.error({ err: error }, '[ERROR] Subiendo foto usuario');
+    res.status(500).json({ error: 'Error al subir la foto' });
   }
 });
 

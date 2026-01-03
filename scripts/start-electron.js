@@ -80,17 +80,59 @@ async function waitForFrontend() {
 }
 
 /**
+ * Matar proceso en puerto específico (Windows/Linux/Mac)
+ */
+async function killPort(port) {
+  return new Promise((resolve) => {
+    const command = process.platform === 'win32'
+      ? `netstat -ano | findstr :${port}`
+      : `lsof -i :${port} -t`;
+
+    const check = spawn(process.platform === 'win32' ? 'cmd' : 'sh', ['/c', command], { shell: true });
+    
+    let pid = '';
+    check.stdout.on('data', (data) => { pid += data.toString(); });
+    
+    check.on('close', async () => {
+      const pids = pid.match(/\d+$/gm); // Extraer PIDs al final de linea (Windows) o lista (Linux)
+      if (pids && pids.length > 0) {
+        // Filtrar PIDs vacíos y únicos
+        const uniquePids = [...new Set(pids.filter(p => p.trim().length > 0 && p !== '0'))];
+        
+        if (uniquePids.length > 0) {
+          log(`[AUTO-CLEAN] Liberando puerto ${port} (Matando PIDs: ${uniquePids.join(', ')})...`, colors.yellow);
+          
+          const killCmd = process.platform === 'win32' 
+            ? `taskkill /F /PID ${uniquePids.join(' /PID ')}`
+            : `kill -9 ${uniquePids.join(' ')}`;
+            
+          const killer = spawn(process.platform === 'win32' ? 'cmd' : 'sh', ['/c', killCmd], { shell: true });
+          await new Promise(r => killer.on('close', r));
+        }
+      }
+      resolve();
+    });
+  });
+}
+
+/**
  * Iniciar Electron con backend y frontend
  */
 async function startElectron() {
   log('\n' + '='.repeat(60), colors.cyan);
   log('  [ELECTRON] Iniciando aplicación Electron', colors.cyan);
   log('='.repeat(60) + '\n', colors.cyan);
+
+  // Paso 0: Limpieza preventiva de puertos
+  await killPort(5000);
+  await killPort(5173);
+  await killPort(5174);
+  log('[AUTO-CLEAN] Puertos verificados y limpios.', colors.green);
   
-  // Paso 1: Iniciar backend
+  // Paso 1: Iniciar backend (usando gestor de memoria dinámico)
   log('[1/4] Iniciando backend...', colors.cyan);
   
-  const backend = spawn('node', ['--max-old-space-size=1024', 'backend/server.js'], {
+  const backend = spawn('node', ['scripts/start-dynamic.js', 'backend/server.js'], {
     stdio: ['ignore', 'inherit', 'inherit'],
     cwd: path.join(__dirname, '..')
   });
@@ -160,30 +202,37 @@ async function startElectron() {
     process.exit(1);
   });
   
-  electron.on('exit', (code) => {
-    log('\n[ELECTRON] Aplicación cerrada', colors.cyan);
-    frontend.kill();
-    backend.kill();
-    process.exit(code || 0);
-  });
-  
-  // Manejar señales de terminación
-  const cleanup = () => {
-    log('\n\n[STOP] Deteniendo servicios...', colors.yellow);
-    electron.kill('SIGTERM');
-    frontend.kill('SIGTERM');
-    backend.kill('SIGTERM');
-    
-    setTimeout(() => {
-      electron.kill('SIGKILL');
-      frontend.kill('SIGKILL');
-      backend.kill('SIGKILL');
+  // Función de limpieza robusta
+  const fullCleanup = async () => {
+    try {
+      log('\n[STOP] Deteniendo servicios y liberando puertos...', colors.yellow);
+      
+      // 1. Matar procesos hijos conocidos si existen
+      if (electron) electron.kill();
+      if (frontend) frontend.kill();
+      if (backend) backend.kill();
+      
+      // 2. Limpieza forzada de puertos (lo que pidió el usuario)
+      await killPort(5000);
+      await killPort(5173);
+      await killPort(5174);
+      
+      log('[STOP] Limpieza completada. Hasta luego!', colors.green);
       process.exit(0);
-    }, 2000);
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
   };
   
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
+  electron.on('exit', async (code) => {
+    log('\n[ELECTRON] Aplicación cerrada manualmente', colors.cyan);
+    await fullCleanup();
+  });
+  
+  process.on('SIGINT', fullCleanup);
+  process.on('SIGTERM', fullCleanup);
+  process.on('SIGHUP', fullCleanup);
   
   // Mantener el proceso vivo
   process.stdin.resume();

@@ -236,7 +236,7 @@ const InstitucionSettings = ({ formData, setFormData, logoPreview, handleLogoCha
 );
 
 // --- SUBCOMPONENT: Usuario Settings ---
-const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserModal, newUser, setNewUser, handleCreateUser, handleDeleteUser, fetchUsuarios, handlePhotoUpload }) => {
+const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserModal, newUser, setNewUser, handleCreateUser, handleDeleteUser, fetchUsuarios, handlePhotoUpload, handleNewUserPhotoChange }) => {
   const fileInputRef = React.useRef(null);
   const [uploadingUserId, setUploadingUserId] = React.useState(null);
 
@@ -374,6 +374,48 @@ const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserMod
           </div>
           
           <div className="p-6 space-y-4">
+            {/* Foto del Usuario */}
+            <div className="flex flex-col items-center gap-2 mb-2">
+              <div className="relative group/avatar-new">
+                <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden">
+                  {newUser.foto_preview ? (
+                    <img src={newUser.foto_preview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera size={32} className="text-gray-400" />
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleNewUserPhotoChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover/avatar-new:opacity-100 transition-opacity pointer-events-none">
+                  <Plus size={20} className="text-white" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">Cargar Foto de Perfil</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Nombres</label>
+                <input
+                  type="text"
+                  value={newUser.nombres}
+                  onChange={e => setNewUser({...newUser, nombres: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Apellidos</label>
+                <input
+                  type="text"
+                  value={newUser.apellidos}
+                  onChange={e => setNewUser({...newUser, apellidos: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1 dark:text-gray-300">Email</label>
               <input
@@ -396,39 +438,19 @@ const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserMod
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Nombres</label>
-                <input
-                  type="text"
-                  value={newUser.nombres}
-                  onChange={e => setNewUser({...newUser, nombres: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Apellidos</label>
-                <input
-                  type="text"
-                  value={newUser.apellidos}
-                  onChange={e => setNewUser({...newUser, apellidos: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Cargo</label>
                 <select
                   value={newUser.cargo}
                   onChange={e => setNewUser({...newUser, cargo: e.target.value})}
                   className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  required
                 >
                   <option value="">Seleccione...</option>
                   <option value="Director">Director(a)</option>
                   <option value="Subdirector">Subdirector(a)</option>
-                  <option value="Secretaria">Secretaria</option>
-                  <option value="Docente">Docente</option>
-                  <option value="Auxiliar">Auxiliar</option>
-                  <option value="Administrador">Administrador</option>
+                  <option value="Secretaria">Secretaria(o)</option>
+                  <option value="Administrador">Administrador(a)</option>
+                  <option value="Coordinador">Coordinador(a)</option>
                 </select>
               </div>
               <div>
@@ -437,12 +459,17 @@ const UsuarioSettings = ({ usuarios, loadingUsers, showUserModal, setShowUserMod
                   value={newUser.jornada}
                   onChange={e => setNewUser({...newUser, jornada: e.target.value})}
                   className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  required
                 >
                   <option value="">Seleccione...</option>
                   <option value="Matutina">Matutina</option>
                   <option value="Vespertina">Vespertina</option>
-                  <option value="Doble">Doble</option>
-                  <option value="Intermedia">Intermedia</option>
+                  <option value="Nocturna">Nocturna</option>
+                  <option value="Semipresencial">Semipresencial</option>
+                  <option value="Virtual">Virtual</option>
+                  <option value="Fin de Semana (Sábado)">Fin de Semana (Sábado)</option>
+                  <option value="Fin de Semana (Domingo)">Fin de Semana (Domingo)</option>
+                  <option value="Extendida">Extendida</option>
                 </select>
               </div>
             </div>
@@ -1003,8 +1030,10 @@ export default function ConfiguracionPanel() {
     nombres: '',
     apellidos: '',
     cargo: '',
-    jornada: '', // Added jornada
-    rol: 'operador'
+    jornada: '',
+    rol: 'operador',
+    foto_file: null,
+    foto_preview: null
   });
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -1036,12 +1065,53 @@ export default function ConfiguracionPanel() {
     }
   };
 
+  const handleNewUserPhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewUser({
+          ...newUser,
+          foto_file: file,
+          foto_preview: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleCreateUser = async () => {
     try {
-      await client.post('/usuarios', newUser);
+      const formData = new FormData();
+      formData.append('email', newUser.email);
+      formData.append('password', newUser.password);
+      formData.append('nombres', newUser.nombres);
+      formData.append('apellidos', newUser.apellidos);
+      formData.append('cargo', newUser.cargo);
+      formData.append('jornada', newUser.jornada);
+      formData.append('rol', newUser.rol);
+      
+      if (newUser.foto_file) {
+        formData.append('foto', newUser.foto_file);
+      }
+
+      await client.post('/usuarios', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
       toast.success('Usuario creado exitosamente');
       setShowUserModal(false);
-      setNewUser({ email: '', password: '', nombres: '', apellidos: '', cargo: '', jornada: '', rol: 'operador' });
+      setNewUser({ 
+        email: '', 
+        password: '', 
+        nombres: '', 
+        apellidos: '', 
+        cargo: '', 
+        jornada: '', 
+        rol: 'operador',
+        foto_file: null,
+        foto_preview: null
+      });
       fetchUsuarios();
     } catch (error) {
       toast.error('Error al crear usuario: ' + (error.response?.data?.error || error.message));
@@ -1220,6 +1290,7 @@ export default function ConfiguracionPanel() {
                 handleDeleteUser={handleDeleteUser}
                 fetchUsuarios={fetchUsuarios}
                 handlePhotoUpload={handlePhotoUpload}
+                handleNewUserPhotoChange={handleNewUserPhotoChange}
               />
             )}
             {activeTab === 'sistema' && (

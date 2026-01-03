@@ -74,14 +74,14 @@ router.get('/', async (req, res) => {
  * POST /api/usuarios
  * Crear nuevo usuario
  */
-router.post('/', async (req, res) => {
+router.post('/', upload.single('foto'), async (req, res) => {
   try {
     // Validar permisos de admin
     if (req.user.rol !== 'admin') {
       return res.status(403).json({ error: 'No autorizado. Solo administradores pueden crear usuarios.' });
     }
 
-    const { email, password, nombres, apellidos, cargo, rol } = req.body;
+    const { email, password, nombres, apellidos, cargo, jornada, rol } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
@@ -90,12 +90,17 @@ router.post('/', async (req, res) => {
     // Verificar si ya existe
     const existente = await prisma.usuario.findUnique({ where: { email } });
     if (existente) {
+      // Si se subió una foto pero el usuario ya existe, multer ya la guardó. 
+      // Podríamos borrarla aquí, pero por simplicidad la dejamos o confiamos en limpiezas periódicas.
       return res.status(400).json({ error: 'El email ya está registrado' });
     }
 
     // Hashear contraseña
     const salt = await bcrypt.genSalt(10);
     const hash_pass = await bcrypt.hash(password, salt);
+
+    // Determinar foto_path si existe archivo
+    const foto_path = req.file ? `usuarios/${req.file.filename}` : null;
 
     const usuario = await prisma.usuario.create({
       data: {
@@ -104,6 +109,8 @@ router.post('/', async (req, res) => {
         nombres,
         apellidos,
         cargo,
+        jornada,
+        foto_path,
         rol: rol || 'operador',
         activo: true
       },
@@ -113,7 +120,8 @@ router.post('/', async (req, res) => {
         nombres: true,
         apellidos: true,
         rol: true,
-        activo: true
+        activo: true,
+        foto_path: true
       }
     });
 

@@ -12,7 +12,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     title: "Sistema de Gestión Institucional",
-    icon: path.join(__dirname, "..", "frontend-react", "public", "logo.png"),
+    icon: path.join(__dirname, "..", "frontend", "public", "logo.png"),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -28,7 +28,7 @@ function createWindow() {
     mainWindow.loadURL("http://localhost:5173");
   } else {
     // En producción, cargar el archivo local compilado
-    mainWindow.loadFile(path.join(__dirname, "..", "frontend-react", "dist", "index.html"));
+    mainWindow.loadFile(path.join(__dirname, "..", "frontend", "dist", "index.html"));
   }
 
   // Abrir enlaces externos en el navegador

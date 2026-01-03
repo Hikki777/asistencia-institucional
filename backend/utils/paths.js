@@ -14,7 +14,7 @@ const UPLOADS_DIR = (isProduction && resourcesPath)
 // Base de datos
 const DB_PATH = (isProduction && resourcesPath)
   ? path.join(resourcesPath, 'backend/prisma/dev.db')
-  : path.join(__dirname, '../prisma/dev.db');
+  : path.join(__dirname, '../../prisma/dev.db');
 
 // Frontend estático (para servir desde Express en prod)
 const FRONTEND_DIR = path.join(__dirname, '../../frontend/dist');

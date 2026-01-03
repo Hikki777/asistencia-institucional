@@ -185,8 +185,12 @@ async function startElectron() {
   // Paso 4: Iniciar Electron
   log('[4/4] Iniciando Electron...', colors.cyan);
   
+  const electronPath = process.platform === 'win32' 
+    ? path.join(__dirname, '..', 'node_modules', '.bin', 'electron.cmd')
+    : path.join(__dirname, '..', 'node_modules', '.bin', 'electron');
+
   const electron = spawn(
-    'electron',
+    electronPath,
     ['electron/main.js'],
     {
       stdio: 'inherit',

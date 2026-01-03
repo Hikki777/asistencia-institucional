@@ -54,6 +54,8 @@ router.get('/', async (req, res) => {
         nombres: true,
         apellidos: true,
         cargo: true,
+        jornada: true,
+        foto_path: true,
         rol: true,
         activo: true,
         creado_en: true

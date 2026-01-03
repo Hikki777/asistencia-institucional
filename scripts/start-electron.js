@@ -190,7 +190,7 @@ async function startElectron() {
     : path.join(__dirname, '..', 'node_modules', '.bin', 'electron');
 
   const electron = spawn(
-    electronPath,
+    `"${electronPath}"`,
     ['electron/main.js'],
     {
       stdio: 'inherit',
